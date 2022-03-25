@@ -15,6 +15,9 @@ abstract class Command extends BaseCommand
 {
     use ClassTrait;
 
+    public const OPTION_OFF_ANNOUNCEMENT = 'off-announcement';
+    public const PARAMETER_OFF_ANNOUNCEMENT = '--' . self::OPTION_OFF_ANNOUNCEMENT;
+
     public function __construct()
     {
         if (isset($this->signature)) {
@@ -42,6 +45,18 @@ abstract class Command extends BaseCommand
     {
         parent::configure();
         $this->specifyDefaultParameters();
+    }
+
+    public function call($command, array $arguments = []): int
+    {
+        $arguments[self::PARAMETER_OFF_ANNOUNCEMENT] = true;
+        return parent::call($command, $arguments);
+    }
+
+    public function callSilent($command, array $arguments = [])
+    {
+        $arguments[self::PARAMETER_OFF_ANNOUNCEMENT] = true;
+        return parent::callSilent($command, $arguments);
     }
 
     protected function specifyDefaultParameters()
@@ -72,19 +87,30 @@ abstract class Command extends BaseCommand
 
     protected function getDefaultOptions(): array
     {
-        return [];
+        return [
+            [self::OPTION_OFF_ANNOUNCEMENT, null, InputOption::VALUE_NONE, ''],
+        ];
+    }
+
+    protected function offAnnouncement(): bool
+    {
+        return $this->option(self::OPTION_OFF_ANNOUNCEMENT);
     }
 
     protected function handleBefore(): void
     {
-        $this->info(sprintf('Console start [%s]', $this->getName()));
-        $this->newLine();
+        if (!$this->offAnnouncement()) {
+            $this->info(sprintf('Console start [%s]', $this->getName()));
+            $this->newLine();
+        }
     }
 
     protected function handleAfter(): void
     {
-        $this->newLine();
-        $this->info(sprintf('Console end [%s]', $this->getName()));
+        if (!$this->offAnnouncement()) {
+            $this->newLine();
+            $this->info(sprintf('Console end [%s]', $this->getName()));
+        }
     }
 
     public function handle(): int

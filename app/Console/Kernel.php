@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Support\Commands\Command;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -10,7 +11,7 @@ class Kernel extends ConsoleKernel
     /**
      * Define the application's command schedule.
      *
-     * @param  \Illuminate\Console\Scheduling\Schedule  $schedule
+     * @param Schedule $schedule
      * @return void
      */
     protected function schedule(Schedule $schedule)
@@ -28,5 +29,11 @@ class Kernel extends ConsoleKernel
         $this->load(__DIR__.'/Commands');
 
         require base_path('routes/console.php');
+    }
+
+    public function call($command, array $parameters = [], $outputBuffer = null): int
+    {
+        $parameters[Command::PARAMETER_OFF_ANNOUNCEMENT] = true;
+        return parent::call($command, $parameters, $outputBuffer);
     }
 }
