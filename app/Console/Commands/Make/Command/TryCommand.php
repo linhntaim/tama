@@ -6,51 +6,36 @@
 
 namespace App\Console\Commands\Make\Command;
 
-use App\Console\Commands\Make\MakeCommand;
+use App\Support\Commands\GeneratorCommand;
 
-class TryCommand extends MakeCommand
+class TryCommand extends GeneratorCommand
 {
-    protected $signature = 'make:command:try {--force}';
+    /**
+     * The type of class being generated.
+     *
+     * @var string
+     */
+    protected string $type = 'Command';
 
-    protected string $tryFilePath;
-
-    protected function remove()
+    protected function getStub(): string
     {
-        unlink($this->tryFilePath);
+        return $this->resolveStubPath('/stubs/command.try.stub');
     }
 
-    protected function has(): bool
+    protected function getNameInput(): string
     {
-        return file_exists($this->tryFilePath);
+        return 'TryCommand';
     }
 
-    protected function copy()
+    protected function getDefaultNamespace(string $rootNamespace): string
     {
-        copy($this->exampleTryFilePath(), $this->tryFilePath);
+        return $rootNamespace . '\Console\Commands';
     }
 
-    protected function tryFilePath(): string
+    protected function getDefaultArguments(): array
     {
-        return app_path(implode(DIRECTORY_SEPARATOR, ['Console', 'Commands', 'TryCommand.php']));
-    }
-
-    protected function exampleTryFilePath(): string
-    {
-        return app_path(implode(DIRECTORY_SEPARATOR, ['Console', 'Commands', 'TryCommand.php.example']));
-    }
-
-    protected function making(): int
-    {
-        $this->tryFilePath = $this->tryFilePath();
-        if ($this->has()) {
-            if ($this->forced()) {
-                $this->remove();
-                $this->copy();
-            }
-        }
-        else {
-            $this->copy();
-        }
-        return $this->exitSuccess();
+        $arguments = parent::getDefaultArguments();
+        array_pop($arguments);
+        return $arguments;
     }
 }

@@ -4,9 +4,9 @@
  * Base
  */
 
-namespace App\Console\Commands;
+namespace {{ namespace }};
 
-use App\Support\Commands\Command;
+use {{ rootNamespace }}Support\Commands\Command;
 
 class TryCommand extends Command
 {
