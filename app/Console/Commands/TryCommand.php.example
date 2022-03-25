@@ -1,0 +1,22 @@
+<?php
+
+/**
+ * Base
+ */
+
+namespace App\Console\Commands;
+
+use App\Support\Commands\Command;
+
+class TryCommand extends Command
+{
+    protected $signature = 'try';
+
+    protected function handling(): int
+    {
+        // TODO:
+
+        // TODO
+        return parent::handling();
+    }
+}
