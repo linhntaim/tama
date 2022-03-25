@@ -6,7 +6,7 @@
 
 namespace App\Console\Commands\Make\Command;
 
-use App\Support\Commands\GeneratorCommand;
+use App\Support\Console\Commands\GeneratorCommand;
 
 class TryCommand extends GeneratorCommand
 {

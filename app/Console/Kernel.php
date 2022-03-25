@@ -2,7 +2,8 @@
 
 namespace App\Console;
 
-use App\Support\Commands\Command;
+use App\Support\Console\Application as Artisan;
+use App\Support\Console\Commands\Command;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -26,9 +27,20 @@ class Kernel extends ConsoleKernel
      */
     protected function commands()
     {
-        $this->load(__DIR__.'/Commands');
+        $this->load(__DIR__ . '/Commands');
 
         require base_path('routes/console.php');
+    }
+
+    protected function getArtisan()
+    {
+        if (is_null($this->artisan)) {
+            $this->artisan = (new Artisan($this->app, $this->events, $this->app->version()))
+                ->resolveCommands($this->commands)
+                ->setContainerCommandLoader();
+        }
+
+        return $this->artisan;
     }
 
     public function call($command, array $parameters = [], $outputBuffer = null): int

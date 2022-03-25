@@ -4,7 +4,7 @@
  * Base
  */
 
-namespace App\Support\Commands;
+namespace App\Support\Console\Commands;
 
 use Symfony\Component\Console\Input\InputOption;
 
@@ -18,7 +18,7 @@ abstract class ForceCommand extends Command
     protected function getDefaultOptions(): array
     {
         return array_merge(parent::getDefaultOptions(), [
-            ['force', null, InputOption::VALUE_NONE, 'Force the operation to run when in production'],
+            ['force', null, InputOption::VALUE_NONE],
         ]);
     }
 }

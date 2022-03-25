@@ -4,7 +4,7 @@
  * Base
  */
 
-namespace App\Support\Commands;
+namespace App\Support\Console\Commands;
 
 use App\Support\ClassTrait;
 use Illuminate\Console\Command as BaseCommand;
@@ -36,9 +36,26 @@ abstract class Command extends BaseCommand
 
     protected function generateName(): string
     {
-        return implode(':', array_map(function ($name) {
-            return str($name)->snake('-')->toString();
-        }, explode('\\', preg_replace('/^App\\\\Console\\\\Commands\\\\|Command$/', '', $this->className()))));
+        return implode(
+            ':',
+            array_map(
+                function ($name) {
+                    return str($name)->snake('-')->toString();
+                },
+                (function (array $names) {
+                    if (($count = count($names)) == 1 && $names[0] == '') {
+                        return ['command'];
+                    }
+                    if ($count >= 2) {
+                        $l1 = array_pop($names);
+                        while (($l2 = array_pop($names)) && $l2 == $l1) {
+                        }
+                        array_push($names, ...array_filter([$l2, $l1]));
+                    }
+                    return $names;
+                })(explode('\\', rtrim(preg_replace('/^App\\\\Console\\\\Commands\\\\|Command$/', '', $this->className()), '\\')))
+            )
+        );
     }
 
     protected function configure()
@@ -87,9 +104,7 @@ abstract class Command extends BaseCommand
 
     protected function getDefaultOptions(): array
     {
-        return [
-            [self::OPTION_OFF_ANNOUNCEMENT, null, InputOption::VALUE_NONE, ''],
-        ];
+        return [];
     }
 
     protected function offAnnouncement(): bool

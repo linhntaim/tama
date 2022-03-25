@@ -1,6 +1,10 @@
 <?php
 
-namespace App\Support\Commands;
+/**
+ * Base
+ */
+
+namespace App\Support\Console\Commands;
 
 use Illuminate\Console\Concerns\CreatesMatchingTest;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
