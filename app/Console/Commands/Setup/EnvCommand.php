@@ -14,15 +14,17 @@ class EnvCommand extends ForceCommand
     {
         if (file_exists($this->laravel->environmentFilePath()) && !$this->forced()) {
             $this->error('The [.env] file already exists!');
+            return $this->exitFailure();
         }
-        if (!$this->createEnvFile()) {
+        if (!$this->createEnvironmentFile()) {
+            $this->error('The [.env] file cannot be created!');
             return $this->exitFailure();
         }
         $this->info('The [.env] file was created!');
         return $this->exitSuccess();
     }
 
-    protected function createEnvFile(): bool
+    protected function createEnvironmentFile(): bool
     {
         return copy($this->laravel->basePath('.env.example'), $this->laravel->environmentFilePath()) === true;
     }

@@ -1,0 +1,96 @@
+### Basic authentication
+### Default: disabled, remove comment to enable
+#AuthType Basic
+#AuthName "Protected Area"
+#AuthUserFile /path/to/.htpasswd
+#<RequireAny>
+#    # Ignore: IPs
+#    Require ip 127.0.0.1
+#    # Ignore: Images
+#    Require expr %{REQUEST_URI} =~ m#\.(jpg|jpeg|png|gif|svg|ico)$#
+#    # Ignore: Health check
+#    Require expr %{REQUEST_URI} =~ m#200\.html$#
+#    # Other must fill username and password
+#    Require valid-user
+#</RequireAny>
+
+### Set default charset
+AddDefaultCharset utf-8
+
+### Set default document
+DirectoryIndex index.php index.html index.htm
+
+### Set mime for some specific file extension
+AddType application/json .json
+AddType font/woff .woff
+AddType font/woff2 .woff2
+AddType font/opentype .otf
+AddType text/csv .csv
+AddType text/plain .txt
+AddType video/mp4 .mp4
+
+### Allow to include .html file in other .html files
+AddHandler server-parsed .html
+
+<IfModule mod_headers.c>
+    ### Enable cross-domain accessing
+    Header add Access-Control-Allow-Origin "*"
+    Header add Access-Control-Allow-Headers "Accept, Authorization, Content-Type, Origin, Referer, User-Agent, X-Authorization, X-Client-Id, X-Device, X-Requested-With, X-Settings, X-Screen"
+    Header add Access-Control-Allow-Methods "OPTIONS, GET, POST, PUT, DELETE"
+    Header add Access-Control-Max-Age 86400
+
+    ### Force to use HTTPS
+    Header add Strict-Transport-Security "max-age=86400; includeSubDomains"
+
+    ### Not allow browsers to change content type of response
+    Header add X-Content-Type-Options "nosniff"
+
+    ### Not allow browsers to open downloaded file directly
+    Header add X-Download-Options "noopen"
+
+    ### Not allow browsers to open the website in an iframe of other websites
+    Header add X-Frame-Options "sameorigin"
+
+    ### Prevent from XSS attack
+    Header add X-XSS-Protection "1; mode=block"
+
+    ### Allow to load resources from known places only
+    #Header add Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: fonts.googleapis.com fonts.gstatic.com *.googletagmanager.com *.google-analytics.com"
+    #Header add X-Content-Security-Policy "allow 'self' 'unsafe-inline' 'unsafe-eval' data: blob: fonts.googleapis.com fonts.gstatic.com *.googletagmanager.com *.google-analytics.com"
+    #Header add X-WebKit-CSP "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: fonts.googleapis.com fonts.gstatic.com *.googletagmanager.com *.google-analytics.com"
+
+    ### Cache for static files only, ignore other requests
+    Header unset Cache-Control
+    Header add Cache-Control "no-cache, no-store, private"
+    Header add Pragma "no-cache"
+    <FilesMatch ".(html|jpg|jpeg|png|gif|svg|ico|css|js|json|woff|woff2|mp4)$">
+        Header unset Cache-Control
+        Header set Cache-Control "max-age=84600, public"
+    </FilesMatch>
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Handle Forwarded Host
+    #RewriteCond %{HTTP:X-Original-Host} .
+    #RewriteRule .* - [E=HTTP_X_FORWARDED_HOST:%{HTTP:X-Original-Host}]
+
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Send Requests To Front Controller...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>

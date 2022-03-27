@@ -15,6 +15,17 @@ abstract class ForceCommand extends Command
         return !$this->hasOption('force') || $this->option('force');
     }
 
+    protected function handleBefore(): void
+    {
+        parent::handleBefore();
+
+        $this->forced() && $this->whenForced();
+    }
+
+    protected function whenForced()
+    {
+    }
+
     protected function getDefaultOptions(): array
     {
         return array_merge(parent::getDefaultOptions(), [
