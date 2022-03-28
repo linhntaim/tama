@@ -52,9 +52,12 @@ class EnvironmentFile
         return $this->exists && preg_match("/^$key=[^\r\n]+/m", $this->content) === 1;
     }
 
-    protected function compose(string $key, mixed $value): string
+    protected function compose(string $key, mixed $value = null): string
     {
-        if (is_array($value)) {
+        if (is_null($value)) {
+            $value = '';
+        }
+        elseif (is_array($value)) {
             $value = json_encode($value);
         }
         elseif (is_bool($value)) {
@@ -68,9 +71,16 @@ class EnvironmentFile
         return sprintf('%s=%s', $key, $value);
     }
 
-    public function fill(string $key, mixed $value): static
+    public function fill(string|array $key, mixed $value = null): static
     {
         if (!$this->exists) {
+            return $this;
+        }
+
+        if (is_array($key)) {
+            foreach ($key as $k => $v) {
+                $this->fill($k, $v);
+            }
             return $this;
         }
 

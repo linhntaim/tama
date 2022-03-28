@@ -18,7 +18,7 @@ class KeyGenerateCommand extends ForceCommand
             return $this->exitFailure();
         }
         if ($environmentFile->filled('APP_KEY') && !$this->forced()) {
-            $this->error('Application key already set!');
+            $this->error('Application key already set.');
             return $this->exitSuccess();
         }
         return $this->call('key:generate');

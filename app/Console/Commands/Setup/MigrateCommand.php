@@ -49,6 +49,11 @@ class MigrateCommand extends ForceCommand
         parent::handleBefore();
     }
 
+    protected function whenForced()
+    {
+        $this->uninstallDatabase();
+    }
+
     protected function handling(): int
     {
         foreach ([
@@ -58,17 +63,12 @@ class MigrateCommand extends ForceCommand
                  ] as $method) {
             $this->warn(sprintf('Migrate %s ...', lcfirst(substr($method, 7))));
             if (!$this->{$method}()) {
-                $this->error('Migration failed!');
+                $this->error('Migration failed.');
                 return $this->exitFailure();
             }
-            $this->info(sprintf('%s migrated!', substr($method, 7)));
+            $this->info(sprintf('%s migrated.', substr($method, 7)));
         }
         return $this->exitSuccess();
-    }
-
-    protected function whenForced()
-    {
-        $this->uninstallDatabase();
     }
 
     protected function migrateDatabase(): bool

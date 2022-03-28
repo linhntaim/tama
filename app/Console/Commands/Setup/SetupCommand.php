@@ -19,6 +19,7 @@ class SetupCommand extends ForceCommand
         }
 
         foreach ([
+                     'webServer',
                      'keyGenerate',
                      'storageLink',
                      'migrate',
@@ -34,6 +35,13 @@ class SetupCommand extends ForceCommand
     protected function keyGenerate(): bool
     {
         return $this->call('setup:key-generate', [
+                '--force' => $this->forced(),
+            ]) == self::SUCCESS;
+    }
+
+    protected function webServer(): bool
+    {
+        return $this->call('setup:web-server', [
                 '--force' => $this->forced(),
             ]) == self::SUCCESS;
     }

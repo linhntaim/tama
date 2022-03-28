@@ -18,6 +18,20 @@ class StorageLinkCommand extends ForceCommand
 
     protected function handling(): int
     {
-        return $this->call('storage:link');
+        if ($this->call('storage:link', [
+                '--force' => $this->forced(),
+            ]) == self::SUCCESS) {
+            foreach ($this->links() as $link => $target) {
+                if (!file_exists($link)) {
+                    if (false === mkdir_recursive($link)) {
+                        $this->error(sprintf('Cannot create [%s] link.', $link));
+                        return $this->exitFailure();
+                    }
+
+                    copy_recursive($target, $link);
+                }
+            }
+        }
+        return $this->exitSuccess();
     }
 }
