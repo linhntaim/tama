@@ -6,8 +6,10 @@
 
 namespace App\Console\Commands\Setup;
 
+use App\Exceptions\DatabaseException;
 use App\Support\Console\Commands\ForceCommand;
 use PDO;
+use PDOException;
 
 class MigrateCommand extends ForceCommand
 {
@@ -20,6 +22,9 @@ class MigrateCommand extends ForceCommand
         return $this->databaseConnectionWrite[$key] ?? $this->databaseConnection[$key];
     }
 
+    /**
+     * @throws DatabaseException
+     */
     protected function createDatabaseConnector(): PDO
     {
         return match ($this->databaseConnection['driver']) {
@@ -27,18 +32,26 @@ class MigrateCommand extends ForceCommand
         };
     }
 
+    /**
+     * @throws DatabaseException
+     */
     protected function createMySqlDatabaseConnector(): PDO
     {
-        return new PDO(
-            sprintf(
-                'mysql:host=%s;port:%d',
-                $this->getDatabaseConfig('host'),
-                $this->getDatabaseConfig('port')
-            ),
-            $this->getDatabaseConfig('username'),
-            $this->getDatabaseConfig('password'),
-            $this->getDatabaseConfig('options')
-        );
+        try {
+            return new PDO(
+                sprintf(
+                    'mysql:host=%s;port:%d',
+                    $this->getDatabaseConfig('host'),
+                    $this->getDatabaseConfig('port')
+                ),
+                $this->getDatabaseConfig('username'),
+                $this->getDatabaseConfig('password'),
+                $this->getDatabaseConfig('options')
+            );
+        }
+        catch (PDOException $exception) {
+            throw DatabaseException::from($exception);
+        }
     }
 
     protected function handleBefore(): void
@@ -49,6 +62,9 @@ class MigrateCommand extends ForceCommand
         parent::handleBefore();
     }
 
+    /**
+     * @throws DatabaseException
+     */
     protected function whenForced()
     {
         $this->uninstallDatabase();
@@ -71,6 +87,9 @@ class MigrateCommand extends ForceCommand
         return $this->exitSuccess();
     }
 
+    /**
+     * @throws DatabaseException
+     */
     protected function migrateDatabase(): bool
     {
         $databaseConnector = $this->createDatabaseConnector();
@@ -79,14 +98,25 @@ class MigrateCommand extends ForceCommand
         };
     }
 
+    /**
+     * @throws DatabaseException
+     */
     protected function migrateMySqlDatabase(PDO $connector): bool
     {
-        return ($query = $connector->prepare(
-                sprintf('create database if not exists `%s`', $this->getDatabaseConfig('database'))
-            )) !== false
-            && $query->execute();
+        try {
+            return ($query = $connector->prepare(
+                    sprintf('create database if not exists `%s`', $this->getDatabaseConfig('database'))
+                )) !== false
+                && $query->execute();
+        }
+        catch (PDOException $exception) {
+            throw DatabaseException::from($exception);
+        }
     }
 
+    /**
+     * @throws DatabaseException
+     */
     protected function uninstallDatabase(): bool
     {
         $databaseConnector = $this->createDatabaseConnector();
@@ -95,12 +125,20 @@ class MigrateCommand extends ForceCommand
         };
     }
 
+    /**
+     * @throws DatabaseException
+     */
     protected function uninstallMySqlDatabase(PDO $connector): bool
     {
-        return ($query = $connector->prepare(
-                sprintf('drop database if exists `%s`', $this->getDatabaseConfig('database'))
-            )) !== false
-            && $query->execute();
+        try {
+            return ($query = $connector->prepare(
+                    sprintf('drop database if exists `%s`', $this->getDatabaseConfig('database'))
+                )) !== false
+                && $query->execute();
+        }
+        catch (PDOException $exception) {
+            throw DatabaseException::from($exception);
+        }
     }
 
     private function migrateTables(): bool

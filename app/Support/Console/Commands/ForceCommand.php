@@ -10,9 +10,13 @@ use Symfony\Component\Console\Input\InputOption;
 
 abstract class ForceCommand extends Command
 {
+    protected bool|null $forced = null;
+
     protected function forced(): bool
     {
-        return !$this->hasOption('force') || $this->option('force');
+        return is_null($this->forced)
+            ? ($this->forced = !$this->hasOption('force') || $this->option('force'))
+            : $this->forced;
     }
 
     protected function handleBefore(): void

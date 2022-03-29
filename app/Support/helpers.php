@@ -32,6 +32,43 @@ if (!function_exists('copy_recursive')) {
     }
 }
 
+if (!function_exists('describe_var')) {
+    function describe_var(mixed $value, int $depth = 1, int $maxShownItems = 3): string
+    {
+        if (is_null($value)) {
+            return 'null';
+        }
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+        if (is_string($value)) {
+            return sprintf('\'%s\'', str_replace('\'', '\\\'', $value));
+        }
+        if (is_array($value)) {
+            return $depth
+                ? sprintf('[%s]', implode(', ', (function ($array) use ($maxShownItems) {
+                    if (count($array) <= $maxShownItems) {
+                        return $array;
+                    }
+                    $sliced = array_slice($array, 0, $maxShownItems);
+                    $sliced[] = '...';
+                    return $sliced;
+                })(array_map(fn($item) => describe_var($item, $depth - 1), $value))))
+                : '{array}';
+        }
+        if (is_resource($value)) {
+            return '{resource}';
+        }
+        if (is_callable($value)) {
+            return '{callable}';
+        }
+        if (is_object($value)) {
+            return sprintf('{%s}', get_debug_type($value));
+        }
+        return (string)$value;
+    }
+}
+
 if (!function_exists('join_paths')) {
     /**
      * @param string[] $paths

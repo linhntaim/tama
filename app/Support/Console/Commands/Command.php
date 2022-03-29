@@ -7,16 +7,26 @@
 namespace App\Support\Console\Commands;
 
 use App\Support\ClassTrait;
+use App\Support\Console\Application;
+use Exception;
 use Illuminate\Console\Command as BaseCommand;
+use Illuminate\Support\Facades\Log;
+use Symfony\Component\Console\Command\Command as SymfonyCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
 
+/**
+ * @method Application getApplication()
+ */
 abstract class Command extends BaseCommand
 {
     use ClassTrait;
 
-    public const OPTION_OFF_ANNOUNCEMENT = 'off-announcement';
-    public const PARAMETER_OFF_ANNOUNCEMENT = '--' . self::OPTION_OFF_ANNOUNCEMENT;
+    public const OPTION_OFF_SHOUT_OUT = 'off-shout-out';
+    public const PARAMETER_OFF_SHOUT_OUT = '--' . self::OPTION_OFF_SHOUT_OUT;
+
+    private bool|null $canShoutOut = null;
 
     public function __construct()
     {
@@ -64,15 +74,31 @@ abstract class Command extends BaseCommand
         $this->specifyDefaultParameters();
     }
 
+    /**
+     * @throws Exception
+     */
+    protected function runCommand($command, array $arguments, OutputInterface $output): int
+    {
+        $arguments['command'] = $command;
+
+        $command = $this->resolveCommand($command);
+        $this->getApplication()->startRunningCommand($command);
+        $exitCode = $command->run(
+            $this->createInputFromArguments($arguments), $output
+        );
+        $this->getApplication()->endRunningCommand();
+        return $exitCode;
+    }
+
     public function call($command, array $arguments = []): int
     {
-        $arguments[self::PARAMETER_OFF_ANNOUNCEMENT] = true;
+        $arguments[self::PARAMETER_OFF_SHOUT_OUT] = true;
         return parent::call($command, $arguments);
     }
 
     public function callSilent($command, array $arguments = [])
     {
-        $arguments[self::PARAMETER_OFF_ANNOUNCEMENT] = true;
+        $arguments[self::PARAMETER_OFF_SHOUT_OUT] = true;
         return parent::callSilent($command, $arguments);
     }
 
@@ -107,32 +133,38 @@ abstract class Command extends BaseCommand
         return [];
     }
 
-    protected function offAnnouncement(): bool
+    protected function canShoutOut(): bool
     {
-        return $this->option(self::OPTION_OFF_ANNOUNCEMENT);
+        return is_null($this->canShoutOut)
+            ? ($this->canShoutOut = $this->laravel->runningInConsole()
+                && !$this->laravel->runningUnitTests()
+                && $this->option(self::OPTION_OFF_SHOUT_OUT))
+            : $this->canShoutOut;
     }
 
     protected function handleBefore(): void
     {
-        if (!$this->offAnnouncement()) {
-            $this->info(sprintf('Console start [%s]', $this->getName()));
-            $this->newLine();
-        }
     }
 
     protected function handleAfter(): void
     {
-        if (!$this->offAnnouncement()) {
-            $this->newLine();
-            $this->info(sprintf('Console end [%s]', $this->getName()));
-        }
     }
 
     public function handle(): int
     {
+        Log::info(sprintf('Command [%s] started.', $this->className()));
+        if (!$this->canShoutOut()) {
+            $this->info(sprintf('Command [%s] started.', $this->getName()));
+            $this->newLine();
+        }
         $this->handleBefore();
         $exit = $this->handling();
         $this->handleAfter();
+        if (!$this->canShoutOut()) {
+            $this->newLine();
+            $this->info(sprintf('Command [%s] ended.', $this->getName()));
+        }
+        Log::info(sprintf('Command [%s] ended.', $this->className()));
         return $exit;
     }
 

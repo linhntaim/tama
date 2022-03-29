@@ -17,21 +17,21 @@ trait ClassTrait
         return $this->classAttributes[$name] ?? ($this->classAttributes[$name] = $value());
     }
 
-    protected function className(): string
+    public function className(): string
     {
         return $this->classAttribute('name', function () {
             return static::class;
         });
     }
 
-    protected function classBasename(): string
+    public function classBasename(): string
     {
         return $this->classAttribute('basename', function () {
             return class_basename($this->className());
         });
     }
 
-    protected function classSnakedName(): string
+    public function classSnakedName(): string
     {
         return $this->classAttribute('snaked_name', function () {
             return str($this->classBasename())
@@ -40,7 +40,7 @@ trait ClassTrait
         });
     }
 
-    protected function classChainedName(): string
+    public function classChainedName(): string
     {
         return $this->classAttribute('chained_name', function () {
             return str($this->classBasename())
@@ -49,7 +49,7 @@ trait ClassTrait
         });
     }
 
-    protected function classFriendlyName(): string
+    public function classFriendlyName(): string
     {
         return $this->classAttribute('friendly_name', function () {
             return str($this->classBasename())

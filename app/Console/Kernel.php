@@ -6,6 +6,7 @@ use App\Support\Console\Application as Artisan;
 use App\Support\Console\Commands\Command;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Throwable;
 
 class Kernel extends ConsoleKernel
 {
@@ -45,7 +46,12 @@ class Kernel extends ConsoleKernel
 
     public function call($command, array $parameters = [], $outputBuffer = null): int
     {
-        $parameters[Command::PARAMETER_OFF_ANNOUNCEMENT] = true;
+        $parameters[Command::PARAMETER_OFF_SHOUT_OUT] = true;
         return parent::call($command, $parameters, $outputBuffer);
+    }
+
+    public function renderThrowable(Throwable $e, $output)
+    {
+        $this->getArtisan()->renderThrowable($e, $output);
     }
 }
