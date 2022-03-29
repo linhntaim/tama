@@ -81,58 +81,60 @@ class Application extends BaseApplication
             $output->writeln(sprintf('<strong-caution>%s</strong-caution>', get_debug_type($e)), OutputInterface::VERBOSITY_QUIET);
             $output->writeln(sprintf('%s', $e->getMessage()), OutputInterface::VERBOSITY_QUIET);
             $output->writeln(sprintf('[%s:%d]', $e->getFile(), $e->getLine()), OutputInterface::VERBOSITY_QUIET);
-            $output->writeln('<comment>Exception trace:</comment>', OutputInterface::VERBOSITY_QUIET);
 
             $traces = $e->getTrace();
-            $padLength = strlen(count($traces));
-            foreach ($traces as $i => $trace) {
-                if (isset($trace['file'])) {
-                    $output->writeln(
-                        sprintf(
-                            '<comment>#%s</comment> [%s:%s]',
-                            str($i + 1)->padLeft($padLength, '0'),
-                            $trace['file'] ?? '',
-                            $trace['line'] ?? ''
-                        ),
-                        OutputInterface::VERBOSITY_QUIET
-                    );
-                    if (isset($trace['function'])) {
+            $padLength = strlen($tracesLength = count($traces));
+            if ($tracesLength > 0) {
+                $output->writeln('<comment>Exception trace:</comment>', OutputInterface::VERBOSITY_QUIET);
+                foreach ($traces as $i => $trace) {
+                    if (isset($trace['file'])) {
                         $output->writeln(
                             sprintf(
-                                '%s %s%s%s(%s)',
-                                str_repeat(' ', $padLength + 1),
-                                $trace['class'] ?? '',
-                                $trace['type'] ?? '',
-                                $trace['function'] ?? '',
-                                implode(', ', array_map(fn($arg) => sprintf('<comment>%s</comment>', describe_var($arg)), $trace['args'] ?? []))
-                            ),
-                            OutputInterface::VERBOSITY_QUIET
-                        );
-                    }
-                }
-                else {
-                    if (isset($trace['function'])) {
-                        $output->writeln(
-                            sprintf(
-                                '<comment>#%s</comment> %s%s%s(%s)',
+                                '<comment>#%s</comment> [%s:%s]',
                                 str($i + 1)->padLeft($padLength, '0'),
-                                $trace['class'] ?? '',
-                                $trace['type'] ?? '',
-                                $trace['function'] ?? '',
-                                implode(', ', array_map(fn($arg) => sprintf('<comment>%s</comment>', describe_var($arg)), $trace['args'] ?? []))
+                                $trace['file'] ?? '',
+                                $trace['line'] ?? ''
                             ),
                             OutputInterface::VERBOSITY_QUIET
                         );
+                        if (isset($trace['function'])) {
+                            $output->writeln(
+                                sprintf(
+                                    '%s %s%s%s(%s)',
+                                    str_repeat(' ', $padLength + 1),
+                                    $trace['class'] ?? '',
+                                    $trace['type'] ?? '',
+                                    $trace['function'] ?? '',
+                                    implode(', ', array_map(fn($arg) => sprintf('<comment>%s</comment>', describe_var($arg)), $trace['args'] ?? []))
+                                ),
+                                OutputInterface::VERBOSITY_QUIET
+                            );
+                        }
                     }
                     else {
-                        $output->writeln(
-                            sprintf(
-                                '<comment>#%s</comment> %s',
-                                str($i + 1)->padLeft($padLength, '0'),
-                                json_encode($trace)
-                            ),
-                            OutputInterface::VERBOSITY_QUIET
-                        );
+                        if (isset($trace['function'])) {
+                            $output->writeln(
+                                sprintf(
+                                    '<comment>#%s</comment> %s%s%s(%s)',
+                                    str($i + 1)->padLeft($padLength, '0'),
+                                    $trace['class'] ?? '',
+                                    $trace['type'] ?? '',
+                                    $trace['function'] ?? '',
+                                    implode(', ', array_map(fn($arg) => sprintf('<comment>%s</comment>', describe_var($arg)), $trace['args'] ?? []))
+                                ),
+                                OutputInterface::VERBOSITY_QUIET
+                            );
+                        }
+                        else {
+                            $output->writeln(
+                                sprintf(
+                                    '<comment>#%s</comment> %s',
+                                    str($i + 1)->padLeft($padLength, '0'),
+                                    json_encode($trace)
+                                ),
+                                OutputInterface::VERBOSITY_QUIET
+                            );
+                        }
                     }
                 }
             }
