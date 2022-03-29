@@ -1,0 +1,7 @@
+.htaccess
+.htpasswd
+web.config
+robots.txt
+
+!/index.php
+*.php
