@@ -16,11 +16,9 @@ use Throwable;
 class Application extends BaseApplication
 {
     /**
-     * @var SymfonyCommand[]
+     * @var RunningCommand[]
      */
     protected array $runningCommands = [];
-
-    protected array $runningCommandInputs = [];
 
     protected function addToParent(SymfonyCommand $command): SymfonyCommand
     {
@@ -79,34 +77,24 @@ class Application extends BaseApplication
 
     public function startRunningCommand(SymfonyCommand $command, InputInterface $input)
     {
-        $this->runningCommands[] = $command;
-        $this->runningCommandInputs[] = $input;
+        $this->runningCommands[] = (new RunningCommand())
+            ->setCommand($command)
+            ->setInput($input);
     }
 
     public function endRunningCommand()
     {
         array_pop($this->runningCommands);
-        array_pop($this->runningCommandInputs);
     }
 
-    public function rootRunningCommand(): ?SymfonyCommand
+    public function rootRunningCommand(): ?RunningCommand
     {
         return $this->runningCommands[0] ?? null;
     }
 
-    public function rootRunningCommandInput(): ?InputInterface
-    {
-        return $this->runningCommandInputs[0] ?? null;
-    }
-
-    public function currentRunningCommand(): ?SymfonyCommand
+    public function currentRunningCommand(): ?RunningCommand
     {
         return $this->runningCommands[count($this->runningCommands) - 1] ?? null;
-    }
-
-    public function currentRunningCommandInput(): ?InputInterface
-    {
-        return $this->runningCommandInputs[count($this->runningCommandInputs) - 1] ?? null;
     }
 
     public function renderThrowable(Throwable $e, OutputInterface $output): void
@@ -202,7 +190,8 @@ class Application extends BaseApplication
         }
         while ($e = $e->getPrevious());
         $output->writeln('', OutputInterface::VERBOSITY_QUIET);
-        if ($command = $this->rootRunningCommand()) {
+        if ($runningCommand = $this->rootRunningCommand()) {
+            $command = $runningCommand->command;
             $output->writeln(sprintf('<caution>Command <comment>[%s]</comment> failed.</caution>', $command::class), OutputInterface::VERBOSITY_QUIET);
             Log::error(sprintf('Command [%s] failed.', $command::class));
         }

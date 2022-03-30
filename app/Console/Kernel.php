@@ -5,9 +5,9 @@ namespace App\Console;
 use App\Support\Console\Application;
 use App\Support\Console\Application as Artisan;
 use App\Support\Console\Commands\Command;
+use App\Support\Console\RunningCommand;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
-use Symfony\Component\Console\Input\InputInterface;
 use Throwable;
 
 /**
@@ -55,14 +55,9 @@ class Kernel extends ConsoleKernel
         return parent::call($command, $parameters, $outputBuffer);
     }
 
-    public function rootRunningCommand(): ?\Symfony\Component\Console\Command\Command
+    public function rootRunningCommand(): ?RunningCommand
     {
         return $this->getArtisan()->rootRunningCommand();
-    }
-
-    public function rootRunningCommandInput(): ?InputInterface
-    {
-        return $this->getArtisan()->rootRunningCommandInput();
     }
 
     public function renderThrowable(Throwable $e, $output)
