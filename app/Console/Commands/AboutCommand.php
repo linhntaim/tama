@@ -12,8 +12,8 @@ class AboutCommand extends Command
 {
     protected function handling(): int
     {
-        $this->info(sprintf('Laravel v%s', $this->laravel->version()));
-        $this->info(sprintf('PHP v%s', PHP_VERSION));
+        $this->output->writeln(sprintf('<comment>Laravel Framework</comment> v%s', $this->laravel->version()), $this->parseVerbosity());
+        $this->output->writeln(sprintf('<comment>PHP</comment> v%s', PHP_VERSION), $this->parseVerbosity());
         return $this->exitSuccess();
     }
 }
