@@ -20,6 +20,8 @@ class Application extends BaseApplication
      */
     protected array $runningCommands = [];
 
+    protected array $runningCommandInputs = [];
+
     protected function addToParent(SymfonyCommand $command): SymfonyCommand
     {
         return parent::addToParent(
@@ -48,7 +50,7 @@ class Application extends BaseApplication
      */
     protected function doRunCommand(SymfonyCommand $command, InputInterface $input, OutputInterface $output): int
     {
-        $this->startRunningCommand($command);
+        $this->startRunningCommand($command, $input);
         $notStarterCommand = !($command instanceof Command);
         $canLog = $notStarterCommand
             && !in_array($command::class, config_starter('console.commands.logging_except'));
@@ -75,14 +77,16 @@ class Application extends BaseApplication
         return $exitCode;
     }
 
-    public function startRunningCommand(SymfonyCommand $command)
+    public function startRunningCommand(SymfonyCommand $command, InputInterface $input)
     {
         $this->runningCommands[] = $command;
+        $this->runningCommandInputs[] = $input;
     }
 
     public function endRunningCommand()
     {
         array_pop($this->runningCommands);
+        array_pop($this->runningCommandInputs);
     }
 
     public function rootRunningCommand(): ?SymfonyCommand
@@ -90,9 +94,19 @@ class Application extends BaseApplication
         return $this->runningCommands[0] ?? null;
     }
 
+    public function rootRunningCommandInput(): ?InputInterface
+    {
+        return $this->runningCommandInputs[0] ?? null;
+    }
+
     public function currentRunningCommand(): ?SymfonyCommand
     {
         return $this->runningCommands[count($this->runningCommands) - 1] ?? null;
+    }
+
+    public function currentRunningCommandInput(): ?InputInterface
+    {
+        return $this->runningCommandInputs[count($this->runningCommandInputs) - 1] ?? null;
     }
 
     public function renderThrowable(Throwable $e, OutputInterface $output): void

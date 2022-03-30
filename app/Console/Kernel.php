@@ -2,12 +2,17 @@
 
 namespace App\Console;
 
+use App\Support\Console\Application;
 use App\Support\Console\Application as Artisan;
 use App\Support\Console\Commands\Command;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Symfony\Component\Console\Input\InputInterface;
 use Throwable;
 
+/**
+ * @property Application $artisan
+ */
 class Kernel extends ConsoleKernel
 {
     /**
@@ -48,6 +53,16 @@ class Kernel extends ConsoleKernel
     {
         $parameters[Command::PARAMETER_OFF_SHOUT_OUT] = true;
         return parent::call($command, $parameters, $outputBuffer);
+    }
+
+    public function rootRunningCommand(): ?\Symfony\Component\Console\Command\Command
+    {
+        return $this->getArtisan()->rootRunningCommand();
+    }
+
+    public function rootRunningCommandInput(): ?InputInterface
+    {
+        return $this->getArtisan()->rootRunningCommandInput();
     }
 
     public function renderThrowable(Throwable $e, $output)
