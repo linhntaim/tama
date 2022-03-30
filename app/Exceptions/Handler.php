@@ -52,14 +52,7 @@ class Handler extends ExceptionHandler
     protected function requestContent(): ?array
     {
         if (!(App::runningInConsole() && !App::runningUnitTests())) {
-            $request = request();
-            return [
-                'method' => $request->method(),
-                'path' => $request->path(),
-                'params' => $request->all(),
-                'ip' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-            ];
+            return request();
         }
         return null;
     }
@@ -67,13 +60,9 @@ class Handler extends ExceptionHandler
     protected function cliContext(): ?array
     {
         if (App::runningInConsole() && !App::runningUnitTests()) {
-            if ($command = Artisan::rootRunningCommand()) {
+            if ($runningCommand = Artisan::rootRunningCommand()) {
                 return [
-                    'command' => [
-                        'class' => $command::class,
-                        'name' => $command->getName(),
-                        'argv' => trim(strstr(Artisan::rootRunningCommandInput(), ' ')),
-                    ],
+                    'command' => $runningCommand,
                 ];
             }
         }
