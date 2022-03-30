@@ -81,10 +81,11 @@ abstract class Command extends BaseCommand
      */
     protected function runCommand($command, array $arguments, OutputInterface $output): int
     {
-        $arguments['command'] = $command;
+        $arguments = array_merge(['command' => $command], $arguments);
 
         $command = $this->resolveCommand($command);
-        $this->getApplication()->startRunningCommand($command);
+        $input = $this->createInputFromArguments($arguments);
+        $this->getApplication()->startRunningCommand($command, $input);
         $notStarterCommand = !($command instanceof Command);
         $canLog = $notStarterCommand
             && !in_array($command::class, config_starter('console.commands.logging_except'));
@@ -99,9 +100,7 @@ abstract class Command extends BaseCommand
             $this->info(sprintf('Command [%s] started.', $command::class));
             $this->newLine();
         }
-        $exitCode = $command->run(
-            $this->createInputFromArguments($arguments), $output
-        );
+        $exitCode = $command->run($input, $output);
         if ($canShoutOut) {
             $this->newLine();
             $this->info(sprintf('Command [%s] ended.', $command::class));
