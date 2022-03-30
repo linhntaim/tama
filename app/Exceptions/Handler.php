@@ -2,8 +2,9 @@
 
 namespace App\Exceptions;
 
+use App\Support\Console\Artisan;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\App;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -38,6 +39,34 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
+    }
+
+    protected function context(): array
+    {
+        return array_filter([
+            'request' => $this->requestContent(),
+            'cli' => $this->cliContext(),
+        ]);
+    }
+
+    protected function requestContent(): ?array
+    {
+        if (!(App::runningInConsole() && !App::runningUnitTests())) {
+            return request();
+        }
+        return null;
+    }
+
+    protected function cliContext(): ?array
+    {
+        if (App::runningInConsole() && !App::runningUnitTests()) {
+            if ($runningCommand = Artisan::rootRunningCommand()) {
+                return [
+                    'command' => $runningCommand,
+                ];
+            }
+        }
+        return null;
     }
 
     public function renderForConsole($output, Throwable $e)

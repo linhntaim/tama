@@ -2,12 +2,17 @@
 
 namespace App\Console;
 
+use App\Support\Console\Application;
 use App\Support\Console\Application as Artisan;
 use App\Support\Console\Commands\Command;
+use App\Support\Console\RunningCommand;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Throwable;
 
+/**
+ * @property Application $artisan
+ */
 class Kernel extends ConsoleKernel
 {
     /**
@@ -48,6 +53,11 @@ class Kernel extends ConsoleKernel
     {
         $parameters[Command::PARAMETER_OFF_SHOUT_OUT] = true;
         return parent::call($command, $parameters, $outputBuffer);
+    }
+
+    public function rootRunningCommand(): ?RunningCommand
+    {
+        return $this->getArtisan()->rootRunningCommand();
     }
 
     public function renderThrowable(Throwable $e, $output)

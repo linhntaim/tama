@@ -16,7 +16,7 @@ use Throwable;
 class Application extends BaseApplication
 {
     /**
-     * @var SymfonyCommand[]
+     * @var RunningCommand[]
      */
     protected array $runningCommands = [];
 
@@ -48,15 +48,38 @@ class Application extends BaseApplication
      */
     protected function doRunCommand(SymfonyCommand $command, InputInterface $input, OutputInterface $output): int
     {
-        $this->startRunningCommand($command);
+        $this->startRunningCommand($command, $input);
+        $notStarterCommand = !($command instanceof Command);
+        $canLog = $notStarterCommand
+            && !in_array($command::class, config_starter('console.commands.logging_except'));
+        if ($canLog) {
+            Log::info(sprintf('Command [%s] started.', $command::class));
+        }
+        $canShoutOut = $notStarterCommand
+            && $this->laravel->runningInConsole()
+            && !$this->laravel->runningUnitTests()
+            && !($arguments[Command::PARAMETER_OFF_SHOUT_OUT] ?? false);
+        if ($canShoutOut) {
+            $output->writeln(sprintf('<info>Command <comment>[%s]</comment> started.</info>', $command::class), OutputInterface::VERBOSITY_QUIET);
+            $output->writeln('', OutputInterface::VERBOSITY_QUIET);
+        }
         $exitCode = parent::doRunCommand($command, $input, $output);
+        if ($canShoutOut) {
+            $output->writeln('', OutputInterface::VERBOSITY_QUIET);
+            $output->writeln(sprintf('<info>Command <comment>[%s]</comment> ended.</info>', $command::class), OutputInterface::VERBOSITY_QUIET);
+        }
+        if ($canLog) {
+            Log::info(sprintf('Command [%s] ended.', $command::class));
+        }
         $this->endRunningCommand();
         return $exitCode;
     }
 
-    public function startRunningCommand(SymfonyCommand $command)
+    public function startRunningCommand(SymfonyCommand $command, InputInterface $input)
     {
-        $this->runningCommands[] = $command;
+        $this->runningCommands[] = (new RunningCommand())
+            ->setCommand($command)
+            ->setInput($input);
     }
 
     public function endRunningCommand()
@@ -64,12 +87,12 @@ class Application extends BaseApplication
         array_pop($this->runningCommands);
     }
 
-    public function rootRunningCommand(): ?SymfonyCommand
+    public function rootRunningCommand(): ?RunningCommand
     {
         return $this->runningCommands[0] ?? null;
     }
 
-    public function currentRunningCommand(): ?SymfonyCommand
+    public function currentRunningCommand(): ?RunningCommand
     {
         return $this->runningCommands[count($this->runningCommands) - 1] ?? null;
     }
@@ -77,73 +100,100 @@ class Application extends BaseApplication
     public function renderThrowable(Throwable $e, OutputInterface $output): void
     {
         $output->writeln('', OutputInterface::VERBOSITY_QUIET);
+        $output->writeln(sprintf('<error> ERROR </error> <caution>%s</caution>', $e->getMessage()), OutputInterface::VERBOSITY_QUIET);
         do {
-            $output->writeln(sprintf('<strong-caution>%s</strong-caution>', get_debug_type($e)), OutputInterface::VERBOSITY_QUIET);
-            $output->writeln(sprintf('%s', $e->getMessage()), OutputInterface::VERBOSITY_QUIET);
-            $output->writeln(sprintf('[%s:%d]', $e->getFile(), $e->getLine()), OutputInterface::VERBOSITY_QUIET);
-
+            $output->writeln(str_repeat('-', 50), OutputInterface::VERBOSITY_QUIET);
             $traces = $e->getTrace();
-            $padLength = strlen($tracesLength = count($traces));
-            if ($tracesLength > 0) {
-                $output->writeln('<comment>Exception trace:</comment>', OutputInterface::VERBOSITY_QUIET);
-                foreach ($traces as $i => $trace) {
-                    if (isset($trace['file'])) {
+            $traces[] = [
+                'text' => '{main}',
+            ];
+            $padLength = strlen(count($traces));
+            array_unshift($traces, [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'text' => implode(PHP_EOL, [
+                    get_debug_type($e) . ':',
+                    str_repeat(' ', $padLength + 1) . ' - ' . $e->getMessage(),
+                ]),
+            ]);
+            foreach ($traces as $i => $trace) {
+                $order = str($i);
+                if (isset($trace['file'])) {
+                    $output->writeln(
+                        sprintf(
+                            '<comment>#%s</comment> [%s:%s]',
+                            $order->padLeft($padLength, '0'),
+                            $trace['file'] ?? '',
+                            $trace['line'] ?? ''
+                        ),
+                        OutputInterface::VERBOSITY_QUIET
+                    );
+                    if (isset($trace['function'])) {
                         $output->writeln(
                             sprintf(
-                                '<comment>#%s</comment> [%s:%s]',
-                                str($i + 1)->padLeft($padLength, '0'),
-                                $trace['file'] ?? '',
-                                $trace['line'] ?? ''
+                                '%s %s%s%s(%s)',
+                                str_repeat(' ', $padLength + 1),
+                                $trace['class'] ?? '',
+                                $trace['type'] ?? '',
+                                $trace['function'] ?? '',
+                                implode(', ', array_map(fn($arg) => sprintf('<comment>%s</comment>', describe_var($arg)), $trace['args'] ?? []))
                             ),
                             OutputInterface::VERBOSITY_QUIET
                         );
-                        if (isset($trace['function'])) {
-                            $output->writeln(
-                                sprintf(
-                                    '%s %s%s%s(%s)',
-                                    str_repeat(' ', $padLength + 1),
-                                    $trace['class'] ?? '',
-                                    $trace['type'] ?? '',
-                                    $trace['function'] ?? '',
-                                    implode(', ', array_map(fn($arg) => sprintf('<comment>%s</comment>', describe_var($arg)), $trace['args'] ?? []))
-                                ),
-                                OutputInterface::VERBOSITY_QUIET
-                            );
-                        }
+                    }
+                    elseif (isset($trace['text'])) {
+                        $output->writeln(
+                            sprintf(
+                                '%s %s',
+                                str_repeat(' ', $padLength + 1),
+                                $trace['text'] ?? ''
+                            ),
+                            OutputInterface::VERBOSITY_QUIET
+                        );
+                    }
+                }
+                else {
+                    if (isset($trace['function'])) {
+                        $output->writeln(
+                            sprintf(
+                                '<comment>#%s</comment> %s%s%s(%s)',
+                                $order->padLeft($padLength, '0'),
+                                $trace['class'] ?? '',
+                                $trace['type'] ?? '',
+                                $trace['function'] ?? '',
+                                implode(', ', array_map(fn($arg) => sprintf('<comment>%s</comment>', describe_var($arg)), $trace['args'] ?? []))
+                            ),
+                            OutputInterface::VERBOSITY_QUIET
+                        );
+                    }
+                    elseif (isset($trace['text'])) {
+                        $output->writeln(
+                            sprintf(
+                                '<comment>#%s</comment> %s',
+                                $order->padLeft($padLength, '0'),
+                                $trace['text'] ?? ''
+                            )
+                        );
                     }
                     else {
-                        if (isset($trace['function'])) {
-                            $output->writeln(
-                                sprintf(
-                                    '<comment>#%s</comment> %s%s%s(%s)',
-                                    str($i + 1)->padLeft($padLength, '0'),
-                                    $trace['class'] ?? '',
-                                    $trace['type'] ?? '',
-                                    $trace['function'] ?? '',
-                                    implode(', ', array_map(fn($arg) => sprintf('<comment>%s</comment>', describe_var($arg)), $trace['args'] ?? []))
-                                ),
-                                OutputInterface::VERBOSITY_QUIET
-                            );
-                        }
-                        else {
-                            $output->writeln(
-                                sprintf(
-                                    '<comment>#%s</comment> %s',
-                                    str($i + 1)->padLeft($padLength, '0'),
-                                    json_encode($trace)
-                                ),
-                                OutputInterface::VERBOSITY_QUIET
-                            );
-                        }
+                        $output->writeln(
+                            sprintf(
+                                '<comment>#%s</comment> %s',
+                                $order->padLeft($padLength, '0'),
+                                json_encode($trace)
+                            ),
+                            OutputInterface::VERBOSITY_QUIET
+                        );
                     }
                 }
             }
         }
         while ($e = $e->getPrevious());
         $output->writeln('', OutputInterface::VERBOSITY_QUIET);
-        if ($command = $this->rootRunningCommand()) {
-            $output->writeln(sprintf('<caution>Command [%s] failed.</caution>', $command->getName()), OutputInterface::VERBOSITY_QUIET);
-            Log::info(sprintf('Command [%s] failed.', $command::class));
+        if ($runningCommand = $this->rootRunningCommand()) {
+            $command = $runningCommand->command;
+            $output->writeln(sprintf('<caution>Command <comment>[%s]</comment> failed.</caution>', $command::class), OutputInterface::VERBOSITY_QUIET);
+            Log::error(sprintf('Command [%s] failed.', $command::class));
         }
     }
 }

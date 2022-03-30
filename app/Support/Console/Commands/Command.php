@@ -10,6 +10,8 @@ use App\Support\ClassTrait;
 use App\Support\Console\Application;
 use Exception;
 use Illuminate\Console\Command as BaseCommand;
+use Illuminate\Console\Scheduling\ScheduleRunCommand;
+use Illuminate\Queue\Console\WorkCommand;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
 use Symfony\Component\Console\Input\InputArgument;
@@ -79,13 +81,33 @@ abstract class Command extends BaseCommand
      */
     protected function runCommand($command, array $arguments, OutputInterface $output): int
     {
-        $arguments['command'] = $command;
+        $arguments = array_merge(['command' => $command], $arguments);
 
         $command = $this->resolveCommand($command);
-        $this->getApplication()->startRunningCommand($command);
-        $exitCode = $command->run(
-            $this->createInputFromArguments($arguments), $output
-        );
+        $input = $this->createInputFromArguments($arguments);
+        $this->getApplication()->startRunningCommand($command, $input);
+        $notStarterCommand = !($command instanceof Command);
+        $canLog = $notStarterCommand
+            && !in_array($command::class, config_starter('console.commands.logging_except'));
+        if ($canLog) {
+            Log::info(sprintf('Command [%s] started.', $command::class));
+        }
+        $canShoutOut = $notStarterCommand
+            && $this->laravel->runningInConsole()
+            && !$this->laravel->runningUnitTests()
+            && !($arguments[self::PARAMETER_OFF_SHOUT_OUT] ?? false);
+        if ($canShoutOut) {
+            $this->info(sprintf('Command [%s] started.', $command::class));
+            $this->newLine();
+        }
+        $exitCode = $command->run($input, $output);
+        if ($canShoutOut) {
+            $this->newLine();
+            $this->info(sprintf('Command [%s] ended.', $command::class));
+        }
+        if ($canLog) {
+            Log::info(sprintf('Command [%s] ended.', $command::class));
+        }
         $this->getApplication()->endRunningCommand();
         return $exitCode;
     }
@@ -138,7 +160,7 @@ abstract class Command extends BaseCommand
         return is_null($this->canShoutOut)
             ? ($this->canShoutOut = $this->laravel->runningInConsole()
                 && !$this->laravel->runningUnitTests()
-                && $this->option(self::OPTION_OFF_SHOUT_OUT))
+                && !$this->option(self::OPTION_OFF_SHOUT_OUT))
             : $this->canShoutOut;
     }
 
@@ -153,16 +175,16 @@ abstract class Command extends BaseCommand
     public function handle(): int
     {
         Log::info(sprintf('Command [%s] started.', $this->className()));
-        if (!$this->canShoutOut()) {
-            $this->info(sprintf('Command [%s] started.', $this->getName()));
+        if ($this->canShoutOut()) {
+            $this->info(sprintf('Command <comment>[%s]</comment> started.', $this->className()));
             $this->newLine();
         }
         $this->handleBefore();
         $exit = $this->handling();
         $this->handleAfter();
-        if (!$this->canShoutOut()) {
+        if ($this->canShoutOut()) {
             $this->newLine();
-            $this->info(sprintf('Command [%s] ended.', $this->getName()));
+            $this->info(sprintf('Command <comment>[%s]</comment> ended.', $this->className()));
         }
         Log::info(sprintf('Command [%s] ended.', $this->className()));
         return $exit;

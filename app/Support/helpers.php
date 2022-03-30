@@ -4,6 +4,26 @@
  * Base
  */
 
+if (!function_exists('config_starter')) {
+    function config_starter(array|string|null $key = null, $default = null): mixed
+    {
+        if (is_null($key)) {
+            $key = 'starter';
+        }
+        elseif (is_string($key)) {
+            $key = "starter.$key";
+        }
+        elseif (is_array($key)) {
+            $values = $key;
+            $key = [];
+            foreach ($values as $k => $v) {
+                $key["starter.$k"] = $v;
+            }
+        }
+        return config($key, $default);
+    }
+}
+
 if (!function_exists('copy_recursive')) {
     function copy_recursive(string $source, string $destination, $context = null): bool
     {
