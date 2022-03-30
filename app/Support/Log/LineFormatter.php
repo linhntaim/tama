@@ -2,12 +2,32 @@
 
 namespace App\Support\Log;
 
+use App\Support\Console\RunningCommand;
 use Monolog\Formatter\LineFormatter as BaseLineFormatter;
 use Throwable;
 
 class LineFormatter extends BaseLineFormatter
 {
-    public const SIMPLE_FORMAT = "[%datetime%] %channel%.%level_name%: %message% %context% %extra% %context.exception%\n";
+    public const SIMPLE_FORMAT = "[%datetime%] %channel%.%level_name%: %message% %context% %extra% %context.cli% %context.exception%\n";
+
+    protected function normalize($data, int $depth = 0)
+    {
+        if ($depth > $this->maxNormalizeDepth) {
+            return 'Over ' . $this->maxNormalizeDepth . ' levels deep, aborting normalization';
+        }
+        if ($data instanceof RunningCommand) {
+            return $this->normalizeCommand($data, $depth);
+        }
+        return parent::normalize($data, $depth);
+    }
+
+    protected function normalizeCommand(RunningCommand $runningCommand, int $depth = 0): string
+    {
+        $normalized[] = '';
+        $normalized[] = '<Command>';
+        $normalized[] = sprintf('%s: %s %s', $runningCommand->command::class, $runningCommand->command->getName(), trim(strstr($runningCommand->input, ' ')));
+        return implode(PHP_EOL, $normalized);
+    }
 
     protected function normalizeException(Throwable $e, int $depth = 0): string
     {
