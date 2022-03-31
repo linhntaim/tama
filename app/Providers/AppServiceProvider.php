@@ -4,8 +4,11 @@ namespace App\Providers;
 
 use App\Exceptions\Handler;
 use App\Support\Log\LineFormatter;
+use App\Support\Log\LogManager;
 use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Support\Facades\Facade;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
 
     protected function registerExceptionHandler()
     {
+        // Override exception handler when running in console
         $this->app->singleton(ExceptionHandler::class, Handler::class);
     }
 
@@ -33,6 +37,11 @@ class AppServiceProvider extends ServiceProvider
                 $formatter->includeStacktraces();
             });
         });
+        // Override log manager
+        Facade::clearResolvedInstance('log');
+        $this->app->singleton('log', function ($app) {
+            return new LogManager($app);
+        });
     }
 
     /**
@@ -42,7 +51,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        $this->configureApp();
         $this->configureLog();
+    }
+
+    protected function configureApp()
+    {
+        $this->app['id'] = Str::uuid()->toString();
     }
 
     protected function configureLog()
