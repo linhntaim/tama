@@ -3,22 +3,61 @@
 namespace App\Support\Log;
 
 use App\Support\Console\RunningCommand;
+use App\Support\Http\Request;
+use Illuminate\Support\Arr;
 use Monolog\Formatter\LineFormatter as BaseLineFormatter;
 use Throwable;
 
 class LineFormatter extends BaseLineFormatter
 {
-    public const SIMPLE_FORMAT = "[%datetime%] %channel%.%level_name%: %message% %context% %extra% %context.cli% %context.exception%\n";
+    public const SIMPLE_FORMAT = "[%datetime%] %channel%.%level_name%: %message% %context% %extra% %context.request% %context.exception%\n";
 
     protected function normalize($data, int $depth = 0)
     {
         if ($depth > $this->maxNormalizeDepth) {
             return 'Over ' . $this->maxNormalizeDepth . ' levels deep, aborting normalization';
         }
+        if ($data instanceof Request) {
+            return $this->normalizeRequest($data, $depth);
+        }
         if ($data instanceof RunningCommand) {
             return $this->normalizeCommand($data, $depth);
         }
         return parent::normalize($data, $depth);
+    }
+
+    protected function normalizeRequest(Request $request, int $depth = 0): string
+    {
+        $normalized[] = '';
+        $normalized[] = '<Request>';
+        $normalized[] = trim($request);
+        if ($request->isMethod('post') && $request->isMultipartFormData($boundary)) {
+            $normalized[] = '';
+            $normalized[] = sprintf('--%s', $boundary ?? '');
+            array_push($normalized, ...$this->normalizeMultipartFormData($request->post()));
+            $normalized[] = sprintf('--%s', $boundary ?? '');
+        }
+        return implode(PHP_EOL, $normalized);
+    }
+
+    protected function normalizeMultipartFormData(array $data, string|null $rootName = null): array
+    {
+        $normalized = [];
+        $associated = Arr::isAssoc($data);
+        foreach ($data as $name => $value) {
+            $currentName = is_null($rootName)
+                ? $name
+                : sprintf('%s[%s]', $rootName, $associated ? $name : '');
+            if (is_array($value)) {
+                array_push($normalized, ...$this->normalizeMultipartFormData($value, $currentName));
+            }
+            else {
+                $normalized[] = sprintf('Content-Disposition: form-data; name="%s"', $currentName);
+                $normalized[] = '';
+                $normalized[] = $value;
+            }
+        }
+        return $normalized;
     }
 
     protected function normalizeCommand(RunningCommand $runningCommand, int $depth = 0): string
