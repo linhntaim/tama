@@ -67,7 +67,6 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => 14,
             'permission' => 0777,
-            'formatter' => 'starter_log_formatter',
         ],
 
         'slack' => [
