@@ -9,7 +9,7 @@ use Throwable;
 
 class LineFormatter extends BaseLineFormatter
 {
-    public const SIMPLE_FORMAT = "[%datetime%] %channel%.%level_name%: %message% %context% %extra% %context.request% %context.exception%\n";
+    public const SIMPLE_FORMAT = "[%datetime%] %channel%.%level_name%: %context.app_id% %message% %context% %extra% %context.request% %context.exception%\n";
 
     protected function normalize($data, int $depth = 0)
     {
