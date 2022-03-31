@@ -10,7 +10,7 @@ use Symfony\Component\Console\Input\InputOption;
 
 abstract class ForceCommand extends Command
 {
-    protected bool|null $forced = null;
+    protected ?bool $forced = null;
 
     protected function forced(): bool
     {

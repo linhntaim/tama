@@ -28,7 +28,7 @@ abstract class Command extends BaseCommand
     public const OPTION_OFF_SHOUT_OUT = 'off-shout-out';
     public const PARAMETER_OFF_SHOUT_OUT = '--' . self::OPTION_OFF_SHOUT_OUT;
 
-    private bool|null $canShoutOut = null;
+    private ?bool $canShoutOut = null;
 
     public function __construct()
     {
