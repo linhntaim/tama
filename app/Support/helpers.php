@@ -4,6 +4,10 @@
  * Base
  */
 
+use App\Support\Client\Client;
+use App\Support\Client\DateTimer;
+use App\Support\Client\NumberFormatter;
+
 if (!function_exists('config_starter')) {
     function config_starter(array|string|null $key = null, $default = null): mixed
     {
@@ -49,6 +53,13 @@ if (!function_exists('copy_recursive')) {
         }
         closedir($dir);
         return true;
+    }
+}
+
+if (!function_exists('date_timer')) {
+    function date_timer(): DateTimer
+    {
+        return Client::dateTimer();
     }
 }
 
@@ -111,9 +122,30 @@ if (!function_exists('join_urls')) {
     }
 }
 
+if (!function_exists('json_decode_array')) {
+    function json_decode_array(string $json, int $depth = 512, int $flags = 0): ?array
+    {
+        return is_array($array = json_decode($json, true, $depth, $flags)) ? $array : null;
+    }
+}
+
 if (!function_exists('mkdir_recursive')) {
     function mkdir_recursive(string $directory, int $permissions = 0777, $context = null): bool
     {
         return mkdir($directory, $permissions, true, $context);
+    }
+}
+
+if (!function_exists('name_starter')) {
+    function name_starter(string $name, string $separator = '_'): string
+    {
+        return sprintf('%s%s%s', config_starter('app.id'), $separator, $name);
+    }
+}
+
+if (!function_exists('number_formatter')) {
+    function number_formatter(): NumberFormatter
+    {
+        return Client::numberFormatter();
     }
 }

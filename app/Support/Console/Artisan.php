@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * Base
+ */
+
 namespace App\Support\Console;
 
 use App\Console\Kernel;

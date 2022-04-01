@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * Base
+ */
+
 namespace App\Support\Console;
 
 use App\Support\Console\Commands\Command;
@@ -22,9 +26,14 @@ class Application extends BaseApplication
 
     protected function addToParent(SymfonyCommand $command): SymfonyCommand
     {
-        return parent::addToParent(
-            $command->addOption(Command::OPTION_OFF_SHOUT_OUT, null, InputOption::VALUE_NONE)
-        );
+        // shout-out
+        $command->addOption(Command::OPTION_OFF_SHOUT_OUT, null, InputOption::VALUE_NONE);
+        // client
+        $command->addOption('x-client', null, InputOption::VALUE_REQUIRED);
+        foreach (array_keys(config_starter('client.settings.default')) as $name) {
+            $command->addOption("x-$name", null, InputOption::VALUE_REQUIRED);
+        }
+        return parent::addToParent($command);
     }
 
     public function run(InputInterface $input = null, OutputInterface $output = null): int

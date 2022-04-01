@@ -1,8 +1,13 @@
 <?php
 
+/**
+ * Base
+ */
+
 namespace App\Providers;
 
 use App\Exceptions\Handler;
+use App\Support\Client\Manager as ClientManager;
 use App\Support\Log\LineFormatter;
 use App\Support\Log\LogManager;
 use Illuminate\Contracts\Debug\ExceptionHandler;
@@ -21,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->registerExceptionHandler();
         $this->registerLog();
+        $this->registerClient();
     }
 
     protected function registerExceptionHandler()
@@ -41,6 +47,13 @@ class AppServiceProvider extends ServiceProvider
         Facade::clearResolvedInstance('log');
         $this->app->singleton('log', function ($app) {
             return new LogManager($app);
+        });
+    }
+
+    protected function registerClient()
+    {
+        $this->app->singleton(ClientManager::class, function ($app) {
+            return new ClientManager($app);
         });
     }
 

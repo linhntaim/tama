@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Base - Any modification needs to be approved, except the space inside the block of TODO
+ * Base
  */
 
 namespace App\Console\Commands\Setup;

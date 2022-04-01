@@ -6,7 +6,7 @@
 
 namespace {{ namespace }};
 
-use {{ rootNamespace }}Support\Commands\Command;
+use {{ rootNamespace }}Support\Console\Commands\Command;
 
 class TryCommand extends Command
 {

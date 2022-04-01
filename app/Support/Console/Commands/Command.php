@@ -7,6 +7,7 @@
 namespace App\Support\Console\Commands;
 
 use App\Support\ClassTrait;
+use App\Support\Client\Client;
 use App\Support\Console\Application;
 use Exception;
 use Illuminate\Console\Command as BaseCommand;
@@ -15,6 +16,7 @@ use Illuminate\Queue\Console\WorkCommand;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
 use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -28,7 +30,13 @@ abstract class Command extends BaseCommand
     public const OPTION_OFF_SHOUT_OUT = 'off-shout-out';
     public const PARAMETER_OFF_SHOUT_OUT = '--' . self::OPTION_OFF_SHOUT_OUT;
 
-    private bool|null $canShoutOut = null;
+    private ?bool $canShoutOut = null;
+
+    private ?array $settingsArguments = null;
+
+    protected string|array|null $settings = null;
+
+    protected bool $settingsPermanently = false;
 
     public function __construct()
     {
@@ -76,6 +84,37 @@ abstract class Command extends BaseCommand
         $this->specifyDefaultParameters();
     }
 
+    protected function specifyDefaultParameters()
+    {
+        foreach ($this->getDefaultArguments() as $arguments) {
+            if ($arguments instanceof InputArgument) {
+                $this->getDefinition()->addArgument($arguments);
+            }
+            else {
+                $this->addArgument(...array_values($arguments));
+            }
+        }
+
+        foreach ($this->getDefaultOptions() as $options) {
+            if ($options instanceof InputOption) {
+                $this->getDefinition()->addOption($options);
+            }
+            else {
+                $this->addOption(...array_values($options));
+            }
+        }
+    }
+
+    protected function getDefaultArguments(): array
+    {
+        return [];
+    }
+
+    protected function getDefaultOptions(): array
+    {
+        return [];
+    }
+
     /**
      * @throws Exception
      */
@@ -112,47 +151,70 @@ abstract class Command extends BaseCommand
         return $exitCode;
     }
 
+    protected function settingsArguments(): array
+    {
+        if (is_null($this->settingsArguments)) {
+            $this->settingsArguments = [];
+            if (!is_null($value = $this->option('x-client'))) {
+                $this->settingsArguments['--x-client'] = $value;
+            }
+            foreach (array_keys(config_starter('client.settings.default')) as $name) {
+                if (!is_null($value = $this->option("x-$name"))) {
+                    $this->settingsArguments["--x-$name"] = $value;
+                }
+            }
+        }
+        return $this->settingsArguments;
+    }
+
+    protected function settingsParse()
+    {
+        $clientSettingsConfig = config_starter('client.settings');
+        $settings = [];
+        if (is_string($this->settings)) {
+            $settings = $clientSettingsConfig[$this->settings] ?? [];
+        }
+        elseif (is_array($this->settings)) {
+            foreach ($this->settings as $name => $value) {
+                $settings[$name] = $value;
+            }
+        }
+
+        if (!is_null($this->settings) && $this->settingsPermanently) {
+            return $settings;
+        }
+
+        if (!is_null($value = $this->option('x-client'))) {
+            $settings = $clientSettingsConfig[$value] ?? [];
+        }
+        foreach (array_keys($clientSettingsConfig['default']) as $name) {
+            if (!is_null($value = $this->option("x-$name"))) {
+                $settings[$name] = $value;
+            }
+        }
+        return $settings;
+    }
+
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        if (count($settings = $this->settingsParse()) > 0) {
+            return Client::settingsTemporary($settings, fn() => parent::execute($input, $output));
+        }
+        return parent::execute($input, $output);
+    }
+
     public function call($command, array $arguments = []): int
     {
         $arguments[self::PARAMETER_OFF_SHOUT_OUT] = true;
+        $arguments = array_merge($arguments, $this->settingsArguments());
         return parent::call($command, $arguments);
     }
 
     public function callSilent($command, array $arguments = [])
     {
         $arguments[self::PARAMETER_OFF_SHOUT_OUT] = true;
+        $arguments = array_merge($arguments, $this->settingsArguments());
         return parent::callSilent($command, $arguments);
-    }
-
-    protected function specifyDefaultParameters()
-    {
-        foreach ($this->getDefaultArguments() as $arguments) {
-            if ($arguments instanceof InputArgument) {
-                $this->getDefinition()->addArgument($arguments);
-            }
-            else {
-                $this->addArgument(...array_values($arguments));
-            }
-        }
-
-        foreach ($this->getDefaultOptions() as $options) {
-            if ($options instanceof InputOption) {
-                $this->getDefinition()->addOption($options);
-            }
-            else {
-                $this->addOption(...array_values($options));
-            }
-        }
-    }
-
-    protected function getDefaultArguments(): array
-    {
-        return [];
-    }
-
-    protected function getDefaultOptions(): array
-    {
-        return [];
     }
 
     protected function canShoutOut(): bool
