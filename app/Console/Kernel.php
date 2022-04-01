@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * Base
+ */
+
 namespace App\Console;
 
 use App\Support\Console\Application;
