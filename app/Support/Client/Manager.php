@@ -50,13 +50,13 @@ class Manager
         return $this;
     }
 
-    public function merge(Settings|array|null $settings): static
+    public function settingsMerge(Settings|array|null $settings, bool $permanently = false, bool $apply = true): static
     {
-        $this->settings->merge($settings);
-        return $this->apply();
+        $this->settings->merge($settings, $permanently);
+        return $apply ? $this->settingsApply() : $this;
     }
 
-    public function apply(): static
+    public function settingsApply(): static
     {
         $this->app->setLocale($this->settings->locale);
         foreach ($this->settingsAppliers as $settingsApplier) {
@@ -65,12 +65,17 @@ class Manager
         return $this;
     }
 
-    public function temporary(Settings|array|null $settings, Closure $callback): static
+    public function settingsChanged(): bool
+    {
+        return $this->settings->hasChanges();
+    }
+
+    public function settingsTemporary(Settings|array|null $settings, Closure $callback): static
     {
         $origin = clone $this->settings;
-        $this->merge($settings);
+        $this->settingsMerge($settings);
         $called = $callback();
-        $this->merge($origin);
+        $this->settingsMerge($origin);
         return $called;
     }
 }

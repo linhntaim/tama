@@ -30,6 +30,7 @@ class DateTimer extends SettingsApplier
         self::SHORT_TIME_FUNCTION,
     ];
 
+    #region Static
     protected static Carbon $now;
 
     public static function now(bool $reset = false): Carbon
@@ -104,6 +105,8 @@ class DateTimer extends SettingsApplier
         return range(0, 4);
     }
 
+    #endregion
+
     protected string $locale;
 
     protected ?array $transTerms;
@@ -147,25 +150,25 @@ class DateTimer extends SettingsApplier
         $defaultTerms = [];
         $localeTerms = [];
         for ($i = 1; $i <= 7; ++$i) {
-            $defaultTerms[] = trans('datetime.day_' . $i, [], self::DEFAULT_LOCALE);
-            $localeTerms[] = trans('datetime.day_' . $i, [], $this->locale);
+            $defaultTerms[] = trans('date_timer.day_' . $i, [], self::DEFAULT_LOCALE);
+            $localeTerms[] = trans('date_timer.day_' . $i, [], $this->locale);
         }
         for ($i = 1; $i <= 7; ++$i) {
-            $defaultTerms[] = trans('datetime.short_day_' . $i, [], self::DEFAULT_LOCALE);
-            $localeTerms[] = trans('datetime.short_day_' . $i, [], $this->locale);
+            $defaultTerms[] = trans('date_timer.short_day_' . $i, [], self::DEFAULT_LOCALE);
+            $localeTerms[] = trans('date_timer.short_day_' . $i, [], $this->locale);
         }
         for ($i = 1; $i <= 12; ++$i) {
-            $defaultTerms[] = trans('datetime.month_' . $i, [], self::DEFAULT_LOCALE);
-            $localeTerms[] = trans('datetime.month_' . $i, [], $this->locale);
+            $defaultTerms[] = trans('date_timer.month_' . $i, [], self::DEFAULT_LOCALE);
+            $localeTerms[] = trans('date_timer.month_' . $i, [], $this->locale);
         }
         for ($i = 1; $i <= 12; ++$i) {
-            $defaultTerms[] = trans('datetime.short_month_' . $i, [], self::DEFAULT_LOCALE);
-            $localeTerms[] = trans('datetime.short_month_' . $i, [], $this->locale);
+            $defaultTerms[] = trans('date_timer.short_month_' . $i, [], self::DEFAULT_LOCALE);
+            $localeTerms[] = trans('date_timer.short_month_' . $i, [], $this->locale);
         }
         foreach (['lm', 'um'] as $c) {
             foreach (['am', 'pm'] as $m) {
-                $defaultTerms[] = trans('datetime.' . $c . '_' . $m, [], self::DEFAULT_LOCALE);
-                $localeTerms[] = trans('datetime.' . $c . '_' . $m, [], $this->locale);
+                $defaultTerms[] = trans('date_timer.' . $c . '_' . $m, [], self::DEFAULT_LOCALE);
+                $localeTerms[] = trans('date_timer.' . $c . '_' . $m, [], $this->locale);
             }
         }
         return [
@@ -200,7 +203,7 @@ class DateTimer extends SettingsApplier
             ];
         }
         $timezones[] = [
-            'name' => trans('datetime.utc_offsets', [], $this->locale),
+            'name' => trans('date_timer.utc_offsets', [], $this->locale),
             'timezones' => $utcOffsets,
         ];
         // UNIX Timezones
@@ -241,7 +244,7 @@ class DateTimer extends SettingsApplier
         $options = [];
         for ($i = 1; $i <= 7; ++$i) {
             $options[] = [
-                'name' => trans('datetime.day_' . $i, [], $this->locale),
+                'name' => trans('date_timer.day_' . $i, [], $this->locale),
                 'value' => $i,
             ];
         }
@@ -254,7 +257,7 @@ class DateTimer extends SettingsApplier
         for ($i = 0; $i <= 3; ++$i) {
             $options[] = [
                 'value' => $i,
-                'text' => trans('datetime.long_date_' . $i, $this->exampleBags(), $this->locale),
+                'text' => trans('date_timer.long_date_' . $i, $this->exampleBags(), $this->locale),
             ];
         }
         return $options;
@@ -265,7 +268,7 @@ class DateTimer extends SettingsApplier
         $options = [];
         for ($i = 0; $i <= 3; ++$i) {
             $options[] = [
-                'name' => trans('datetime.short_date_' . $i, $this->exampleBags(), $this->locale),
+                'name' => trans('date_timer.short_date_' . $i, $this->exampleBags(), $this->locale),
                 'value' => $i,
             ];
         }
@@ -277,7 +280,7 @@ class DateTimer extends SettingsApplier
         $options = [];
         for ($i = 0; $i <= 4; ++$i) {
             $options[] = [
-                'name' => trans('datetime.long_time_' . $i, $this->exampleBags(), $this->locale),
+                'name' => trans('date_timer.long_time_' . $i, $this->exampleBags(), $this->locale),
                 'value' => $i,
             ];
         }
@@ -289,7 +292,7 @@ class DateTimer extends SettingsApplier
         $options = [];
         for ($i = 0; $i <= 4; ++$i) {
             $options[] = [
-                'name' => trans('datetime.short_time_' . $i, $this->exampleBags(), $this->locale),
+                'name' => trans('date_timer.short_time_' . $i, $this->exampleBags(), $this->locale),
                 'value' => $i,
             ];
         }
@@ -331,12 +334,12 @@ class DateTimer extends SettingsApplier
         return [
             'd' => $time->format('j'),
             'dd' => $time->format('d'),
-            'sd' => trans('datetime.short_day_' . $time->format('N'), [], $this->locale),
-            'ld' => trans('datetime.day_' . $time->format('N'), [], $this->locale),
+            'sd' => trans('date_timer.short_day_' . $time->format('N'), [], $this->locale),
+            'ld' => trans('date_timer.day_' . $time->format('N'), [], $this->locale),
             'm' => $time->format('n'),
             'mm' => $time->format('m'),
-            'sm' => trans('datetime.short_month_' . $time->format('n'), [], $this->locale),
-            'lm' => trans('datetime.month_' . $time->format('n'), [], $this->locale),
+            'sm' => trans('date_timer.short_month_' . $time->format('n'), [], $this->locale),
+            'lm' => trans('date_timer.month_' . $time->format('n'), [], $this->locale),
             'yy' => $time->format('y'),
             'yyyy' => $time->format('Y'),
             'h' => $time->format('g'),
@@ -345,8 +348,8 @@ class DateTimer extends SettingsApplier
             'hh2' => $time->format('H'),
             'ii' => $time->format('i'),
             'ss' => $time->format('s'),
-            'ut' => trans('datetime.um_' . $time->format('a'), [], $this->locale),
-            'lt' => trans('datetime.lm_' . $time->format('a'), [], $this->locale),
+            'ut' => trans('date_timer.um_' . $time->format('a'), [], $this->locale),
+            'lt' => trans('date_timer.lm_' . $time->format('a'), [], $this->locale),
         ];
     }
 
@@ -420,14 +423,21 @@ class DateTimer extends SettingsApplier
         return sprintf('%s%s%s', $this->{$func1 . 'WithBags'}($bags), $separation, $this->{$func2 . 'WithBags'}($bags));
     }
 
-    public function custom($format, Carbon|string $time = 'now', int $dateType = DateTimer::DAY_TYPE_NONE): string
+    public function format(string $name, Carbon|string $time = 'now', int $dayType = DateTimer::DAY_TYPE_NONE): string
     {
-        return $this->time($time, $dateType)->format($format);
+        return trans('date_timer.formats.' . $name, $this->bags($time, $dayType), $this->locale);
     }
 
-    public function other(string $name, Carbon|string $time = 'now', int $dayType = DateTimer::DAY_TYPE_NONE): string
+    protected function toLocaleTimeString(string $time): string
     {
-        return trans('datetime.formats.' . $name, $this->bags($time, $dayType), $this->locale);
+        return is_null($this->transTerms)
+            ? $time
+            : str_replace($this->transTerms['default'], $this->transTerms['locale'], $time);
+    }
+
+    public function custom($format, Carbon|string $time = 'now', int $dateType = DateTimer::DAY_TYPE_NONE): string
+    {
+        return $this->toLocaleTimeString($this->time($time, $dateType)->format($format));
     }
 
     protected function formatBags(): array

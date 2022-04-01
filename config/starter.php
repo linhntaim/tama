@@ -20,14 +20,11 @@ return [
         'default' => 'default',
         'settings' => [
             'default' => [
-                'app_name' => null,
-                'app_url' => null,
                 'locale' => 'en',
                 'country' => 'US',
                 'timezone' => 'UTC',
                 'currency' => 'USD',
                 'number_format' => 'point_comma',
-                'first_day_of_week' => 0,
                 'long_date_format' => 0,
                 'short_date_format' => 0,
                 'long_time_format' => 0,

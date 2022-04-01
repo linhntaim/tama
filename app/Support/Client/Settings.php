@@ -12,14 +12,11 @@ use Illuminate\Contracts\Support\Jsonable;
 /**
  * Class Settings
  * @package App\Support\Client
- * @property string $appName
- * @property string $appUrl
  * @property string $locale
  * @property string $country
  * @property string $timezone
  * @property string $currency
  * @property string $numberFormat
- * @property int $firstDayOfWeek
  * @property int $longDateFormat
  * @property int $shortDateFormat
  * @property int $longTimeFormat
@@ -29,9 +26,25 @@ class Settings implements ISettings, Arrayable, Jsonable
 {
     protected array $settings;
 
+    protected array $changes;
+
     public function __construct(?array $settings = null)
     {
-        $this->setDefault()->merge($settings);
+        $this
+            ->clearChanges()
+            ->setDefault()
+            ->merge($settings, true);
+    }
+
+    public function hasChanges(): bool
+    {
+        return count($this->changes);
+    }
+
+    public function clearChanges(): static
+    {
+        $this->changes = [];
+        return $this;
     }
 
     protected function setDefault(): static
@@ -42,19 +55,24 @@ class Settings implements ISettings, Arrayable, Jsonable
         return $this;
     }
 
-    public function merge(Settings|array|null $settings): static
+    public function merge(Settings|array|null $settings, bool $permanently = false): static
     {
         if (is_null($settings)) {
             return $this;
         }
         if (is_array($settings)) {
             foreach ($settings as $name => $value) {
-                $this->{$name} = $value;
+                if (method_exists($this, $method = 'set' . str($name)->studly()->toString())) {
+                    $this->{$method}($value);
+                }
+                else {
+                    $this->set($name, $value, $permanently);
+                }
             }
             return $this;
         }
         if ($settings instanceof Settings) {
-            return $this->merge($settings->toArray());
+            return $this->merge($settings->toArray(), $permanently);
         }
         return $this;
     }
@@ -79,26 +97,19 @@ class Settings implements ISettings, Arrayable, Jsonable
         }
     }
 
-    private function set(string $name, $value): static
+    public function set(string $name, $value, bool $permanently = false): static
     {
+        if (!$permanently && ($this->settings[$name] ?? null) != $value) {
+            $this->changes[] = $name;
+        }
         $this->settings[$name] = $value;
         return $this;
     }
 
-    public function getAppName(): string
-    {
-        return $this->settings['app_name'] ?? config('app.name');
-    }
-
-    public function getAppUrl(): string
-    {
-        return $this->settings['app_url'] ?? config('app.url');
-    }
-
-    public function setLocale(string $locale): static
+    public function setLocale(string $locale, bool $permanently = false): static
     {
         if (in_array($locale, config_starter('supported_locales'))) {
-            return $this->set('locale', $locale);
+            return $this->set('locale', $locale, $permanently);
         }
         return $this;
     }
@@ -108,74 +119,66 @@ class Settings implements ISettings, Arrayable, Jsonable
         return $this->settings['locale'];
     }
 
-    public function setCountry(string $country): static
+    public function setCountry(string $country, bool $permanently = false): static
     {
         if (in_array($country = strtoupper($country), array_keys(config_starter('countries')))) {
-            return $this->set('country', $country);
+            return $this->set('country', $country, $permanently);
         }
         return $this;
     }
 
-    public function setTimezone(string $timezone): static
+    public function setTimezone(string $timezone, bool $permanently = false): static
     {
         if (in_array($timezone, DateTimer::availableTimezones())) {
-            return $this->set('timezone', $timezone);
+            return $this->set('timezone', $timezone, $permanently);
         }
         return $this;
     }
 
-    public function setCurrency(string $currency): static
+    public function setCurrency(string $currency, bool $permanently = false): static
     {
         if (in_array($currency = strtoupper($currency), array_keys(config_starter('currencies')))) {
-            return $this->set('currency', $currency);
+            return $this->set('currency', $currency, $permanently);
         }
         return $this;
     }
 
-    public function setNumberFormat(string $numberFormat): static
+    public function setNumberFormat(string $numberFormat, bool $permanently = false): static
     {
         if (in_array($numberFormat, config_starter('number_formats'))) {
-            return $this->set('number_format', $numberFormat);
+            return $this->set('number_format', $numberFormat, $permanently);
         }
         return $this;
     }
 
-    public function setFirstDayOfWeek(int $firstDayOfWeek): static
-    {
-        if (in_array($firstDayOfWeek, DateTimer::availableDaysOfWeek())) {
-            return $this->set('first_day_of_week', $firstDayOfWeek);
-        }
-        return $this;
-    }
-
-    public function setLongDateFormat(int $longDateFormat): static
+    public function setLongDateFormat(int $longDateFormat, bool $permanently = false): static
     {
         if (in_array($longDateFormat, DateTimer::availableLongDateFormats())) {
-            return $this->set('long_date_format', $longDateFormat);
+            return $this->set('long_date_format', $longDateFormat, $permanently);
         }
         return $this;
     }
 
-    public function setShortDateFormat(int $shortDateFormat): static
+    public function setShortDateFormat(int $shortDateFormat, bool $permanently = false): static
     {
         if (in_array($shortDateFormat, DateTimer::availableShortDateFormats())) {
-            return $this->set('short_date_format', $shortDateFormat);
+            return $this->set('short_date_format', $shortDateFormat, $permanently);
         }
         return $this;
     }
 
-    public function setLongTimeFormat(int $longTimeFormat): static
+    public function setLongTimeFormat(int $longTimeFormat, bool $permanently = false): static
     {
         if (in_array($longTimeFormat, DateTimer::availableLongTimeFormats())) {
-            return $this->set('long_time_format', $longTimeFormat);
+            return $this->set('long_time_format', $longTimeFormat, $permanently);
         }
         return $this;
     }
 
-    public function setShortTimeFormat(int $shortTimeFormat): static
+    public function setShortTimeFormat(int $shortTimeFormat, bool $permanently = false): static
     {
         if (in_array($shortTimeFormat, DateTimer::availableShortTimeFormats())) {
-            return $this->set('short_time_format', $shortTimeFormat);
+            return $this->set('short_time_format', $shortTimeFormat, $permanently);
         }
         return $this;
     }
