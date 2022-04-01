@@ -1,39 +1,31 @@
 <?php
 
+/**
+ * Base
+ */
+
 namespace App\Support\Http;
 
 use Illuminate\Http\Request as BaseRequest;
 
 class Request extends BaseRequest
 {
-    protected ?string $headerContentType = null;
-
-    public function getHeaderContentType(): ?string
+    public function headerJson(string $key, ?array $default = null): ?array
     {
-        return is_null($this->headerContentType)
-            ? ($this->headerContentType = $this->headers->get('CONTENT_TYPE'))
-            : $this->headerContentType;
+        if (is_null($header = $this->header($key))
+            || is_null($header = json_decode_array($header))) {
+            return $default;
+        }
+        return $header;
     }
 
-    public function getHeaderMimeType(): ?string
+    public function cookieJson(string $key, ?array $default = null): ?array
     {
-        $mimeType = $this->getHeaderContentType();
-        if ($mimeType && false !== ($pos = strpos($mimeType, ';'))) {
-            $mimeType = trim(substr($mimeType, 0, $pos));
+        if (is_null($cookie = $this->cookie($key))
+            || is_null($cookie = json_decode_array($cookie))) {
+            return $default;
         }
-        return $mimeType;
-    }
-
-    public function isMultipartFormData(?string &$boundary = null): bool
-    {
-        $boundary = null;
-        if ('multipart/form-data' === $this->getHeaderMimeType()) {
-            if (1 === preg_match('/boundary=([^\s]+)/', $this->getHeaderContentType(), $matches)) {
-                $boundary = $matches[1] ?? null;
-            }
-            return true;
-        }
-        return false;
+        return $cookie;
     }
 
     public function __toString(): string

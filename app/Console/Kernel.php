@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * Base
+ */
+
 namespace App\Console;
 
 use App\Support\Console\Application;
@@ -52,6 +56,9 @@ class Kernel extends ConsoleKernel
     public function call($command, array $parameters = [], $outputBuffer = null): int
     {
         $parameters[Command::PARAMETER_OFF_SHOUT_OUT] = true;
+        if ($runningCommand = $this->rootRunningCommand()) {
+            $parameters = $parameters + $runningCommand->settingsParameters();
+        }
         return parent::call($command, $parameters, $outputBuffer);
     }
 

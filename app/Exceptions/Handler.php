@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * Base
+ */
+
 namespace App\Exceptions;
 
 use App\Support\Console\Artisan;
