@@ -40,6 +40,7 @@ return [
     }),
     'currencies' => [
         'USD' => ['symbol' => '$'],
+        'VND' => ['symbol' => '₫'],
     ],
     'number_formats' => [
         'point_comma',

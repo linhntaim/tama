@@ -26,7 +26,8 @@ class Manager
         $this->settings = new Settings();
         $this
             ->addSettingApplier('date_timer', new DateTimer($this->settings))
-            ->addSettingApplier('number_formatter', new NumberFormatter($this->settings));
+            ->addSettingApplier('number_formatter', new NumberFormatter($this->settings))
+            ->settingsApply();
     }
 
     public function settings(): Settings
@@ -70,7 +71,7 @@ class Manager
         return $this->settings->hasChanges();
     }
 
-    public function settingsTemporary(Settings|array|null $settings, Closure $callback): static
+    public function settingsTemporary(Settings|array|null $settings, Closure $callback): mixed
     {
         $origin = clone $this->settings;
         $this->settingsMerge($settings);
