@@ -32,8 +32,8 @@ abstract class ForceCommand extends Command
 
     protected function getDefaultOptions(): array
     {
-        return array_merge(parent::getDefaultOptions(), [
-            ['force', null, InputOption::VALUE_NONE],
-        ]);
+        return parent::getDefaultOptions() + [
+                ['force', null, InputOption::VALUE_NONE],
+            ];
     }
 }

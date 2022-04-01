@@ -6,7 +6,7 @@
 
 namespace App\Console;
 
-use App\Support\Console\Application;
+use App\Support\Client\Client;
 use App\Support\Console\Application as Artisan;
 use App\Support\Console\Commands\Command;
 use App\Support\Console\RunningCommand;
@@ -15,7 +15,7 @@ use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Throwable;
 
 /**
- * @property Application $artisan
+ * @property Artisan $artisan
  */
 class Kernel extends ConsoleKernel
 {
@@ -56,8 +56,19 @@ class Kernel extends ConsoleKernel
     public function call($command, array $parameters = [], $outputBuffer = null): int
     {
         $parameters[Command::PARAMETER_OFF_SHOUT_OUT] = true;
-        if ($runningCommand = $this->rootRunningCommand()) {
-            $parameters = $parameters + $runningCommand->settingsParameters();
+        if ($this->commandsLoaded) {
+            if ($runningCommand = $this->rootRunningCommand()) {
+                $parameters += $runningCommand->settingsParameters();
+            }
+        }
+        else {
+            $parameters += (function (array $settings) {
+                $settingsParameters = [];
+                foreach ($settings as $name => $value) {
+                    $settingsParameters["--x-$name"] = $value;
+                }
+                return $settingsParameters;
+            })(Client::settings()->toArray());
         }
         return parent::call($command, $parameters, $outputBuffer);
     }
