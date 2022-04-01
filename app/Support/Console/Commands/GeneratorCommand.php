@@ -423,9 +423,9 @@ abstract class GeneratorCommand extends ForceCommand
      */
     protected function getDefaultArguments(): array
     {
-        return array_merge(parent::getDefaultArguments(), [
-            ['name', InputArgument::REQUIRED, 'The name of the class'],
-        ]);
+        return parent::getDefaultArguments() + [
+                ['name', InputArgument::REQUIRED, 'The name of the class'],
+            ];
     }
 
     /**

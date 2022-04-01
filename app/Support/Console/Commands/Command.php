@@ -120,7 +120,8 @@ abstract class Command extends BaseCommand
      */
     protected function runCommand($command, array $arguments, OutputInterface $output): int
     {
-        $arguments = array_merge(['command' => $command], $arguments);
+        $arguments[self::PARAMETER_OFF_SHOUT_OUT] = true;
+        $arguments = ['command' => $command] + $arguments + $this->settingsArguments();
 
         $command = $this->resolveCommand($command);
         $input = $this->createInputFromArguments($arguments);
@@ -201,20 +202,6 @@ abstract class Command extends BaseCommand
             return Client::settingsTemporary($settings, fn() => parent::execute($input, $output));
         }
         return parent::execute($input, $output);
-    }
-
-    public function call($command, array $arguments = []): int
-    {
-        $arguments[self::PARAMETER_OFF_SHOUT_OUT] = true;
-        $arguments = array_merge($arguments, $this->settingsArguments());
-        return parent::call($command, $arguments);
-    }
-
-    public function callSilent($command, array $arguments = [])
-    {
-        $arguments[self::PARAMETER_OFF_SHOUT_OUT] = true;
-        $arguments = array_merge($arguments, $this->settingsArguments());
-        return parent::callSilent($command, $arguments);
     }
 
     protected function canShoutOut(): bool
