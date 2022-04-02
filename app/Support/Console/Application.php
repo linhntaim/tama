@@ -101,7 +101,7 @@ class Application extends BaseApplication
         return $this->runningCommands[0] ?? null;
     }
 
-    public function currentRunningCommand(): ?RunningCommand
+    public function latestRunningCommand(): ?RunningCommand
     {
         return $this->runningCommands[count($this->runningCommands) - 1] ?? null;
     }

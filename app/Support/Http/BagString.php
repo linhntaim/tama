@@ -13,7 +13,7 @@ class BagString
         if (!is_countable($bag) || !is_iterable($bag)) {
             return null;
         }
-        if (count($bag) <= 0) {
+        if (!count($bag)) {
             return null;
         }
         return new static($bag);

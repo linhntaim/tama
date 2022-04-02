@@ -72,7 +72,7 @@ class ClientMiddleware
                 $settings[$name] = $value;
             }
         }
-        if (count($settings) > 0) {
+        if (count($settings)) {
             return $this->mergeSettings($settings, false);
         }
         return false;

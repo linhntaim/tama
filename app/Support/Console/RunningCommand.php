@@ -6,18 +6,19 @@
 
 namespace App\Support\Console;
 
-use Symfony\Component\Console\Command\Command;
+use App\Support\Console\Commands\Command;
+use Symfony\Component\Console\Command\Command as SymfonyCommand;
 use Symfony\Component\Console\Input\InputInterface;
 
 class RunningCommand
 {
-    public ?Command $command = null;
+    public ?SymfonyCommand $command = null;
 
     public ?InputInterface $input = null;
 
     protected ?array $settingsParameters = null;
 
-    public function setCommand(Command $command): static
+    public function setCommand(SymfonyCommand $command): static
     {
         $this->command = $command;
         return $this;
@@ -32,10 +33,15 @@ class RunningCommand
     public function settingsParameters(): array
     {
         if (is_null($this->settingsParameters)) {
-            $this->settingsParameters = [];
-            $this->setSettingsParameter('--x-client');
-            foreach (array_keys(config_starter('client.settings.default')) as $name) {
-                $this->setSettingsParameter("--x-$name");
+            if ($this->command instanceof Command) {
+                $this->settingsParameters = $this->command->settingsArguments();
+            }
+            else {
+                $this->settingsParameters = [];
+                $this->setSettingsParameter('--x-client');
+                foreach (array_keys(config_starter('client.settings.default')) as $name) {
+                    $this->setSettingsParameter("--x-$name");
+                }
             }
         }
         return $this->settingsParameters;
