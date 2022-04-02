@@ -7,6 +7,7 @@
 use App\Support\Client\Client;
 use App\Support\Client\DateTimer;
 use App\Support\Client\NumberFormatter;
+use Illuminate\Http\JsonResponse;
 
 if (!function_exists('config_starter')) {
     function config_starter(array|string|null $key = null, $default = null): mixed
@@ -107,7 +108,10 @@ if (!function_exists('join_paths')) {
      */
     function join_paths(...$paths): string
     {
-        return implode(DIRECTORY_SEPARATOR, $paths);
+        return implode(
+            DIRECTORY_SEPARATOR,
+            array_map(fn($path) => trim_more(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR), $paths)
+        );
     }
 }
 
@@ -118,7 +122,10 @@ if (!function_exists('join_urls')) {
      */
     function join_urls(...$urls): string
     {
-        return implode('/', $urls);
+        return implode(
+            '/',
+            array_map(fn($url) => trim_more(str_replace(['\\'], '/', $url), '/'), $urls)
+        );
     }
 }
 
@@ -147,5 +154,37 @@ if (!function_exists('number_formatter')) {
     function number_formatter(): NumberFormatter
     {
         return Client::numberFormatter();
+    }
+}
+
+if (!function_exists('response_json')) {
+    function response_json(array $data = [], int $status = 200, array $headers = []): JsonResponse
+    {
+        return response()->json(
+            $data,
+            $status,
+            $headers
+        );
+    }
+}
+
+if (!function_exists('trim_more')) {
+    function trim_more(string $string, string $characters = ''): string
+    {
+        return trim($string, " \t\n\r\0\x0B" . $characters);
+    }
+}
+
+if (!function_exists('ltrim_more')) {
+    function ltrim_more(string $string, string $characters = ''): string
+    {
+        return ltrim($string, " \t\n\r\0\x0B" . $characters);
+    }
+}
+
+if (!function_exists('rtrim_more')) {
+    function rtrim_more(string $string, string $characters = ''): string
+    {
+        return rtrim($string, " \t\n\r\0\x0B" . $characters);
     }
 }
