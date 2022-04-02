@@ -115,6 +115,65 @@ abstract class Command extends BaseCommand
         return [];
     }
 
+    protected function settingsCommanded(): array
+    {
+        $clientSettingsConfig = config_starter('client.settings');
+        $settings = [];
+        if (is_string($this->settings)) {
+            $settings = $clientSettingsConfig[$this->settings] ?? [];
+        }
+        elseif (is_array($this->settings)) {
+            foreach ($this->settings as $name => $value) {
+                $settings[$name] = $value;
+            }
+        }
+        return $settings;
+    }
+
+    protected function settingsArgumentsCommanded(): array
+    {
+        $settingsArguments = [];
+        foreach ($this->settingsCommanded() as $name => $value) {
+            $settingsArguments["--x-$name"] = $value;
+        }
+        return $settingsArguments;
+    }
+
+    public function settingsArguments(): array
+    {
+        if (is_null($this->settingsArguments)) {
+            $this->settingsArguments = $this->settingsArgumentsCommanded();
+            if (!count($this->settingsArguments) || !$this->settingsPermanently) {
+                if (!is_null($value = $this->option('x-client'))) {
+                    $this->settingsArguments['--x-client'] = $value;
+                }
+                foreach (array_keys(config_starter('client.settings.default')) as $name) {
+                    if (!is_null($value = $this->option("x-$name"))) {
+                        $this->settingsArguments["--x-$name"] = $value;
+                    }
+                }
+            }
+        }
+        return $this->settingsArguments;
+    }
+
+    protected function settingsParse()
+    {
+        $clientSettingsConfig = config_starter('client.settings');
+        $settings = $this->settingsCommanded();
+        if (!count($settings) || !$this->settingsPermanently) {
+            if (!is_null($value = $this->option('x-client'))) {
+                $settings = $clientSettingsConfig[$value] ?? [];
+            }
+            foreach (array_keys($clientSettingsConfig['default']) as $name) {
+                if (!is_null($value = $this->option("x-$name"))) {
+                    $settings[$name] = $value;
+                }
+            }
+        }
+        return $settings;
+    }
+
     /**
      * @throws Exception
      */
@@ -152,53 +211,9 @@ abstract class Command extends BaseCommand
         return $exitCode;
     }
 
-    protected function settingsArguments(): array
-    {
-        if (is_null($this->settingsArguments)) {
-            $this->settingsArguments = [];
-            if (!is_null($value = $this->option('x-client'))) {
-                $this->settingsArguments['--x-client'] = $value;
-            }
-            foreach (array_keys(config_starter('client.settings.default')) as $name) {
-                if (!is_null($value = $this->option("x-$name"))) {
-                    $this->settingsArguments["--x-$name"] = $value;
-                }
-            }
-        }
-        return $this->settingsArguments;
-    }
-
-    protected function settingsParse()
-    {
-        $clientSettingsConfig = config_starter('client.settings');
-        $settings = [];
-        if (is_string($this->settings)) {
-            $settings = $clientSettingsConfig[$this->settings] ?? [];
-        }
-        elseif (is_array($this->settings)) {
-            foreach ($this->settings as $name => $value) {
-                $settings[$name] = $value;
-            }
-        }
-
-        if (!is_null($this->settings) && $this->settingsPermanently) {
-            return $settings;
-        }
-
-        if (!is_null($value = $this->option('x-client'))) {
-            $settings = $clientSettingsConfig[$value] ?? [];
-        }
-        foreach (array_keys($clientSettingsConfig['default']) as $name) {
-            if (!is_null($value = $this->option("x-$name"))) {
-                $settings[$name] = $value;
-            }
-        }
-        return $settings;
-    }
-
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        if (count($settings = $this->settingsParse()) > 0) {
+        if (count($settings = $this->settingsParse())) {
             return Client::settingsTemporary($settings, fn() => parent::execute($input, $output));
         }
         return parent::execute($input, $output);

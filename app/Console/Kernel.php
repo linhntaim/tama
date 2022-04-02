@@ -57,7 +57,7 @@ class Kernel extends ConsoleKernel
     {
         $parameters[Command::PARAMETER_OFF_SHOUT_OUT] = true;
         if ($this->commandsLoaded) {
-            if ($runningCommand = $this->rootRunningCommand()) {
+            if ($runningCommand = $this->latestRunningCommand()) {
                 $parameters += $runningCommand->settingsParameters();
             }
         }
@@ -76,6 +76,11 @@ class Kernel extends ConsoleKernel
     public function rootRunningCommand(): ?RunningCommand
     {
         return $this->getArtisan()->rootRunningCommand();
+    }
+
+    public function latestRunningCommand(): ?RunningCommand
+    {
+        return $this->getArtisan()->latestRunningCommand();
     }
 
     public function renderThrowable(Throwable $e, $output)
