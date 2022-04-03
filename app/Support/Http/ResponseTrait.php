@@ -5,6 +5,7 @@ namespace App\Support\Http;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
+use Throwable;
 
 trait ResponseTrait
 {
@@ -23,14 +24,28 @@ trait ResponseTrait
         return view($view, $data, $mergeData);
     }
 
-    protected function responseJson(array $data = [], int $status = 200, array $headers = []): JsonResponse
+    protected function responseJson(array|ResponsePayload|null $data = null, int $status = 200, array $headers = []): JsonResponse
     {
-        return response_json(
-            [
-                '_data' => $data,
-            ],
+        if ($data instanceof ResponsePayload) {
+            $headers = $data->getHeaders();
+            $status = $data->getStatusCode();
+            $data = $data->toArray();
+        }
+        return response()->json(
+            $data,
             $status,
-            $headers
+            $headers,
+            JSON_READABLE
         );
+    }
+
+    protected function responseJsonFrom(array|Throwable|null $source = null): JsonResponse
+    {
+        return $this->responseJson(ResponsePayload::create($source));
+    }
+
+    protected function responseJsonOk(array $headers = []): JsonResponse
+    {
+        return $this->responseJson(null, 200, $headers);
     }
 }

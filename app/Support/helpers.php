@@ -7,7 +7,9 @@
 use App\Support\Client\Client;
 use App\Support\Client\DateTimer;
 use App\Support\Client\NumberFormatter;
-use Illuminate\Http\JsonResponse;
+
+const JSON_READABLE = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_LINE_TERMINATORS;
+const JSON_PRETTY = JSON_READABLE | JSON_PRETTY_PRINT;
 
 if (!function_exists('config_starter')) {
     function config_starter(array|string|null $key = null, $default = null): mixed
@@ -129,6 +131,20 @@ if (!function_exists('join_urls')) {
     }
 }
 
+if (!function_exists('json_encode_pretty')) {
+    function json_encode_pretty(mixed $value, int $depth = 512): string|false
+    {
+        return json_encode($value, JSON_PRETTY, $depth);
+    }
+}
+
+if (!function_exists('json_encode_readable')) {
+    function json_encode_readable(mixed $value, int $depth = 512): string|false
+    {
+        return json_encode($value, JSON_READABLE, $depth);
+    }
+}
+
 if (!function_exists('json_decode_array')) {
     function json_decode_array(string $json, int $depth = 512, int $flags = 0): ?array
     {
@@ -154,17 +170,6 @@ if (!function_exists('number_formatter')) {
     function number_formatter(): NumberFormatter
     {
         return Client::numberFormatter();
-    }
-}
-
-if (!function_exists('response_json')) {
-    function response_json(array $data = [], int $status = 200, array $headers = []): JsonResponse
-    {
-        return response()->json(
-            $data,
-            $status,
-            $headers
-        );
     }
 }
 

@@ -28,7 +28,7 @@ class Settings implements ISettings, Arrayable, Jsonable
 
     protected array $changes;
 
-    public function __construct(?array $settings = null)
+    public function __construct(?array $settings)
     {
         $this
             ->clearChanges()

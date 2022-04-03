@@ -58,7 +58,7 @@ class EnvironmentFile
             $value = '';
         }
         elseif (is_array($value)) {
-            $value = json_encode($value);
+            $value = json_encode_readable($value);
         }
         elseif (is_bool($value)) {
             $value = $value ? 'true' : 'false';
