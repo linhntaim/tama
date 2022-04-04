@@ -13,7 +13,7 @@ use Closure;
 
 class ClientMiddleware
 {
-    public function handle(Request $request, Closure $next, ?string $source)
+    public function handle(Request $request, Closure $next, ?string $source = null)
     {
         foreach ([
                      'viaHeader',
@@ -30,7 +30,7 @@ class ClientMiddleware
         return $this->storeCookie($request, $next($request));
     }
 
-    protected function viaHeader(Request $request, ?string $source): Manager|bool
+    protected function viaHeader(Request $request, ?string $source = null): Manager|bool
     {
         if (is_null($source) || $source === 'header') {
             if (!is_null($settings = $request->headerJson('x-settings'))) {
@@ -40,7 +40,7 @@ class ClientMiddleware
         return false;
     }
 
-    protected function viaCookie(Request $request, ?string $source): Manager|bool
+    protected function viaCookie(Request $request, ?string $source = null): Manager|bool
     {
         if (is_null($source) || $source === 'cookie') {
             if (!is_null($settings = $request->cookieJson(name_starter('settings')))) {
@@ -50,7 +50,7 @@ class ClientMiddleware
         return false;
     }
 
-    protected function viaRoute(Request $request, ?string $source): Manager|bool
+    protected function viaRoute(Request $request, ?string $source = null): Manager|bool
     {
         if (is_null($source) || $source === 'route') {
             foreach (config_starter('client.routes') as $routeMatch => $settingsName) {

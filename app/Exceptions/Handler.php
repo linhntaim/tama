@@ -88,16 +88,27 @@ class Handler extends ExceptionHandler
         ]);
     }
 
+    protected function shouldReturnJson($request, Throwable $e): bool
+    {
+        return parent::shouldReturnJson($request, $e)
+            || $request->is(['api', 'api/*']);
+    }
+
+    protected function prepareJsonResponse($request, Throwable $e): JsonResponse
+    {
+        return $this->responseJsonWith($e);
+    }
+
     protected function unauthenticated($request, AuthenticationException $exception): SymfonyResponse
     {
         return $this->shouldReturnJson($request, $exception)
-            ? $this->responseJsonFrom($exception)
+            ? $this->responseJsonWith($exception)
             : redirect()->guest($exception->redirectTo() ?? route('login'));
     }
 
     protected function invalidJson($request, ValidationException $exception): JsonResponse
     {
-        return $this->responseJsonFrom($exception);
+        return $this->responseJsonWith($exception);
     }
 
     public function renderForConsole($output, Throwable $e)

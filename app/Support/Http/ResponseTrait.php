@@ -2,9 +2,11 @@
 
 namespace App\Support\Http;
 
+use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
+use InvalidArgumentException;
 use Throwable;
 
 trait ResponseTrait
@@ -24,7 +26,7 @@ trait ResponseTrait
         return view($view, $data, $mergeData);
     }
 
-    protected function responseJson(array|ResponsePayload|null $data = null, int $status = 200, array $headers = []): JsonResponse
+    protected function responseJson(ResponsePayload|array|null $data = null, int $status = 200, array $headers = []): JsonResponse
     {
         if ($data instanceof ResponsePayload) {
             $headers = $data->getHeaders();
@@ -32,20 +34,57 @@ trait ResponseTrait
             $data = $data->toArray();
         }
         return response()->json(
-            $data,
+            $data ?? [],
             $status,
             $headers,
             JSON_READABLE
         );
     }
 
-    protected function responseJsonFrom(array|Throwable|null $source = null): JsonResponse
+    protected function responseJsonWith(ResponsePayload|bool|array|Throwable|null $source = null, ?Closure $callback = null): JsonResponse
     {
-        return $this->responseJson(ResponsePayload::create($source));
+        return $this->responseJson(
+            with($source instanceof ResponsePayload ? $source : ResponsePayload::create($source), $callback)
+        );
     }
 
     protected function responseJsonOk(array $headers = []): JsonResponse
     {
         return $this->responseJson(null, 200, $headers);
+    }
+
+    protected function responseJsonSuccess(?array $data = null, ?int $status = null, array $headers = []): JsonResponse
+    {
+        if (!is_null($status) && ($status >= 400 || $status < 100)) {
+            throw new InvalidArgumentException("$status should be greater than or equal to 100 and less than 400");
+        }
+        return $this->responseJsonWith(
+            $data,
+            function (ResponsePayload $responsePayload) use ($status, $headers) {
+                return $responsePayload
+                    ->setStatusCode($status)
+                    ->setHeaders($headers);
+            }
+        );
+    }
+
+    protected function responseJsonFail(string|array|Throwable|null $message = null, ?Throwable $throwable = null, ?int $status = null, array $headers = []): JsonResponse
+    {
+        if ($message instanceof Throwable) {
+            return $this->responseJson(ResponsePayload::create($message));
+        }
+
+        if (!is_null($status) && ($status < 400 || $status >= 600)) {
+            throw new InvalidArgumentException("$status should be greater than or equal to 400 and less than 600");
+        }
+        return $this->responseJsonWith(
+            is_null($throwable) ? false : $throwable,
+            function (ResponsePayload $responsePayload) use ($message, $status, $headers) {
+                return $responsePayload
+                    ->setMessages($message)
+                    ->setStatusCode($status)
+                    ->setHeaders($headers);
+            }
+        );
     }
 }

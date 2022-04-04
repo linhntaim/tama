@@ -11,12 +11,20 @@ use Throwable;
 
 class ResponsePayload implements Arrayable
 {
-    public static function create(array|Throwable|null $source = null): static
+    public static function create(bool|string|array|Throwable|null $source = null): static
     {
         return new static($source);
     }
 
+    protected array $headers = [];
+
     protected bool|null $status = null;
+
+    protected int|null $statusCode = null;
+
+    protected int|string|null $errorCode = null;
+
+    protected ?Throwable $throwable = null;
 
     /**
      * @var array|string[]|null
@@ -25,105 +33,22 @@ class ResponsePayload implements Arrayable
 
     protected ?array $data = null;
 
-    protected ?Throwable $throwable = null;
-
-    protected int|null $statusCode = null;
-
-    protected int|string|null $errorCode = null;
-
-    protected array $headers = [];
-
-    public function __construct(array|Throwable|null $source = null)
+    public function __construct(bool|string|array|Throwable|null $source = null)
     {
-        if (is_array($source)) {
+        if (is_bool($source)) {
+            $this->setStatus($source);
+        }
+        elseif (is_string($source)) {
+            $this->setStatus(false)
+                ->setMessages($source);
+        }
+        elseif (is_array($source)) {
             $this->setStatus(true)
-                ->setData($source)
-                ->setStatusCode(200);
+                ->setData($source);
         }
         elseif ($source instanceof Throwable) {
-            $this->setThrowable($source);
+            $this->setException($source);
         }
-    }
-
-    public function setStatus(bool $status): static
-    {
-        $this->status = $status;
-        return $this;
-    }
-
-    public function setMessages(array|string $messages): static
-    {
-        $this->messages = (array)$messages;
-        return $this;
-    }
-
-    public function setData(array $data): static
-    {
-        $this->data = $data;
-        return $this;
-    }
-
-    public function setThrowable(Throwable $throwable): static
-    {
-        if (is_null($this->status)) {
-            $this->setStatus(false);
-        }
-        if (is_null($this->messages)) {
-            if ($throwable instanceof Exception) {
-                $this->setMessages($throwable->getMessages());
-            }
-            elseif ($throwable instanceof ValidationException) {
-                $this->setMessages($throwable->errors());
-            }
-            else {
-                $this->setMessages($throwable->getMessage());
-            }
-        }
-        if (is_null($this->data)) {
-            if ($throwable instanceof Exception) {
-                if (count($data = $throwable->getData())) {
-                    $this->setData($data);
-                }
-            }
-        }
-        if (is_null($this->errorCode)) {
-            $this->setErrorCode($throwable->getCode());
-        }
-        if (is_null($this->statusCode)) {
-            if ($throwable instanceof HttpExceptionInterface) {
-                $this->setStatusCode($throwable->getStatusCode());
-            }
-            elseif ($throwable instanceof ValidationException) {
-                $this->setStatusCode($throwable->status);
-            }
-            elseif ($throwable instanceof AuthenticationException) {
-                $this->setStatusCode(401);
-            }
-            else {
-                $this->setStatusCode(500);
-            }
-        }
-        if ($throwable instanceof HttpExceptionInterface) {
-            $this->setHeaders($throwable->getHeaders());
-        }
-        return $this;
-    }
-
-    public function setErrorCode(int|string $errorCode): static
-    {
-        $this->errorCode = $errorCode;
-        return $this;
-    }
-
-    public function setStatusCode(int $statusCode): static
-    {
-        $this->statusCode = $statusCode;
-        return $this;
-    }
-
-    public function getStatusCode(): int
-    {
-        return $this->statusCode ?? 200;
     }
 
     public function setHeaders(array $headers, bool $fresh = false): static
@@ -142,15 +67,133 @@ class ResponsePayload implements Arrayable
         return $this->headers;
     }
 
+    public function setStatus(bool $status): static
+    {
+        $this->status = $status;
+        return $this;
+    }
+
+    public function getStatus(): bool
+    {
+        return $this->status ?? true;
+    }
+
+    public function setStatusCode(?int $statusCode): static
+    {
+        if (!is_null($statusCode)) {
+            $this->statusCode = $statusCode;
+        }
+        return $this;
+    }
+
+    public function getStatusCode(): int
+    {
+        return $this->statusCode ?? ($this->getStatus() ? 200 : 500);
+    }
+
+    public function setErrorCode(int|string|null $errorCode): static
+    {
+        if (!is_null($errorCode)) {
+            $this->errorCode = $errorCode;
+        }
+        return $this;
+    }
+
+    public function getErrorCode(): int|string|null
+    {
+        return $this->errorCode;
+    }
+
+    public function setException(Throwable $throwable): static
+    {
+        $this->throwable = $throwable;
+        if ($throwable instanceof HttpExceptionInterface) {
+            $this->setHeaders($throwable->getHeaders());
+        }
+        if (is_null($this->status)) {
+            $this->setStatus(false);
+        }
+        if (is_null($this->statusCode)) {
+            if ($throwable instanceof ValidationException) {
+                $this->setStatusCode($throwable->status);
+            }
+            elseif ($throwable instanceof AuthenticationException) {
+                $this->setStatusCode(401);
+            }
+            elseif ($throwable instanceof HttpExceptionInterface) {
+                $this->setStatusCode($throwable->getStatusCode());
+            }
+            else {
+                $this->setStatusCode(500);
+            }
+        }
+        if (is_null($this->errorCode)) {
+            $this->setErrorCode($throwable->getCode());
+        }
+        if (is_null($this->messages)) {
+            if ($throwable instanceof ValidationException) {
+                $this->setMessages($throwable->validator->errors()->all());
+            }
+            elseif ($throwable instanceof Exception) {
+                $this->setMessages($throwable->getMessages());
+            }
+            else {
+                $this->setMessages($throwable->getMessage());
+            }
+        }
+        if (is_null($this->data)) {
+            if ($throwable instanceof ValidationException) {
+                $this->setData($throwable->errors());
+            }
+            elseif ($throwable instanceof Exception) {
+                if (count($data = $throwable->getData())) {
+                    $this->setData($data);
+                }
+            }
+        }
+        return $this;
+    }
+
+    public function getException(bool $debug = false): ?Throwable
+    {
+        return config('app.debug') || $debug ? $this->throwable : null;
+    }
+
+    public function setMessages(array|string|null $messages): static
+    {
+        if (!is_null($messages)) {
+            $this->messages = (array)$messages;
+        }
+        return $this;
+    }
+
+    public function getMessages(): ?array
+    {
+        return $this->messages;
+    }
+
+    public function setData(?array $data): static
+    {
+        if (!is_null($data)) {
+            $this->data = $data;
+        }
+        return $this;
+    }
+
+    public function getData(): ?array
+    {
+        return $this->data;
+    }
+
     public function toArray(): array
     {
         return [
-            '_status' => $this->status ?? true,
+            '_status' => $this->getStatus(),
             '_status_code' => $this->getStatusCode(),
-            '_error_code' => $this->errorCode,
-            '_exception' => config('app.debug') ? $this->throwable : null,
-            '_messages' => $this->messages,
-            '_data' => $this->data,
+            '_error_code' => $this->getErrorCode(),
+            '_exception' => $this->getException(),
+            '_messages' => $this->getMessages(),
+            '_data' => $this->getData(),
         ];
     }
 }

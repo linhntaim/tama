@@ -9,7 +9,7 @@ class WelcomeController extends ApiController
 {
     public function index(): JsonResponse
     {
-        return $this->response([
+        return $this->responseJsonSuccess([
             'welcome' => 'Welcome',
         ]);
     }

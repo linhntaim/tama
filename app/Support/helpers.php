@@ -152,6 +152,13 @@ if (!function_exists('json_decode_array')) {
     }
 }
 
+if (!function_exists('ltrim_more')) {
+    function ltrim_more(string $string, string $characters = ''): string
+    {
+        return ltrim($string, " \t\n\r\0\x0B" . $characters);
+    }
+}
+
 if (!function_exists('mkdir_recursive')) {
     function mkdir_recursive(string $directory, int $permissions = 0777, $context = null): bool
     {
@@ -173,23 +180,16 @@ if (!function_exists('number_formatter')) {
     }
 }
 
-if (!function_exists('trim_more')) {
-    function trim_more(string $string, string $characters = ''): string
-    {
-        return trim($string, " \t\n\r\0\x0B" . $characters);
-    }
-}
-
-if (!function_exists('ltrim_more')) {
-    function ltrim_more(string $string, string $characters = ''): string
-    {
-        return ltrim($string, " \t\n\r\0\x0B" . $characters);
-    }
-}
-
 if (!function_exists('rtrim_more')) {
     function rtrim_more(string $string, string $characters = ''): string
     {
         return rtrim($string, " \t\n\r\0\x0B" . $characters);
+    }
+}
+
+if (!function_exists('trim_more')) {
+    function trim_more(string $string, string $characters = ''): string
+    {
+        return trim($string, " \t\n\r\0\x0B" . $characters);
     }
 }

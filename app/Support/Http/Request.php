@@ -10,7 +10,7 @@ use Illuminate\Http\Request as BaseRequest;
 
 class Request extends BaseRequest
 {
-    public function headerJson(string $key, ?array $default): ?array
+    public function headerJson(string $key, ?array $default = null): ?array
     {
         if (is_null($header = $this->header($key))
             || is_null($header = json_decode_array($header))) {
@@ -19,7 +19,7 @@ class Request extends BaseRequest
         return $header;
     }
 
-    public function cookieJson(string $key, ?array $default): ?array
+    public function cookieJson(string $key, ?array $default = null): ?array
     {
         if (is_null($cookie = $this->cookie($key))
             || is_null($cookie = json_decode_array($cookie))) {
