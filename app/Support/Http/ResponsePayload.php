@@ -143,7 +143,9 @@ class ResponsePayload implements Arrayable
         }
         if (is_null($this->data)) {
             if ($throwable instanceof ValidationException) {
-                $this->setData($throwable->errors());
+                $this->setData([
+                    'validation' => $throwable->errors(),
+                ]);
             }
             elseif ($throwable instanceof Exception) {
                 if (count($data = $throwable->getData())) {
@@ -159,10 +161,36 @@ class ResponsePayload implements Arrayable
         return config('app.debug') || $debug ? $this->throwable : null;
     }
 
-    public function setMessages(array|string|null $messages): static
+    public function getExceptionAsArray(bool $debug = false): ?array
+    {
+        if (!config('app.debug') && !$debug) {
+            return null;
+        }
+        $exceptions = [];
+        $exception = $this->throwable;
+        do {
+            $exceptions[] = [
+                'class' => get_debug_type($exception),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'code' => $exception->getCode(),
+                'message' => $exception->getMessage(),
+                'trace' => $exception->getTrace(),
+            ];
+        }
+        while ($exception = $exception->getPrevious());
+        return $exceptions;
+    }
+
+    public function setMessages(array|string|null $messages, bool $fresh = false): static
     {
         if (!is_null($messages)) {
-            $this->messages = (array)$messages;
+            if ($fresh) {
+                $this->messages = (array)$messages;
+            }
+            else {
+                $this->messages = ($this->messages ?? []) + (array)$messages;
+            }
         }
         return $this;
     }
@@ -172,10 +200,15 @@ class ResponsePayload implements Arrayable
         return $this->messages;
     }
 
-    public function setData(?array $data): static
+    public function setData(?array $data, bool $fresh = false): static
     {
         if (!is_null($data)) {
-            $this->data = $data;
+            if ($fresh) {
+                $this->data = $data;
+            }
+            else {
+                $this->data = ($this->data ?? []) + $data;
+            }
         }
         return $this;
     }
@@ -185,13 +218,13 @@ class ResponsePayload implements Arrayable
         return $this->data;
     }
 
-    public function toArray(): array
+    public function toArray(bool $debug = false): array
     {
         return [
             '_status' => $this->getStatus(),
             '_status_code' => $this->getStatusCode(),
             '_error_code' => $this->getErrorCode(),
-            '_exception' => $this->getException(),
+            '_exception' => $this->getExceptionAsArray($debug),
             '_messages' => $this->getMessages(),
             '_data' => $this->getData(),
         ];

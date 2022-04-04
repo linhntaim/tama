@@ -1,8 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\EncryptController;
+use App\Http\Controllers\Api\PrerequisiteController;
 use App\Http\Controllers\Api\WelcomeController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,11 +16,11 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-//Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-//    return $request->user();
-//});
-
+Route::get('prerequisite', [PrerequisiteController::class, 'index']);
 Route::post('encrypt', [EncryptController::class, 'encrypt']);
 Route::post('decrypt', [EncryptController::class, 'decrypt']);
+
+//
+
 Route::any('{path?}', [WelcomeController::class, 'index'])
     ->where('path', '.*');
