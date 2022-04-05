@@ -32,7 +32,7 @@ class Manager
 
     public function settings(): Settings
     {
-        return $this->settings;
+        return clone $this->settings;
     }
 
     public function dateTimer(): DateTimer
@@ -73,7 +73,7 @@ class Manager
 
     public function settingsTemporary(Settings|array|null $settings, Closure $callback): mixed
     {
-        $origin = clone $this->settings;
+        $origin = $this->settings();
         $this->settingsMerge($settings);
         $called = $callback();
         $this->settingsMerge($origin);

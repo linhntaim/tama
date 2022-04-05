@@ -163,7 +163,7 @@ class ResponsePayload implements Arrayable
 
     public function getExceptionAsArray(bool $debug = false): ?array
     {
-        if (!config('app.debug') && !$debug) {
+        if (is_null($this->throwable) || (!config('app.debug') && !$debug)) {
             return null;
         }
         $exceptions = [];
