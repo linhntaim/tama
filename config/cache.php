@@ -45,6 +45,7 @@ return [
         'database' => [
             'driver' => 'database',
             'table' => 'sys_cache',
+            'lock_table' => 'sys_cache_locks',
             'connection' => null,
             'lock_connection' => null,
         ],
