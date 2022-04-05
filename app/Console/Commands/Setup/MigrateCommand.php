@@ -107,8 +107,6 @@ class MigrateCommand extends ForceCommand
      */
     protected function handling(): int
     {
-        $this->migrateExtraTables();
-        dd();
         foreach ([
                      'migrateDatabase',
                      'migrateTables',
