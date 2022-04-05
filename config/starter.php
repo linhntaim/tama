@@ -8,6 +8,16 @@ return [
     'app' => [
         'id' => env('APP_ID'),
     ],
+    'html_index' => [
+        // in public folder
+        'paths' => [
+            //'admin',
+        ],
+        'files' => [
+            'index.html',
+            'index.htm',
+        ],
+    ],
     'console' => [
         'commands' => [
             'logging_except' => [

@@ -3,6 +3,7 @@
 namespace App\Http;
 
 use App\Support\Client\ClientMiddleware;
+use App\Support\Http\Middleware\PrioritizeHtmlIndex;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
 class Kernel extends HttpKernel
@@ -31,6 +32,7 @@ class Kernel extends HttpKernel
      */
     protected $middlewareGroups = [
         'web' => [
+            PrioritizeHtmlIndex::class,
             \App\Http\Middleware\EncryptCookies::class,
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \Illuminate\Session\Middleware\StartSession::class,

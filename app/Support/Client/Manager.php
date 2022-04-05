@@ -16,7 +16,7 @@ class Manager
     protected Settings $settings;
 
     /**
-     * @var SettingsApplier[]|array
+     * @var array|SettingsApplier[]
      */
     protected array $settingsAppliers;
 

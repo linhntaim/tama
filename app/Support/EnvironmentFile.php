@@ -47,9 +47,11 @@ class EnvironmentFile
         return $this->exists && preg_match("/^$key=/m", $this->content) === 1;
     }
 
-    public function filled(string $key): bool
+    public function filled(string $key, &$value = null): bool
     {
-        return $this->exists && preg_match("/^$key=[^\r\n]+/m", $this->content) === 1;
+        $matched = $this->exists && preg_match("/^$key=([^\r\n]+)/m", $this->content, $matches) === 1;
+        $value = $matched ? ($matches[1] ?? null) : null;
+        return $matched;
     }
 
     protected function compose(string $key, mixed $value = null): string
@@ -58,7 +60,7 @@ class EnvironmentFile
             $value = '';
         }
         elseif (is_array($value)) {
-            $value = json_encode($value);
+            $value = json_encode_readable($value);
         }
         elseif (is_bool($value)) {
             $value = $value ? 'true' : 'false';

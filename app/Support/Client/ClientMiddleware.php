@@ -6,10 +6,10 @@
 
 namespace App\Support\Client;
 
+use App\Http\Middleware\EncryptCookies;
 use App\Support\Configuration;
 use App\Support\Http\Request;
 use Closure;
-use Illuminate\Http\Response;
 
 class ClientMiddleware
 {
@@ -88,11 +88,11 @@ class ClientMiddleware
         return Client::settingsApply();
     }
 
-    protected function storeCookie(Request $request, Response $response): Response
+    protected function storeCookie(Request $request, $response)
     {
         if (Client::settingsChanged()) {
-            if ($request->hasSession()) {
-                return $response->cookie(name_starter('settings'), Client::settings()->toJson(), Configuration::COOKIE_FOREVER_EXPIRE);
+            if (EncryptCookies::ran()) {
+                return $response->cookie(name_starter('settings'), Client::settings()->toJson(JSON_READABLE), Configuration::COOKIE_FOREVER_EXPIRE);
             }
         }
         return $response;

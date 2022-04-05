@@ -8,6 +8,7 @@ namespace App\Providers;
 
 use App\Exceptions\Handler;
 use App\Support\Client\Manager as ClientManager;
+use App\Support\Http\Request;
 use App\Support\Log\LineFormatter;
 use App\Support\Log\LogManager;
 use Illuminate\Contracts\Debug\ExceptionHandler;
@@ -24,9 +25,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        $this->registerRequest();
         $this->registerExceptionHandler();
         $this->registerLog();
         $this->registerClient();
+    }
+
+    protected function registerRequest()
+    {
+        $this->app->alias('request', Request::class);
     }
 
     protected function registerExceptionHandler()
@@ -44,10 +51,10 @@ class AppServiceProvider extends ServiceProvider
             });
         });
         // Override log manager
-        Facade::clearResolvedInstance('log');
         $this->app->singleton('log', function ($app) {
             return new LogManager($app);
         });
+        Facade::clearResolvedInstance('log');
     }
 
     protected function registerClient()

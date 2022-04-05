@@ -32,7 +32,7 @@ class Request extends BaseRequest
     {
         $bagStringGroup = new class {
             /**
-             * @var BagString[]|array
+             * @var array|BagString[]
              */
             protected array $bagStrings = [];
 
@@ -63,7 +63,7 @@ class Request extends BaseRequest
             $bagStringGroup
                 ->putBag('Headers', HeaderBagString::create($this->headers->all()))
                 ->putBag('Cookies', BagString::create($this->cookies->all()))
-                ->putBag('Sessions', BagString::create($this->session->all()))
+                ->putBag('Sessions', BagString::create($this->session?->all()))
                 ->putBag('Query', BagString::create($this->query()))
                 ->putBag('Request', BagString::create($this->post()))
                 ->putBag('Files', FileBagString::create($this->allFiles()))

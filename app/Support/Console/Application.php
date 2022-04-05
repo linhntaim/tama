@@ -189,7 +189,7 @@ class Application extends BaseApplication
                             sprintf(
                                 '<comment>#%s</comment> %s',
                                 $order->padLeft($padLength, '0'),
-                                json_encode($trace)
+                                json_encode_readable($trace)
                             ),
                             OutputInterface::VERBOSITY_QUIET
                         );

@@ -112,7 +112,7 @@ class LineFormatter extends BaseLineFormatter
                         $normalized[] = sprintf(
                             '#%s %s',
                             $order->padLeft($padLength, '0'),
-                            json_encode($trace)
+                            json_encode_readable($trace)
                         );
                     }
                 }
