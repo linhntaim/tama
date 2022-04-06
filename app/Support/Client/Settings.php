@@ -24,16 +24,73 @@ use Illuminate\Contracts\Support\Jsonable;
  */
 class Settings implements ISettings, Arrayable, Jsonable
 {
+    public static function config(?string $client = null, ?array $default = []): array
+    {
+        $clients = config_starter('client');
+        if (is_null($client)) {
+            $client = $clients['default'];
+        }
+        return $clients['settings'][$client] ?? $default;
+    }
+
+    public static function names(): array
+    {
+        return array_keys(static::config());
+    }
+
+    public static function routes(): array
+    {
+        return config_starter('client.routes');
+    }
+
+    public static function parseConfig(Settings|string|array|null $settings): array
+    {
+        if ($settings instanceof Settings) {
+            return $settings->toArray();
+        }
+        if (is_string($settings)) {
+            return static::config($settings);
+        }
+        if (is_array($settings)) {
+            return $settings;
+        }
+        return [];
+    }
+
+    public static function basedConfig(Settings|string|array|null $settings): array
+    {
+        $config = static::config();
+        foreach (static::parseConfig($settings) as $name => $value) {
+            $config[$name] = $value;
+        }
+        return $config;
+    }
+
+    public function isDiff(Settings|string|array|null $comparedSettings, Settings|string|array|null $comparingSettings, &$diff = null): bool
+    {
+        return count($diff = static::diff($comparedSettings, $comparingSettings)) > 0;
+    }
+
+    public static function diff(Settings|string|array|null $comparedSettings, Settings|string|array|null $comparingSettings): array
+    {
+        $comparedSettings = static::parseConfig($comparedSettings);
+        $comparingSettings = static::parseConfig($comparingSettings);
+        $diff = [];
+        foreach ($comparingSettings as $name => $value) {
+            if (($comparedSettings[$name] ?? null) != $value) {
+                $diff[$name] = $value;
+            }
+        }
+        return $diff;
+    }
+
     protected array $settings;
 
     protected array $changes;
 
-    public function __construct(?array $settings = null)
+    public function __construct(string|array|null $settings = null)
     {
-        $this
-            ->clearChanges()
-            ->setDefault()
-            ->merge($settings, true);
+        $this->setDefault($settings)->clearChanges();
     }
 
     public function hasChanges(): bool
@@ -47,18 +104,19 @@ class Settings implements ISettings, Arrayable, Jsonable
         return $this;
     }
 
-    protected function setDefault(): static
+    protected function setDefault(string|array|null $settings = null): static
     {
-        $client = config_starter('client');
-        $defaultSettings = $client['settings'][$client['default']];
-        $this->settings = $defaultSettings;
+        $this->settings = static::basedConfig($settings);
         return $this;
     }
 
-    public function merge(Settings|array|null $settings, bool $permanently = false): static
+    public function merge(Settings|string|array|null $settings, bool $permanently = false): static
     {
         if (is_null($settings)) {
             return $this;
+        }
+        if (is_string($settings)) {
+            $settings = static::config($settings);
         }
         if (is_array($settings)) {
             foreach ($settings as $name => $value) {
@@ -181,6 +239,16 @@ class Settings implements ISettings, Arrayable, Jsonable
             return $this->set('short_time_format', $shortTimeFormat, $permanently);
         }
         return $this;
+    }
+
+    public function isDiffFrom(Settings|string|array|null $settings, &$diff = null): bool
+    {
+        return static::isDiff($this, $settings, $diff);
+    }
+
+    public function diffFrom(Settings|string|array|null $settings): array
+    {
+        return static::diff($this, $settings);
     }
 
     public function toArray(): array

@@ -7,7 +7,6 @@
 namespace App\Support\Console\Commands;
 
 use App\Support\ClassTrait;
-use App\Support\Client\Client;
 use App\Support\Client\InternalSettingsTrait;
 use App\Support\Console\Application;
 use Illuminate\Console\Command as BaseCommand;
@@ -106,6 +105,9 @@ abstract class Command extends BaseCommand
     protected function runCommand($command, array $arguments, OutputInterface $output): int
     {
         $arguments[self::PARAMETER_OFF_SHOUT_OUT] = true;
+        foreach ($this->getFinalInternalSettings() as $name => $value) {
+            $arguments["--x-$name"] = $value;
+        }
 
         return $this->wrapRunning(
             $this->laravel,
@@ -121,11 +123,9 @@ abstract class Command extends BaseCommand
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        return $this
-            ->setForcedSettings(count($this->getInternalSettings()) ? Client::settings()->toArray() : [])
-            ->withInternalSettings(function () use ($input, $output) {
-                return parent::execute($input, $output);
-            });
+        return $this->withInternalSettings(function () use ($input, $output) {
+            return parent::execute($input, $output);
+        });
     }
 
     protected function handleBefore(): void

@@ -6,65 +6,70 @@ use Closure;
 
 trait InternalSettingsTrait
 {
-    use ParseSettingsTrait;
-
-    protected ?Settings $currentSettings;
+    protected ?array $currentSettings = null;
 
     protected string|array|null $internalSettings = null;
 
     protected bool $internalSettingsPermanently = false;
 
-    protected string|array|null $forcedSettings = null;
+    protected string|array|null $forcedInternalSettings = null;
+
+    protected ?array $currentInternalSettings = null;
+
+    protected ?array $finalInternalSettings = null;
 
     protected function captureCurrentSettings(): static
     {
-        $this->currentSettings = clone Client::settings();
+        $this->currentSettings = Client::settings()->toArray();
         return $this;
     }
 
-    protected function getCurrentSettings(): Settings
+    protected function getCurrentSettings(): array
     {
-        return is_null($this->currentSettings) ? new Settings() : $this->currentSettings;
+        return !is_array($this->currentSettings)
+            ? ($this->currentSettings = [])
+            : $this->currentSettings;
     }
 
     protected function getInternalSettings(): array
     {
         return !is_array($this->internalSettings)
-            ? ($this->internalSettings = $this->parseSettings($this->internalSettings))
+            ? ($this->internalSettings = Settings::parseConfig($this->internalSettings))
             : $this->internalSettings;
     }
 
-    public function setInternalSettings(array|string|null $internalSettings): static
+    protected function getForcedInternalSettings(): array
     {
-        $this->internalSettings = $internalSettings;
+        return !is_array($this->forcedInternalSettings)
+            ? ($this->forcedInternalSettings = Settings::parseConfig($this->forcedInternalSettings))
+            : $this->forcedInternalSettings;
+    }
+
+    public function setForcedInternalSettings(array|string|null $forcedInternalSettings): static
+    {
+        $this->forcedInternalSettings = $forcedInternalSettings;
         return $this;
     }
 
-    protected function getForcedSettings(): array
+    public function getCurrentInternalSettings(): array
     {
-        return !is_array($this->forcedSettings)
-            ? ($this->forcedSettings = $this->parseSettings($this->forcedSettings))
-            : $this->forcedSettings;
+        return !is_array($this->currentInternalSettings)
+            ? ($this->currentInternalSettings = array_merge(
+                $this->getInternalSettings(),
+                ($this->internalSettingsPermanently ? [] : $this->getForcedInternalSettings())
+            ))
+            : $this->currentInternalSettings;
     }
 
-    public function setForcedSettings(array|string|null $forcedSettings): static
+    public function getFinalInternalSettings(): array
     {
-        $this->forcedSettings = $forcedSettings;
-        return $this;
-    }
-
-    protected function finalInternalSettings(): array
-    {
-        return $this->getInternalSettings() + ($this->internalSettingsPermanently ? [] : $this->getForcedSettings());
+        return !is_array($this->finalInternalSettings)
+            ? ($this->finalInternalSettings = array_merge($this->getCurrentSettings(), $this->getCurrentInternalSettings()))
+            : $this->finalInternalSettings;
     }
 
     protected function withInternalSettings(Closure $callback)
     {
-        return count($settings = $this->finalInternalSettings())
-            ? Client::settingsTemporary(
-                $this->getCurrentSettings()->merge($settings),
-                $callback
-            )
-            : $callback();
+        return Client::settingsTemporary($this->getFinalInternalSettings(), $callback);
     }
 }

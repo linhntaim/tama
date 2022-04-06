@@ -6,8 +6,7 @@
 
 namespace App\Support\Console;
 
-use App\Support\Client\Client;
-use App\Support\Client\ParseSettingsTrait;
+use App\Support\Client\Settings;
 use App\Support\Console\Commands\Command;
 use App\Support\Console\Commands\WrapCommandTrait;
 use Illuminate\Console\Application as BaseApplication;
@@ -22,7 +21,7 @@ use Throwable;
 
 class Application extends BaseApplication
 {
-    use WrapCommandTrait, ParseSettingsTrait;
+    use WrapCommandTrait;
 
     /**
      * @var RunningCommand[]
@@ -35,7 +34,7 @@ class Application extends BaseApplication
         $command->addOption(Command::OPTION_OFF_SHOUT_OUT, null, InputOption::VALUE_NONE);
         // client
         $command->addOption('x-client', null, InputOption::VALUE_REQUIRED);
-        foreach (array_keys(config_starter('client.settings.default')) as $name) {
+        foreach (Settings::names() as $name) {
             $command->addOption("x-$name", null, InputOption::VALUE_REQUIRED);
         }
         return parent::addToParent($command);
@@ -48,25 +47,6 @@ class Application extends BaseApplication
         if (!$output->getFormatter()->hasStyle('caution')) {
             $style = new OutputFormatterStyle('red');
             $output->getFormatter()->setStyle('caution', $style);
-        }
-        if (!$output->getFormatter()->hasStyle('strong-caution')) {
-            $style = new OutputFormatterStyle('black', 'red');
-            $output->getFormatter()->setStyle('strong-caution', $style);
-        }
-
-        $settings = [];
-        if ($client = $input->getParameterOption('x-client', null)) {
-            $settings = $this->parseSettings($client);
-        }
-        foreach ($this->settingsNames() as $name) {
-            if ($value = $input->getParameterOption("x-$name", null)) {
-                $settings[$name] = $value;
-            }
-        }
-        if (count($settings)) {
-            return Client::settingsTemporary($settings, function () use ($input, $output) {
-                return parent::run($input, $output);
-            });
         }
         return parent::run($input, $output);
     }
@@ -82,7 +62,7 @@ class Application extends BaseApplication
             $command,
             $input,
             $output,
-            function ($command, $input, $output) {
+            function (SymfonyCommand $command, InputInterface $input, OutputInterface $output) {
                 return parent::doRunCommand($command, $input, $output);
             }
         );

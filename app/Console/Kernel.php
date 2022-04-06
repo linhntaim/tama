@@ -61,6 +61,9 @@ class Kernel extends ConsoleKernel
     public function call($command, array $parameters = [], $outputBuffer = null): int
     {
         $parameters[Command::PARAMETER_OFF_SHOUT_OUT] = true;
+        if ($this->commandsLoaded) {
+            $parameters = array_merge($this->latestRunningCommand()->settingsParameters(), $parameters);
+        }
         return parent::call($command, $parameters, $outputBuffer);
     }
 

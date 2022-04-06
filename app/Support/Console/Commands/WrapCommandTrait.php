@@ -2,6 +2,9 @@
 
 namespace App\Support\Console\Commands;
 
+use App\Support\App;
+use App\Support\Client\Client;
+use App\Support\Client\Settings;
 use App\Support\Console\Application as Artisan;
 use Closure;
 use Illuminate\Contracts\Container\Container;
@@ -20,8 +23,7 @@ trait WrapCommandTrait
 
     protected function wrapCanShoutOut(SymfonyCommand $command, InputInterface $input): bool
     {
-        return app()->runningInConsole()
-            && !app()->runningUnitTests()
+        return App::runningSolelyInConsole()
             && !($input->hasParameterOption(Command::PARAMETER_OFF_SHOUT_OUT));
     }
 
@@ -43,7 +45,27 @@ trait WrapCommandTrait
             $output->writeln(sprintf('<info>Command <comment>[%s]</comment> started.</info>', $command::class), OutputInterface::VERBOSITY_QUIET);
             $output->writeln('', OutputInterface::VERBOSITY_QUIET);
         }
-        $exitCode = $runCallback($command, $input, $output);
+
+        $settings = [];
+        if ($client = $input->getParameterOption('x-client', null)) {
+            $settings = Settings::parseConfig($client);
+        }
+        foreach (Settings::names() as $name) {
+            if ($value = $input->getParameterOption("--x-$name", null)) {
+                $settings[$name] = $value;
+            }
+        }
+        if (count($settings)) {
+            if ($command instanceof Command) {
+                $command->setForcedInternalSettings($settings);
+            }
+            $exitCode = Client::settingsTemporary($settings, function () use ($runCallback, $command, $input, $output) {
+                return $runCallback($command, $input, $output);
+            });
+        }
+        else {
+            $exitCode = $runCallback($command, $input, $output);
+        }
         if ($canShoutOut) {
             $output->writeln('', OutputInterface::VERBOSITY_QUIET);
             $output->writeln(sprintf('<info>Command <comment>[%s]</comment> ended.</info>', $command::class), OutputInterface::VERBOSITY_QUIET);
@@ -57,7 +79,6 @@ trait WrapCommandTrait
 
     protected function wrapException(?SymfonyCommand $command, ?InputInterface $input, OutputInterface $output, Throwable $e)
     {
-        $output->writeln('', OutputInterface::VERBOSITY_QUIET);
         $output->writeln(sprintf('<error> ERROR </error> <caution>%s</caution>', $e->getMessage()), OutputInterface::VERBOSITY_QUIET);
         do {
             $output->writeln(str_repeat('-', 50), OutputInterface::VERBOSITY_QUIET);

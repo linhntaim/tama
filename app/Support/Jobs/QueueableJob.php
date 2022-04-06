@@ -2,8 +2,11 @@
 
 namespace App\Support\Jobs;
 
+use App\Support\App;
 use App\Support\Bus\Queueable;
+use App\Support\Client\Client;
 use App\Support\Client\InternalSettingsTrait;
+use App\Support\Console\Artisan;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
 abstract class QueueableJob extends Job implements ShouldQueue
@@ -17,6 +20,11 @@ abstract class QueueableJob extends Job implements ShouldQueue
 
     public function handle()
     {
+        if (App::runningSolelyInConsole()) {
+            if ($runningCommand = Artisan::latestRunningCommand()) {
+                $this->setForcedInternalSettings($runningCommand->settings());
+            }
+        }
         $this->withInternalSettings(function () {
             parent::handle();
         });

@@ -189,7 +189,7 @@ class ResponsePayload implements Arrayable
                 $this->messages = (array)$messages;
             }
             else {
-                $this->messages = ($this->messages ?? []) + (array)$messages;
+                $this->messages = array_merge($this->messages ?? [], (array)$messages);
             }
         }
         return $this;
@@ -207,7 +207,7 @@ class ResponsePayload implements Arrayable
                 $this->data = $data;
             }
             else {
-                $this->data = ($this->data ?? []) + $data;
+                $this->data = array_merge($this->data ?? [], $data);
             }
         }
         return $this;
