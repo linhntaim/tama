@@ -4,6 +4,8 @@
  * Base
  */
 
+use App\Console\Schedules\TestSchedule;
+
 return [
     'app' => [
         'id' => env('APP_ID'),
@@ -23,6 +25,18 @@ return [
             'logging_except' => [
                 Illuminate\Queue\Console\WorkCommand::class,
                 Illuminate\Console\Scheduling\ScheduleRunCommand::class,
+            ],
+        ],
+        'schedules' => [
+            'definitions' => [
+                [
+                    'schedules' => [
+                        TestSchedule::class,
+                    ],
+                    'frequencies' => [
+                        'everyMinute',
+                    ],
+                ],
             ],
         ],
     ],
