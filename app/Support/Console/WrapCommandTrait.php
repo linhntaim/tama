@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Support\Console\Commands;
+namespace App\Support\Console;
 
 use App\Support\App;
 use App\Support\Client\Client;
 use App\Support\Client\Settings;
 use App\Support\Console\Application as Artisan;
+use App\Support\Console\Commands\Command;
 use Closure;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Facades\Log;
@@ -46,8 +47,16 @@ trait WrapCommandTrait
             $output->writeln('', OutputInterface::VERBOSITY_QUIET);
         }
 
+        $runCallbackWithDebug = !App::runningInDebug()
+        && (App::runningSolelyInConsole() || config_starter('app.debug_from_request'))
+        && $input->hasParameterOption(Command::PARAMETER_DEBUG)
+            ? function ($command, $input, $output) use ($runCallback) {
+                return with_debug($runCallback, $command, $input, $output);
+            }
+            : $runCallback;
+
         $settings = [];
-        if ($client = $input->getParameterOption('x-client', null)) {
+        if ($client = $input->getParameterOption(Command::PARAMETER_CLIENT, null)) {
             $settings = Settings::parseConfig($client);
         }
         foreach (Settings::names() as $name) {
@@ -59,12 +68,12 @@ trait WrapCommandTrait
             if ($command instanceof Command) {
                 $command->setForcedInternalSettings($settings);
             }
-            $exitCode = Client::settingsTemporary($settings, function () use ($runCallback, $command, $input, $output) {
-                return $runCallback($command, $input, $output);
+            $exitCode = Client::settingsTemporary($settings, function () use ($runCallbackWithDebug, $command, $input, $output) {
+                return $runCallbackWithDebug($command, $input, $output);
             });
         }
         else {
-            $exitCode = $runCallback($command, $input, $output);
+            $exitCode = $runCallbackWithDebug($command, $input, $output);
         }
         if ($canShoutOut) {
             $output->writeln('', OutputInterface::VERBOSITY_QUIET);

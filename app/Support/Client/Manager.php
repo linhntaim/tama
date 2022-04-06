@@ -71,12 +71,12 @@ class Manager
         return $this->settings->hasChanges();
     }
 
-    public function settingsTemporary(Settings|string|array|null $settings, Closure $callback): mixed
+    public function settingsTemporary(Settings|string|array|null $settings, Closure $callback, ...$args): mixed
     {
         if ($this->settings->isDiffFrom($settings)) {
             $origin = $this->settings();
             $this->settingsMerge($settings);
-            $called = $callback();
+            $called = value($callback, ...$args);
             $this->settingsMerge($origin);
             return $called;
         }

@@ -8,7 +8,7 @@ namespace App\Support\Console;
 
 use App\Support\Client\Settings;
 use App\Support\Console\Commands\Command;
-use App\Support\Console\Commands\WrapCommandTrait;
+use App\Support\Console\WrapCommandTrait;
 use Illuminate\Console\Application as BaseApplication;
 use Illuminate\Console\BufferedConsoleOutput;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
@@ -30,10 +30,12 @@ class Application extends BaseApplication
 
     protected function addToParent(SymfonyCommand $command): SymfonyCommand
     {
+        // debug
+        $command->addOption(Command::OPTION_DEBUG, null, InputOption::VALUE_NONE);
         // shout-out
         $command->addOption(Command::OPTION_OFF_SHOUT_OUT, null, InputOption::VALUE_NONE);
         // client
-        $command->addOption('x-client', null, InputOption::VALUE_REQUIRED);
+        $command->addOption(Command::OPTION_CLIENT, null, InputOption::VALUE_REQUIRED);
         foreach (Settings::names() as $name) {
             $command->addOption("x-$name", null, InputOption::VALUE_REQUIRED);
         }

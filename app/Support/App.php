@@ -10,4 +10,9 @@ class App extends BaseApp
     {
         return parent::runningInConsole() && !parent::runningUnitTests();
     }
+
+    public static function runningInDebug(): bool
+    {
+        return config('app.debug');
+    }
 }

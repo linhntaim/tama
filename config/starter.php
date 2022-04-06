@@ -9,6 +9,7 @@ use App\Console\Schedules\TestSchedule;
 return [
     'app' => [
         'id' => env('APP_ID'),
+        'debug_from_request' => (bool)env('APP_DEBUG_FROM_REQUEST', false),
     ],
     'html_index' => [
         // in public folder
@@ -32,6 +33,12 @@ return [
                 [
                     'schedules' => [
                         TestSchedule::class,
+                        'about',
+                        \App\Console\Commands\AboutCommand::class,
+                        \App\Jobs\TestJob::class,
+                        [\App\Console\Commands\AboutCommand::class, ['a' => 'b']],
+                        [\App\Jobs\TestJob::class, ['a' => 'b'], ['c']],
+                        'dir',
                     ],
                     'frequencies' => [
                         'everyMinute',

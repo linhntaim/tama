@@ -2,8 +2,10 @@
 
 namespace App\Support\Console;
 
+use App\Support\App;
 use App\Support\Console\Schedules\Schedule;
 use App\Support\Jobs\Job;
+use Closure;
 use Illuminate\Console\Scheduling\Event as ConsoleScheduleEvent;
 use Illuminate\Console\Scheduling\Schedule as ConsoleSchedule;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
@@ -17,6 +19,8 @@ class Scheduler
     protected ?string $name = null;
 
     protected array $params = [];
+
+    protected ?string $debug = null;
 
     protected function reset(): static
     {
@@ -37,13 +41,13 @@ class Scheduler
         return $this;
     }
 
-    protected function parse($scheduleCaller, $scheduleCallerParams = [], $methodParams = []): static
+    protected function parse($scheduleCaller, array $scheduleCallerParams = [], array $methodParams = []): static
     {
         if (is_array($scheduleCaller)) {
             return $this->parse(
                 $scheduleCaller[0] ?? null,
-                $scheduleCaller[1] ?? [],
-                $scheduleCaller[2] ?? []
+                (array)($scheduleCaller[1] ?? []),
+                (array)($scheduleCaller[2] ?? [])
             );
         }
 
@@ -51,12 +55,12 @@ class Scheduler
             if (is_subclass_of($scheduleCaller, Schedule::class)) {
                 $this
                     ->setName('call')
-                    ->addParams(new $scheduleCaller(...$scheduleCallerParams));
+                    ->addParams(new $scheduleCaller(...array_values($scheduleCallerParams)));
             }
             elseif (is_subclass_of($scheduleCaller, Job::class)) {
                 $this
                     ->setName('job')
-                    ->addParams(new $scheduleCaller(...$scheduleCallerParams), ...$methodParams);
+                    ->addParams(new $scheduleCaller(...array_values($scheduleCallerParams)), ...$methodParams);
             }
             elseif (is_subclass_of($scheduleCaller, SymfonyCommand::class)) {
                 $this
@@ -80,10 +84,42 @@ class Scheduler
         return $this;
     }
 
+    protected function writeDebug(string|Closure $text = ''): static
+    {
+        if (App::runningInDebug()) {
+            if (is_null($this->debug)) {
+                $this->debug = value($text);
+            }
+            else {
+                $this->debug .= value($text);
+            }
+        }
+        return $this;
+    }
+
+    protected function shoutDebug(): static
+    {
+        if (App::runningSolelyInConsole()) {
+            echo $this->debug;
+        }
+        return $this;
+    }
+
     protected function call(array $frequencies = []): ?ConsoleScheduleEvent
     {
         if ($this->name) {
             $scheduleEvent = $this->schedule->{$this->name}(...$this->params);
+
+            $this->writeDebug(function () {
+                return sprintf(
+                    '$schedule->%s(%s)',
+                    $this->name,
+                    implode(', ', array_map(function ($param) {
+                        return describe_var($param);
+                    }, $this->params))
+                );
+            });
+
             foreach ($frequencies as $key => $value) {
                 if (is_int($key)) {
                     $method = $value;
@@ -94,7 +130,20 @@ class Scheduler
                     $parameters = (array)$value;
                 }
                 $scheduleEvent->{$method}(...$parameters);
+
+                $this->writeDebug(function () use ($method, $parameters) {
+                    return sprintf(
+                        '->%s(%s)',
+                        $method,
+                        implode(', ', array_map(function ($param) {
+                            return describe_var($param);
+                        }, $parameters))
+                    );
+                });
             }
+            $this->writeDebug(function () {
+                return PHP_EOL;
+            });
             return $scheduleEvent;
         }
         return null;
@@ -117,6 +166,6 @@ class Scheduler
                 }
             }
         }
-        return $this;
+        return $this->shoutDebug();
     }
 }

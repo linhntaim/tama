@@ -9,6 +9,7 @@ namespace App\Support\Console\Commands;
 use App\Support\ClassTrait;
 use App\Support\Client\InternalSettingsTrait;
 use App\Support\Console\Application;
+use App\Support\Console\WrapCommandTrait;
 use Illuminate\Console\Command as BaseCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -22,8 +23,12 @@ abstract class Command extends BaseCommand
 {
     use ClassTrait, WrapCommandTrait, InternalSettingsTrait;
 
+    public const OPTION_DEBUG = 'x-debug';
+    public const PARAMETER_DEBUG = '--' . self::OPTION_DEBUG;
     public const OPTION_OFF_SHOUT_OUT = 'off-shout-out';
     public const PARAMETER_OFF_SHOUT_OUT = '--' . self::OPTION_OFF_SHOUT_OUT;
+    public const OPTION_CLIENT = 'x-client';
+    public const PARAMETER_CLIENT = '--' . self::OPTION_CLIENT;
 
     public function __construct()
     {
