@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static Manager settingsMerge(Settings|string|array|null $settings, bool $permanently = false, bool $apply = true)
  * @method static Manager settingsApply()
  * @method static bool settingsChanged()
- * @method static mixed settingsTemporary(Settings|string|array|null $settings, Closure $callback)
+ * @method static mixed settingsTemporary(Settings|string|array|null $settings, Closure $callback, ...$args)
  *
  * @see Manager
  */

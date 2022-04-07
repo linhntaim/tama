@@ -93,11 +93,11 @@ if (!function_exists('describe_var')) {
         if (is_resource($value)) {
             return '{resource}';
         }
-        if (is_callable($value)) {
-            return '{callable}';
-        }
         if (is_object($value)) {
             return sprintf('{%s}', get_debug_type($value));
+        }
+        if (is_callable($value)) {
+            return '{callable}';
         }
         return (string)$value;
     }
@@ -187,9 +187,26 @@ if (!function_exists('rtrim_more')) {
     }
 }
 
+if (!function_exists('stringable')) {
+    function stringable(mixed $value): bool
+    {
+        return is_string($value) || (is_object($value) && method_exists($value, '__toString'));
+    }
+}
+
 if (!function_exists('trim_more')) {
     function trim_more(string $string, string $characters = ''): string
     {
         return trim($string, " \t\n\r\0\x0B" . $characters);
+    }
+}
+
+if (!function_exists('with_debug')) {
+    function with_debug(Closure $callback, ...$args): string
+    {
+        config(['app.debug' => true]);
+        $called = value($callback, ...$args);
+        config(['app.debug' => false]);
+        return $called;
     }
 }

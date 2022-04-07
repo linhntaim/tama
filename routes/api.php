@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\Api\EncryptController;
 use App\Http\Controllers\Api\PrerequisiteController;
-use App\Http\Controllers\Api\Test\JobController as TestJobController;
+use App\Http\Controllers\Api\Trial\JobController as TrialJobController;
 use App\Http\Controllers\Api\WelcomeController;
 use Illuminate\Support\Facades\Route;
 
@@ -23,9 +23,9 @@ Route::post('decrypt', [EncryptController::class, 'decrypt']);
 
 //
 Route::group([
-    'prefix' => 'test',
+    'prefix' => 'trial',
 ], function () {
-    Route::post('job', [TestJobController::class, 'store']);
+    Route::post('job', [TrialJobController::class, 'store']);
 });
 
 Route::any('{path?}', [WelcomeController::class, 'index'])

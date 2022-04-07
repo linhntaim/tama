@@ -2,7 +2,7 @@
 
 namespace App\Support\Http;
 
-use App\Exceptions\Exception;
+use App\Support\Exceptions\Exception;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Validation\ValidationException;

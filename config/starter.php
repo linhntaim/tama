@@ -7,6 +7,7 @@
 return [
     'app' => [
         'id' => env('APP_ID'),
+        'debug_from_request' => (bool)env('APP_DEBUG_FROM_REQUEST', false),
     ],
     'html_index' => [
         // in public folder
@@ -23,6 +24,18 @@ return [
             'logging_except' => [
                 Illuminate\Queue\Console\WorkCommand::class,
                 Illuminate\Console\Scheduling\ScheduleRunCommand::class,
+            ],
+        ],
+        'schedules' => [
+            'definitions' => [
+                [
+                    'schedules' => [
+                        //App\Console\Schedules\TrialSchedule::class,
+                    ],
+                    'frequencies' => [
+                        'everyMinute',
+                    ],
+                ],
             ],
         ],
     ],
