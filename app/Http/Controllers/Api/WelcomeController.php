@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\ApiController;
+use App\Support\Http\Controllers\ApiController;
 use Illuminate\Http\JsonResponse;
 
 class WelcomeController extends ApiController

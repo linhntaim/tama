@@ -25,7 +25,7 @@ class ClientMiddleware
             }
         }
 
-        $this->viaQuery($request);
+        $this->viaInput($request);
         $this->applySettings();
         return $this->storeCookie($request, $next($request));
     }
@@ -62,7 +62,7 @@ class ClientMiddleware
         return false;
     }
 
-    protected function viaQuery(Request $request): Manager|bool
+    protected function viaInput(Request $request): Manager|bool
     {
         $settings = Settings::parseConfig($request->input('x_client'));
         foreach (Settings::names() as $name) {

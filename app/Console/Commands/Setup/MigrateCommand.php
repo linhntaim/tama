@@ -6,9 +6,9 @@
 
 namespace App\Console\Commands\Setup;
 
-use App\Exceptions\DatabaseException;
 use App\Support\Console\Commands\ForceCommand;
 use App\Support\EnvironmentFile;
+use App\Support\Exceptions\DatabaseException;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Composer;

@@ -21,7 +21,7 @@ abstract class QueueableJob extends Job implements ShouldQueue
     public function handle()
     {
         if (App::runningSolelyInConsole()) {
-            if ($runningCommand = Artisan::latestRunningCommand()) {
+            if ($runningCommand = Artisan::lastRunningCommand()) {
                 $this->setForcedInternalSettings($runningCommand->settings());
             }
         }
