@@ -6,6 +6,7 @@
 
 namespace App\Support\Console;
 
+use App\Support\Client\Settings;
 use App\Support\Console\Commands\Command;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
 use Symfony\Component\Console\Input\InputInterface;
@@ -17,6 +18,8 @@ class RunningCommand
     public ?InputInterface $input = null;
 
     protected ?array $settingsParameters = null;
+
+    protected ?array $settings = null;
 
     public function setCommand(SymfonyCommand $command): static
     {
@@ -30,27 +33,45 @@ class RunningCommand
         return $this;
     }
 
+    public function settings(): array
+    {
+        if (is_null($this->settings)) {
+            $this->settings = [];
+            if ($this->command instanceof Command) {
+                $this->settings = $this->command->getFinalInternalSettings();
+            }
+            else {
+                $this->settings = Settings::parseConfig($this->input->getParameterOption('--x-client', null));
+                foreach (Settings::names() as $name) {
+                    if (!is_null($value = $this->input->getParameterOption("--x-$name", null))) {
+                        $this->settings[$name] = $value;
+                    }
+                }
+            }
+        }
+        return $this->settings;
+    }
+
     public function settingsParameters(): array
     {
         if (is_null($this->settingsParameters)) {
+            $this->settingsParameters = [];
             if ($this->command instanceof Command) {
-                $this->settingsParameters = $this->command->settingsArguments();
+                foreach ($this->command->getFinalInternalSettings() as $name => $value) {
+                    $this->settingsParameters["--x-$name"] = $value;
+                }
             }
             else {
-                $this->settingsParameters = [];
-                $this->setSettingsParameter('--x-client');
-                foreach (array_keys(config_starter('client.settings.default')) as $name) {
-                    $this->setSettingsParameter("--x-$name");
+                if (!is_null($value = $this->input->getParameterOption('--x-client', null))) {
+                    $this->settingsParameters['--x-client'] = $value;
+                }
+                foreach (Settings::names() as $name) {
+                    if (!is_null($value = $this->input->getParameterOption("--x-$name", null))) {
+                        $this->settingsParameters["--x-$name"] = $value;
+                    }
                 }
             }
         }
         return $this->settingsParameters;
-    }
-
-    protected function setSettingsParameter($name)
-    {
-        if (!is_null($value = $this->input->getParameterOption($name, null))) {
-            $this->settingsParameters[$name] = $value;
-        }
     }
 }

@@ -48,11 +48,6 @@ trait ResponseTrait
         );
     }
 
-    protected function responseJsonOk(array $headers = []): JsonResponse
-    {
-        return $this->responseJson(null, 200, $headers);
-    }
-
     protected function responseJsonSuccess(?array $data = null, ?int $status = null, array $headers = []): JsonResponse
     {
         if (!is_null($status) && ($status >= 400 || $status < 100)) {

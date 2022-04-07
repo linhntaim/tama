@@ -7,14 +7,13 @@
 namespace App\Support\Console\Commands;
 
 use App\Support\ClassTrait;
-use App\Support\Client\Client;
+use App\Support\Client\InternalSettingsTrait;
 use App\Support\Console\Application;
-use Exception;
+use App\Support\Console\Shell;
+use App\Support\Console\Sheller;
+use App\Support\Console\WrapCommandTrait;
+use App\Support\Exceptions\ShellException;
 use Illuminate\Console\Command as BaseCommand;
-use Illuminate\Console\Scheduling\ScheduleRunCommand;
-use Illuminate\Queue\Console\WorkCommand;
-use Illuminate\Support\Facades\Log;
-use Symfony\Component\Console\Command\Command as SymfonyCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -25,18 +24,14 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 abstract class Command extends BaseCommand
 {
-    use ClassTrait;
+    use ClassTrait, WrapCommandTrait, InternalSettingsTrait;
 
+    public const OPTION_DEBUG = 'x-debug';
+    public const PARAMETER_DEBUG = '--' . self::OPTION_DEBUG;
     public const OPTION_OFF_SHOUT_OUT = 'off-shout-out';
     public const PARAMETER_OFF_SHOUT_OUT = '--' . self::OPTION_OFF_SHOUT_OUT;
-
-    private ?bool $canShoutOut = null;
-
-    private ?array $settingsArguments = null;
-
-    protected string|array|null $settings = null;
-
-    protected bool $settingsPermanently = false;
+    public const OPTION_CLIENT = 'x-client';
+    public const PARAMETER_CLIENT = '--' . self::OPTION_CLIENT;
 
     public function __construct()
     {
@@ -115,117 +110,80 @@ abstract class Command extends BaseCommand
         return [];
     }
 
-    protected function settingsCommanded(): array
-    {
-        $clientSettingsConfig = config_starter('client.settings');
-        $settings = [];
-        if (is_string($this->settings)) {
-            $settings = $clientSettingsConfig[$this->settings] ?? [];
-        }
-        elseif (is_array($this->settings)) {
-            foreach ($this->settings as $name => $value) {
-                $settings[$name] = $value;
-            }
-        }
-        return $settings;
-    }
-
-    protected function settingsArgumentsCommanded(): array
-    {
-        $settingsArguments = [];
-        foreach ($this->settingsCommanded() as $name => $value) {
-            $settingsArguments["--x-$name"] = $value;
-        }
-        return $settingsArguments;
-    }
-
-    public function settingsArguments(): array
-    {
-        if (is_null($this->settingsArguments)) {
-            $this->settingsArguments = $this->settingsArgumentsCommanded();
-            if (!count($this->settingsArguments) || !$this->settingsPermanently) {
-                if (!is_null($value = $this->option('x-client'))) {
-                    $this->settingsArguments['--x-client'] = $value;
-                }
-                foreach (array_keys(config_starter('client.settings.default')) as $name) {
-                    if (!is_null($value = $this->option("x-$name"))) {
-                        $this->settingsArguments["--x-$name"] = $value;
-                    }
-                }
-            }
-        }
-        return $this->settingsArguments;
-    }
-
-    protected function settingsParse()
-    {
-        $clientSettingsConfig = config_starter('client.settings');
-        $settings = $this->settingsCommanded();
-        if (!count($settings) || !$this->settingsPermanently) {
-            if (!is_null($value = $this->option('x-client'))) {
-                $settings = $clientSettingsConfig[$value] ?? [];
-            }
-            foreach (array_keys($clientSettingsConfig['default']) as $name) {
-                if (!is_null($value = $this->option("x-$name"))) {
-                    $settings[$name] = $value;
-                }
-            }
-        }
-        return $settings;
-    }
-
-    /**
-     * @throws Exception
-     */
     protected function runCommand($command, array $arguments, OutputInterface $output): int
     {
         $arguments[self::PARAMETER_OFF_SHOUT_OUT] = true;
-        $arguments = ['command' => $command] + $arguments + $this->settingsArguments();
+        foreach ($this->getFinalInternalSettings() as $name => $value) {
+            $arguments["--x-$name"] = $value;
+        }
 
-        $command = $this->resolveCommand($command);
-        $input = $this->createInputFromArguments($arguments);
-        $this->getApplication()->startRunningCommand($command, $input);
-        $notStarterCommand = !($command instanceof Command);
-        $canLog = $notStarterCommand
-            && !in_array($command::class, config_starter('console.commands.logging_except'));
-        if ($canLog) {
-            Log::info(sprintf('Command [%s] started.', $command::class));
-        }
-        $canShoutOut = $notStarterCommand
-            && $this->laravel->runningInConsole()
-            && !$this->laravel->runningUnitTests()
-            && !($arguments[self::PARAMETER_OFF_SHOUT_OUT] ?? false);
-        if ($canShoutOut) {
-            $this->info(sprintf('Command [%s] started.', $command::class));
-            $this->newLine();
-        }
-        $exitCode = $command->run($input, $output);
-        if ($canShoutOut) {
-            $this->newLine();
-            $this->info(sprintf('Command [%s] ended.', $command::class));
-        }
-        if ($canLog) {
-            Log::info(sprintf('Command [%s] ended.', $command::class));
-        }
-        $this->getApplication()->endRunningCommand();
-        return $exitCode;
+        return $this->wrapRunning(
+            $this->laravel,
+            $this->getApplication(),
+            $this->resolveCommand($command),
+            $this->createInputFromArguments(['command' => $command] + $arguments),
+            $output,
+            function ($command, $input, $output) {
+                return $command->run($input, $output);
+            }
+        );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        if (count($settings = $this->settingsParse())) {
-            return Client::settingsTemporary($settings, fn() => parent::execute($input, $output));
-        }
-        return parent::execute($input, $output);
+        return $this->withInternalSettings(function () use ($input, $output) {
+            return parent::execute($input, $output);
+        });
     }
 
-    protected function canShoutOut(): bool
+    public function text($string, $style = null, $verbosity = null)
     {
-        return is_null($this->canShoutOut)
-            ? ($this->canShoutOut = $this->laravel->runningInConsole()
-                && !$this->laravel->runningUnitTests()
-                && !$this->option(self::OPTION_OFF_SHOUT_OUT))
-            : $this->canShoutOut;
+        $styled = $style ? "<$style>$string</$style>" : $string;
+
+        $this->output->write($styled, false, $this->parseVerbosity($verbosity));
+    }
+
+    public function textInfo($string, $verbosity = null)
+    {
+        $this->text($string, 'info', $verbosity);
+    }
+
+    public function textError($string, $verbosity = null)
+    {
+        $this->text($string, 'error', $verbosity);
+    }
+
+    public function textComment($string, $verbosity = null)
+    {
+        $this->text($string, 'comment', $verbosity);
+    }
+
+    public function textWarn($string, $verbosity = null)
+    {
+        $this->text($string, 'warning', $verbosity);
+    }
+
+    public function textCaution($string, $verbosity = null)
+    {
+        $this->text($string, 'caution', $verbosity);
+    }
+
+    public function lineWithBadge($string, $badge, $style = null, $badgeStyle = null, $verbosity = null)
+    {
+        $styled = $style ? "<$style>$string</$style>" : $string;
+        $badgeStyled = $badgeStyle ? "<$badgeStyle>$badge</$badgeStyle>" : $badge;
+
+        $this->output->writeln($badgeStyled . ' ' . $styled, $this->parseVerbosity($verbosity));
+    }
+
+    public function caution($string, $verbosity = null)
+    {
+        $this->line($string, 'caution', $verbosity);
+    }
+
+    public function cautionWithBadge($string, $badge = 'CAUTION', $verbosity = null)
+    {
+        $this->lineWithBadge($string, ' ' . $badge . ' ', 'caution', 'error-badge', $verbosity);
     }
 
     protected function handleBefore(): void
@@ -238,19 +196,9 @@ abstract class Command extends BaseCommand
 
     public function handle(): int
     {
-        Log::info(sprintf('Command [%s] started.', $this->className()));
-        if ($this->canShoutOut()) {
-            $this->info(sprintf('Command <comment>[%s]</comment> started.', $this->className()));
-            $this->newLine();
-        }
         $this->handleBefore();
         $exit = $this->handling();
         $this->handleAfter();
-        if ($this->canShoutOut()) {
-            $this->newLine();
-            $this->info(sprintf('Command <comment>[%s]</comment> ended.', $this->className()));
-        }
-        Log::info(sprintf('Command [%s] ended.', $this->className()));
         return $exit;
     }
 
@@ -269,5 +217,37 @@ abstract class Command extends BaseCommand
     protected function exitInvalid(): int
     {
         return self::INVALID;
+    }
+
+    protected function getSheller(): Sheller
+    {
+        return Shell::getFacadeRoot();
+    }
+
+    /**
+     * @throws ShellException
+     */
+    protected function handleShell($shell): int
+    {
+        if ($canShoutOut = $this->wrapCanShoutOut($this, $this->input)) {
+            $this->info('Shell started.');
+            $this->warn($shell);
+            $this->line(str_repeat('-', 50));
+        }
+        $sheller = $this->getSheller();
+        $exitCode = $sheller->run($shell);
+        $successful = $sheller->successful();
+        if ($output = $sheller->output()) {
+            $successful
+                ? $this->line($output)
+                : $this->warn($output);
+        }
+        if ($canShoutOut) {
+            $this->line(str_repeat('-', 50));
+            $successful
+                ? $this->info(sprintf('Shell succeeded (exit code: %d).', $exitCode))
+                : $this->cautionWithBadge(sprintf('Shell failed (exit code: %d).', $exitCode), 'ERROR');
+        }
+        return $exitCode;
     }
 }

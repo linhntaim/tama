@@ -6,6 +6,7 @@
 
 namespace App\Exceptions;
 
+use App\Support\App;
 use App\Support\Console\Artisan;
 use App\Support\Http\Request;
 use App\Support\Http\ResponseTrait;
@@ -13,7 +14,6 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Throwable;
@@ -67,7 +67,7 @@ class Handler extends ExceptionHandler
      */
     protected function requestContent(): mixed
     {
-        if (App::runningInConsole() && !App::runningUnitTests()) {
+        if (App::runningSolelyInConsole()) {
             if ($runningCommand = Artisan::rootRunningCommand()) {
                 return $runningCommand;
             }

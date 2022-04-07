@@ -32,7 +32,7 @@ class Manager
 
     public function settings(): Settings
     {
-        return $this->settings;
+        return clone $this->settings;
     }
 
     public function dateTimer(): DateTimer
@@ -51,7 +51,7 @@ class Manager
         return $this;
     }
 
-    public function settingsMerge(Settings|array|null $settings, bool $permanently = false, bool $apply = true): static
+    public function settingsMerge(Settings|string|array|null $settings, bool $permanently = false, bool $apply = true): static
     {
         $this->settings->merge($settings, $permanently);
         return $apply ? $this->settingsApply() : $this;
@@ -71,12 +71,15 @@ class Manager
         return $this->settings->hasChanges();
     }
 
-    public function settingsTemporary(Settings|array|null $settings, Closure $callback): mixed
+    public function settingsTemporary(Settings|string|array|null $settings, Closure $callback, ...$args): mixed
     {
-        $origin = clone $this->settings;
-        $this->settingsMerge($settings);
-        $called = $callback();
-        $this->settingsMerge($origin);
-        return $called;
+        if ($this->settings->isDiffFrom($settings)) {
+            $origin = $this->settings();
+            $this->settingsMerge($settings);
+            $called = value($callback, ...$args);
+            $this->settingsMerge($origin);
+            return $called;
+        }
+        return $callback();
     }
 }

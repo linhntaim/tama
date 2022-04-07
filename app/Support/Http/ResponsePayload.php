@@ -2,7 +2,7 @@
 
 namespace App\Support\Http;
 
-use App\Exceptions\Exception;
+use App\Support\Exceptions\Exception;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Validation\ValidationException;
@@ -163,7 +163,7 @@ class ResponsePayload implements Arrayable
 
     public function getExceptionAsArray(bool $debug = false): ?array
     {
-        if (!config('app.debug') && !$debug) {
+        if (is_null($this->throwable) || (!config('app.debug') && !$debug)) {
             return null;
         }
         $exceptions = [];
@@ -189,7 +189,7 @@ class ResponsePayload implements Arrayable
                 $this->messages = (array)$messages;
             }
             else {
-                $this->messages = ($this->messages ?? []) + (array)$messages;
+                $this->messages = array_merge($this->messages ?? [], (array)$messages);
             }
         }
         return $this;
@@ -207,7 +207,7 @@ class ResponsePayload implements Arrayable
                 $this->data = $data;
             }
             else {
-                $this->data = ($this->data ?? []) + $data;
+                $this->data = array_merge($this->data ?? [], $data);
             }
         }
         return $this;

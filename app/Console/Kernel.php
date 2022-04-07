@@ -6,12 +6,13 @@
 
 namespace App\Console;
 
-use App\Support\Client\Client;
 use App\Support\Console\Application as Artisan;
 use App\Support\Console\Commands\Command;
 use App\Support\Console\RunningCommand;
-use Illuminate\Console\Scheduling\Schedule;
+use App\Support\Console\Scheduler;
+use Illuminate\Console\Scheduling\Schedule as ConsoleSchedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Symfony\Component\Console\Output\OutputInterface;
 use Throwable;
 
 /**
@@ -22,12 +23,12 @@ class Kernel extends ConsoleKernel
     /**
      * Define the application's command schedule.
      *
-     * @param Schedule $schedule
+     * @param ConsoleSchedule $schedule
      * @return void
      */
-    protected function schedule(Schedule $schedule)
+    protected function schedule(ConsoleSchedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        (new Scheduler())($this->getArtisan(), $schedule);
     }
 
     /**
@@ -42,7 +43,7 @@ class Kernel extends ConsoleKernel
         require base_path('routes/console.php');
     }
 
-    protected function getArtisan()
+    protected function getArtisan(): Artisan
     {
         if (is_null($this->artisan)) {
             $this->artisan = (new Artisan($this->app, $this->events, $this->app->version()))
@@ -57,18 +58,7 @@ class Kernel extends ConsoleKernel
     {
         $parameters[Command::PARAMETER_OFF_SHOUT_OUT] = true;
         if ($this->commandsLoaded) {
-            if ($runningCommand = $this->latestRunningCommand()) {
-                $parameters += $runningCommand->settingsParameters();
-            }
-        }
-        else {
-            $parameters += (function (array $settings) {
-                $settingsParameters = [];
-                foreach ($settings as $name => $value) {
-                    $settingsParameters["--x-$name"] = $value;
-                }
-                return $settingsParameters;
-            })(Client::settings()->toArray());
+            $parameters = array_merge($this->lastRunningCommand()->settingsParameters(), $parameters);
         }
         return parent::call($command, $parameters, $outputBuffer);
     }
@@ -78,9 +68,9 @@ class Kernel extends ConsoleKernel
         return $this->getArtisan()->rootRunningCommand();
     }
 
-    public function latestRunningCommand(): ?RunningCommand
+    public function lastRunningCommand(): ?RunningCommand
     {
-        return $this->getArtisan()->latestRunningCommand();
+        return $this->getArtisan()->lastRunningCommand();
     }
 
     public function renderThrowable(Throwable $e, $output)

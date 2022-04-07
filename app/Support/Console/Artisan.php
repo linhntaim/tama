@@ -12,6 +12,7 @@ use Throwable;
 
 /**
  * @method static RunningCommand|null rootRunningCommand()
+ * @method static RunningCommand|null lastRunningCommand()
  * @method static void renderThrowable(Throwable $e, $output)
  *
  * @see Kernel

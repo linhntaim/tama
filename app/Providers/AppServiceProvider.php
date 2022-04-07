@@ -8,6 +8,7 @@ namespace App\Providers;
 
 use App\Exceptions\Handler;
 use App\Support\Client\Manager as ClientManager;
+use App\Support\Console\Sheller;
 use App\Support\Http\Request;
 use App\Support\Log\LineFormatter;
 use App\Support\Log\LogManager;
@@ -28,6 +29,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerRequest();
         $this->registerExceptionHandler();
         $this->registerLog();
+        $this->registerShell();
         $this->registerClient();
     }
 
@@ -55,6 +57,11 @@ class AppServiceProvider extends ServiceProvider
             return new LogManager($app);
         });
         Facade::clearResolvedInstance('log');
+    }
+
+    protected function registerShell()
+    {
+        $this->app->singleton('shell', Sheller::class);
     }
 
     protected function registerClient()

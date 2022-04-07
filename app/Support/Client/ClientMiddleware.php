@@ -25,7 +25,7 @@ class ClientMiddleware
             }
         }
 
-        $this->viaQuery($request);
+        $this->viaInput($request);
         $this->applySettings();
         return $this->storeCookie($request, $next($request));
     }
@@ -53,22 +53,20 @@ class ClientMiddleware
     protected function viaRoute(Request $request, ?string $source = null): Manager|bool
     {
         if (is_null($source) || $source === 'route') {
-            foreach (config_starter('client.routes') as $routeMatch => $settingsName) {
+            foreach (Settings::routes() as $routeMatch => $settings) {
                 if ($request->is($routeMatch)) {
-                    return $this->mergeSettings(config_starter("client.routes.$settingsName"));
+                    return $this->mergeSettings($settings);
                 }
             }
         }
         return false;
     }
 
-    protected function viaQuery(Request $request): Manager|bool
+    protected function viaInput(Request $request): Manager|bool
     {
-        $settings = !is_null($value = $request->query('x_client'))
-            ? config_starter('client.settings')[$value] ?? []
-            : [];
-        foreach (array_keys(config_starter('client.settings.default')) as $name) {
-            if (!is_null($value = $request->query("x_$name"))) {
+        $settings = Settings::parseConfig($request->input('x_client'));
+        foreach (Settings::names() as $name) {
+            if (!is_null($value = $request->input("x_$name"))) {
                 $settings[$name] = $value;
             }
         }
@@ -78,7 +76,7 @@ class ClientMiddleware
         return false;
     }
 
-    protected function mergeSettings(array $settings, bool $permanently = true): Manager
+    protected function mergeSettings(string|array $settings, bool $permanently = true): Manager
     {
         return Client::settingsMerge($settings, $permanently, false);
     }

@@ -7,6 +7,7 @@
 namespace App\Support\Log;
 
 use App\Support\Console\RunningCommand;
+use App\Support\Exceptions\ShellException;
 use App\Support\Http\Request;
 use Monolog\Formatter\LineFormatter as BaseLineFormatter;
 use Throwable;
@@ -49,6 +50,11 @@ class LineFormatter extends BaseLineFormatter
     {
         $normalized[] = '';
         $normalized[] = '<Exception>';
+        if ($e instanceof ShellException && ($output = $e->getOutput())) {
+            $normalized[] = '[Output]';
+            $normalized[] = $output;
+        }
+        $normalized[] = '[Trace]';
         do {
             $traces = $e->getTrace();
             $traces[] = [
