@@ -5,7 +5,6 @@ namespace App\Support\Console;
 use App\Support\App;
 use App\Support\Console\Schedules\Schedule;
 use App\Support\Jobs\Job;
-use Closure;
 use Illuminate\Console\Scheduling\Event as ConsoleScheduleEvent;
 use Illuminate\Console\Scheduling\Schedule as ConsoleSchedule;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
@@ -16,16 +15,19 @@ class Scheduler
 
     protected array $commandNames;
 
+    protected ?array $forcedInternalSettings = null;
+
     protected ?string $name = null;
 
     protected array $params = [];
 
-    protected ?string $debug = null;
+    protected ?string $description = null;
 
     protected function reset(): static
     {
         $this->name = null;
         $this->params = [];
+        $this->description = null;
         return $this;
     }
 
@@ -41,6 +43,12 @@ class Scheduler
         return $this;
     }
 
+    public function setDescription(string $description): static
+    {
+        $this->description = $description;
+        return $this;
+    }
+
     protected function parse($scheduleCaller, array $scheduleCallerParams = [], array $methodParams = []): static
     {
         if (is_array($scheduleCaller)) {
@@ -52,55 +60,72 @@ class Scheduler
         }
 
         if (is_string($scheduleCaller)) {
+            $composeCommandParams = function (array $commandParams): array {
+                foreach (($this->forcedInternalSettings ?? []) as $name => $value) {
+                    $commandParams["--x-$name"] = $value;
+                }
+                return $commandParams;
+            };
+            $composeCommandParamsDescription = function (array $commandParams): string {
+                $commandArgs = [];
+                foreach ($commandParams as $name => $value) {
+                    $commandArgs[] = str($name)->startsWith('--')
+                        ? sprintf('%s="%s"', $name, str_replace('"', '\\"', $value))
+                        : sprintf('"%s"', str_replace('"', '\\"', $value));
+                }
+                return implode(' ', $commandArgs);
+            };
             if (is_subclass_of($scheduleCaller, Schedule::class)) {
                 $this
                     ->setName('call')
-                    ->addParams(new $scheduleCaller(...array_values($scheduleCallerParams)));
+                    ->addParams(new $scheduleCaller(...$scheduleCallerParams))
+                    ->setDescription($scheduleCaller);
             }
             elseif (is_subclass_of($scheduleCaller, Job::class)) {
                 $this
                     ->setName('job')
-                    ->addParams(new $scheduleCaller(...array_values($scheduleCallerParams)), ...$methodParams);
+                    ->addParams(new $scheduleCaller(...$scheduleCallerParams), ...$methodParams);
             }
             elseif (is_subclass_of($scheduleCaller, SymfonyCommand::class)) {
+                $commandParamsDescription = $composeCommandParamsDescription(
+                    $commandParams = $composeCommandParams($scheduleCallerParams)
+                );
                 $this
                     ->setName('command')
-                    ->addParams($scheduleCaller, $scheduleCallerParams);
+                    ->addParams($scheduleCaller, $commandParams)
+                    ->setDescription(
+                        sprintf(
+                            '%s%s > "NUL" 2>&1',
+                            $scheduleCaller,
+                            $commandParamsDescription ? ' ' . $commandParamsDescription : ''
+                        )
+                    );
             }
             else {
-                $commandName = strtok($scheduleCaller, ' ');
+                $commandName = strstr($scheduleCaller, ' ', true) ?: $scheduleCaller;
                 if (in_array($commandName, $this->commandNames)) {
+                    $commandParamsDescription = $composeCommandParamsDescription(
+                        $commandParams = $composeCommandParams($commandName == $scheduleCaller ? $scheduleCallerParams : [])
+                    );
                     $this
                         ->setName('command')
-                        ->addParams($scheduleCaller);
+                        ->addParams($scheduleCaller, $commandParams)
+                        ->setDescription(
+                            sprintf(
+                                '"%s" "artisan" %s%s > "NUL" 2>&1',
+                                PHP_BINARY,
+                                $scheduleCaller,
+                                $commandParamsDescription ? ' ' . $commandParamsDescription : ''
+                            )
+                        );
                 }
                 else {
                     $this
                         ->setName('exec')
-                        ->addParams($scheduleCaller);
+                        ->addParams($scheduleCaller)
+                        ->setDescription(sprintf('%s > "NUL" 2>&1', $scheduleCaller));
                 }
             }
-        }
-        return $this;
-    }
-
-    protected function writeDebug(string|Closure $text = ''): static
-    {
-        if (App::runningInDebug()) {
-            if (is_null($this->debug)) {
-                $this->debug = value($text);
-            }
-            else {
-                $this->debug .= value($text);
-            }
-        }
-        return $this;
-    }
-
-    protected function shoutDebug(): static
-    {
-        if (App::runningSolelyInConsole()) {
-            echo $this->debug;
         }
         return $this;
     }
@@ -109,17 +134,6 @@ class Scheduler
     {
         if ($this->name) {
             $scheduleEvent = $this->schedule->{$this->name}(...$this->params);
-
-            $this->writeDebug(function () {
-                return sprintf(
-                    '$schedule->%s(%s)',
-                    $this->name,
-                    implode(', ', array_map(function ($param) {
-                        return describe_var($param);
-                    }, $this->params))
-                );
-            });
-
             foreach ($frequencies as $key => $value) {
                 if (is_int($key)) {
                     $method = $value;
@@ -130,21 +144,8 @@ class Scheduler
                     $parameters = (array)$value;
                 }
                 $scheduleEvent->{$method}(...$parameters);
-
-                $this->writeDebug(function () use ($method, $parameters) {
-                    return sprintf(
-                        '->%s(%s)',
-                        $method,
-                        implode(', ', array_map(function ($param) {
-                            return describe_var($param);
-                        }, $parameters))
-                    );
-                });
             }
-            $this->writeDebug(function () {
-                return PHP_EOL;
-            });
-            return $scheduleEvent;
+            return $this->description ? $scheduleEvent->description($this->description) : $scheduleEvent;
         }
         return null;
     }
@@ -153,6 +154,11 @@ class Scheduler
     {
         $this->schedule = $schedule;
         $this->commandNames = array_keys($application->all());
+        if (App::runningSolelyInConsole()) {
+            if ($runningCommand = $application->lastRunningCommand()) {
+                $this->forcedInternalSettings = $runningCommand->settings();
+            }
+        }
 
         foreach (config_starter('console.schedules.definitions') as $scheduleDefinition) {
             $scheduleCallerDefinitions = $scheduleDefinition['schedules'] ?? [];
@@ -166,6 +172,6 @@ class Scheduler
                 }
             }
         }
-        return $this->shoutDebug();
+        return $this;
     }
 }

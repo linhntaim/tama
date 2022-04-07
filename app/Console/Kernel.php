@@ -12,6 +12,7 @@ use App\Support\Console\RunningCommand;
 use App\Support\Console\Scheduler;
 use Illuminate\Console\Scheduling\Schedule as ConsoleSchedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Symfony\Component\Console\Output\OutputInterface;
 use Throwable;
 
 /**
@@ -57,7 +58,7 @@ class Kernel extends ConsoleKernel
     {
         $parameters[Command::PARAMETER_OFF_SHOUT_OUT] = true;
         if ($this->commandsLoaded) {
-            $parameters = array_merge($this->latestRunningCommand()->settingsParameters(), $parameters);
+            $parameters = array_merge($this->lastRunningCommand()->settingsParameters(), $parameters);
         }
         return parent::call($command, $parameters, $outputBuffer);
     }
@@ -67,9 +68,9 @@ class Kernel extends ConsoleKernel
         return $this->getArtisan()->rootRunningCommand();
     }
 
-    public function latestRunningCommand(): ?RunningCommand
+    public function lastRunningCommand(): ?RunningCommand
     {
-        return $this->getArtisan()->latestRunningCommand();
+        return $this->getArtisan()->lastRunningCommand();
     }
 
     public function renderThrowable(Throwable $e, $output)

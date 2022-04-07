@@ -37,12 +37,10 @@ trait WrapCommandTrait
         Closure         $runCallback)
     {
         $artisan->startRunningCommand($command, $input);
-        $canLog = $this->wrapCanLog($command, $input);
-        $canShoutOut = $this->wrapCanShoutOut($command, $input);
-        if ($canLog) {
+        if ($canLog = $this->wrapCanLog($command, $input)) {
             Log::info(sprintf('Command [%s] started.', $command::class));
         }
-        if ($canShoutOut) {
+        if ($canShoutOut = $this->wrapCanShoutOut($command, $input)) {
             $output->writeln(sprintf('<info>Command <comment>[%s]</comment> started.</info>', $command::class), OutputInterface::VERBOSITY_QUIET);
             $output->writeln('', OutputInterface::VERBOSITY_QUIET);
         }

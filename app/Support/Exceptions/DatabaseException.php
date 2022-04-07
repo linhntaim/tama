@@ -4,7 +4,7 @@
  * Base
  */
 
-namespace App\Exceptions;
+namespace App\Support\Exceptions;
 
 use PDOException;
 use Throwable;

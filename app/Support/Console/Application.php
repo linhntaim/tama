@@ -8,7 +8,6 @@ namespace App\Support\Console;
 
 use App\Support\Client\Settings;
 use App\Support\Console\Commands\Command;
-use App\Support\Console\WrapCommandTrait;
 use Illuminate\Console\Application as BaseApplication;
 use Illuminate\Console\BufferedConsoleOutput;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
@@ -42,6 +41,11 @@ class Application extends BaseApplication
         return parent::addToParent($command);
     }
 
+    public function call($command, array $parameters = [], $outputBuffer = null): int
+    {
+        return parent::call($command, $parameters, $outputBuffer ?: $this->lastOutput);
+    }
+
     public function run(InputInterface $input = null, OutputInterface $output = null): int
     {
         $input = $input ?: new ArgvInput;
@@ -49,6 +53,14 @@ class Application extends BaseApplication
         if (!$output->getFormatter()->hasStyle('caution')) {
             $style = new OutputFormatterStyle('red');
             $output->getFormatter()->setStyle('caution', $style);
+        }
+        if (!$output->getFormatter()->hasStyle('warning')) {
+            $style = new OutputFormatterStyle('yellow');
+            $output->getFormatter()->setStyle('warning', $style);
+        }
+        if (!$output->getFormatter()->hasStyle('error-badge')) {
+            $style = new OutputFormatterStyle('white', 'red');
+            $output->getFormatter()->setStyle('error-badge', $style);
         }
         return parent::run($input, $output);
     }
@@ -87,7 +99,7 @@ class Application extends BaseApplication
         return $this->runningCommands[0] ?? null;
     }
 
-    public function latestRunningCommand(): ?RunningCommand
+    public function lastRunningCommand(): ?RunningCommand
     {
         return $this->runningCommands[count($this->runningCommands) - 1] ?? null;
     }

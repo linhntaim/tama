@@ -9,7 +9,10 @@ namespace App\Support\Console\Commands;
 use App\Support\ClassTrait;
 use App\Support\Client\InternalSettingsTrait;
 use App\Support\Console\Application;
+use App\Support\Console\Shell;
+use App\Support\Console\Sheller;
 use App\Support\Console\WrapCommandTrait;
+use App\Support\Exceptions\ShellException;
 use Illuminate\Console\Command as BaseCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -133,6 +136,56 @@ abstract class Command extends BaseCommand
         });
     }
 
+    public function text($string, $style = null, $verbosity = null)
+    {
+        $styled = $style ? "<$style>$string</$style>" : $string;
+
+        $this->output->write($styled, false, $this->parseVerbosity($verbosity));
+    }
+
+    public function textInfo($string, $verbosity = null)
+    {
+        $this->text($string, 'info', $verbosity);
+    }
+
+    public function textError($string, $verbosity = null)
+    {
+        $this->text($string, 'error', $verbosity);
+    }
+
+    public function textComment($string, $verbosity = null)
+    {
+        $this->text($string, 'comment', $verbosity);
+    }
+
+    public function textWarn($string, $verbosity = null)
+    {
+        $this->text($string, 'warning', $verbosity);
+    }
+
+    public function textCaution($string, $verbosity = null)
+    {
+        $this->text($string, 'caution', $verbosity);
+    }
+
+    public function lineWithBadge($string, $badge, $style = null, $badgeStyle = null, $verbosity = null)
+    {
+        $styled = $style ? "<$style>$string</$style>" : $string;
+        $badgeStyled = $badgeStyle ? "<$badgeStyle>$badge</$badgeStyle>" : $badge;
+
+        $this->output->writeln($badgeStyled . ' ' . $styled, $this->parseVerbosity($verbosity));
+    }
+
+    public function caution($string, $verbosity = null)
+    {
+        $this->line($string, 'caution', $verbosity);
+    }
+
+    public function cautionWithBadge($string, $badge = 'CAUTION', $verbosity = null)
+    {
+        $this->lineWithBadge($string, ' ' . $badge . ' ', 'caution', 'error-badge', $verbosity);
+    }
+
     protected function handleBefore(): void
     {
     }
@@ -164,5 +217,37 @@ abstract class Command extends BaseCommand
     protected function exitInvalid(): int
     {
         return self::INVALID;
+    }
+
+    protected function getSheller(): Sheller
+    {
+        return Shell::getFacadeRoot();
+    }
+
+    /**
+     * @throws ShellException
+     */
+    protected function handleShell($shell): int
+    {
+        if ($canShoutOut = $this->wrapCanShoutOut($this, $this->input)) {
+            $this->info('Shell started.');
+            $this->warn($shell);
+            $this->line(str_repeat('-', 50));
+        }
+        $sheller = $this->getSheller();
+        $exitCode = $sheller->run($shell);
+        $successful = $sheller->successful();
+        if ($output = $sheller->output()) {
+            $successful
+                ? $this->line($output)
+                : $this->warn($output);
+        }
+        if ($canShoutOut) {
+            $this->line(str_repeat('-', 50));
+            $successful
+                ? $this->info(sprintf('Shell succeeded (exit code: %d).', $exitCode))
+                : $this->cautionWithBadge(sprintf('Shell failed (exit code: %d).', $exitCode), 'ERROR');
+        }
+        return $exitCode;
     }
 }

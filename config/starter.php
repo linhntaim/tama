@@ -4,8 +4,6 @@
  * Base
  */
 
-use App\Console\Schedules\TestSchedule;
-
 return [
     'app' => [
         'id' => env('APP_ID'),
@@ -32,13 +30,7 @@ return [
             'definitions' => [
                 [
                     'schedules' => [
-                        TestSchedule::class,
-                        'about',
-                        \App\Console\Commands\AboutCommand::class,
-                        \App\Jobs\TestJob::class,
-                        [\App\Console\Commands\AboutCommand::class, ['a' => 'b']],
-                        [\App\Jobs\TestJob::class, ['a' => 'b'], ['c']],
-                        'dir',
+                        //App\Console\Schedules\TrialSchedule::class,
                     ],
                     'frequencies' => [
                         'everyMinute',

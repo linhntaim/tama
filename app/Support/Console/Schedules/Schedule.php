@@ -2,17 +2,23 @@
 
 namespace App\Support\Console\Schedules;
 
+use App\Support\App;
 use App\Support\ClassTrait;
 use App\Support\Client\InternalSettingsTrait;
+use App\Support\Console\Artisan;
 use Illuminate\Support\Facades\Log;
 
 abstract class Schedule
 {
     use ClassTrait, InternalSettingsTrait;
 
-    public static function run(): static
+    public function __construct()
     {
-        return (new static())();
+        if (App::runningSolelyInConsole()) {
+            if ($runningCommand = Artisan::lastRunningCommand()) {
+                $this->setForcedInternalSettings($runningCommand->settings());
+            }
+        }
     }
 
     protected function handleBefore()
@@ -25,7 +31,7 @@ abstract class Schedule
 
     protected abstract function handling();
 
-    protected function handle(): static
+    public function __invoke(): static
     {
         Log::info(sprintf('Schedule [%s] started.', $this->className()));
         $this->handleBefore();
@@ -35,10 +41,5 @@ abstract class Schedule
         $this->handleAfter();
         Log::info(sprintf('Schedule [%s] ended.', $this->className()));
         return $this;
-    }
-
-    public function __invoke(): static
-    {
-        return $this->handle();
     }
 }
