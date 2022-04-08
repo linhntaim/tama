@@ -39,7 +39,7 @@ abstract class Listener
      * @param Event $event
      * @return void
      */
-    public function handle($event)
+    final public function handle($event)
     {
         if (App::runningSolelyInConsole()) {
             if (($runningCommand = Artisan::lastRunningCommand())
