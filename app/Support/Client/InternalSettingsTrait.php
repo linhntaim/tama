@@ -18,27 +18,27 @@ trait InternalSettingsTrait
 
     protected ?array $finalInternalSettings = null;
 
-    protected function captureCurrentSettings(): static
+    public function captureCurrentSettings(): static
     {
         $this->currentSettings = Client::settings()->toArray();
         return $this;
     }
 
-    protected function getCurrentSettings(): array
+    public function getCurrentSettings(): array
     {
         return !is_array($this->currentSettings)
             ? ($this->currentSettings = [])
             : $this->currentSettings;
     }
 
-    protected function getInternalSettings(): array
+    public function getInternalSettings(): array
     {
         return !is_array($this->internalSettings)
             ? ($this->internalSettings = Settings::parseConfig($this->internalSettings))
             : $this->internalSettings;
     }
 
-    protected function getForcedInternalSettings(): array
+    public function getForcedInternalSettings(): array
     {
         return !is_array($this->forcedInternalSettings)
             ? ($this->forcedInternalSettings = Settings::parseConfig($this->forcedInternalSettings))
@@ -68,7 +68,7 @@ trait InternalSettingsTrait
             : $this->finalInternalSettings;
     }
 
-    protected function withInternalSettings(Closure $callback)
+    public function withInternalSettings(Closure $callback)
     {
         return Client::settingsTemporary($this->getFinalInternalSettings(), $callback);
     }

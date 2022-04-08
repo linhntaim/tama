@@ -6,7 +6,7 @@ use App\Support\App;
 use App\Support\Console\Commands\Command;
 use Illuminate\Support\Facades\Log;
 
-class CommandCommand extends Command
+class TrialCommand extends Command
 {
     protected function handling(): int
     {
