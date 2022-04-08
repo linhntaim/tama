@@ -2,11 +2,24 @@
 
 namespace App\Support\Events;
 
+use App\Support\App;
+use App\Support\Client\InternalSettingsTrait;
+use App\Support\Console\Artisan;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
 abstract class Event
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable, InteractsWithSockets, SerializesModels, InternalSettingsTrait;
+
+    public function __construct()
+    {
+        $this->captureCurrentSettings();
+        if (App::runningSolelyInConsole()) {
+            if ($runningCommand = Artisan::lastRunningCommand()) {
+                $this->setForcedInternalSettings($runningCommand->settings());
+            }
+        }
+    }
 }

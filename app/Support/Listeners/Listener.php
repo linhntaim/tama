@@ -2,7 +2,9 @@
 
 namespace App\Support\Listeners;
 
+use App\Support\App;
 use App\Support\ClassTrait;
+use App\Support\Console\Artisan;
 use App\Support\Events\Event;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -11,25 +13,54 @@ abstract class Listener
 {
     use ClassTrait;
 
+    /**
+     * @param Event $event
+     * @return void
+     */
     protected function handleBefore($event)
     {
     }
 
+    /**
+     * @param Event $event
+     * @return void
+     */
     protected function handleAfter($event)
     {
     }
 
+    /**
+     * @param Event $event
+     * @return void
+     */
     protected abstract function handling($event);
 
-    public function handle(Event $event)
+    /**
+     * @param Event $event
+     * @return void
+     */
+    public function handle($event)
     {
-        Log::info(sprintf('Listener [%s] started.', $this->className()));
-        $this->handleBefore($event);
-        $this->handling($event);
-        $this->handleAfter($event);
-        Log::info(sprintf('Listener [%s] ended.', $this->className()));
+        if (App::runningSolelyInConsole()) {
+            if (($runningCommand = Artisan::lastRunningCommand())
+                && count($settings = $runningCommand->settings())) {
+                $event->setForcedInternalSettings($settings);
+            }
+        }
+        $event->withInternalSettings(function () use ($event) {
+            Log::info(sprintf('Listener [%s] started.', $this->className()));
+            $this->handleBefore($event);
+            $this->handling($event);
+            $this->handleAfter($event);
+            Log::info(sprintf('Listener [%s] ended.', $this->className()));
+        });
     }
 
+    /**
+     * @param Event $event
+     * @param Throwable $e
+     * @return void
+     */
     public function failed($event, Throwable $e)
     {
     }
