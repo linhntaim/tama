@@ -2,10 +2,12 @@
 
 namespace App\Providers;
 
+use App\Events\TrialEvent;
+use App\Listeners\TrialListener;
+use App\Listeners\TrialQueueableListener;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Event;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -17,6 +19,10 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         Registered::class => [
             SendEmailVerificationNotification::class,
+        ],
+        TrialEvent::class => [
+            TrialListener::class,
+            TrialQueueableListener::class,
         ],
     ];
 

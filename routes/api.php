@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\EncryptController;
 use App\Http\Controllers\Api\PrerequisiteController;
+use App\Http\Controllers\Api\Trial\EventController as TrialEventController;
 use App\Http\Controllers\Api\Trial\JobController as TrialJobController;
 use App\Http\Controllers\Api\WelcomeController;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +27,7 @@ Route::group([
     'prefix' => 'trial',
 ], function () {
     Route::post('job', [TrialJobController::class, 'store']);
+    Route::post('event', [TrialEventController::class, 'store']);
 });
 
 Route::any('{path?}', [WelcomeController::class, 'index'])
