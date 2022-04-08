@@ -2,31 +2,12 @@
 
 namespace App\Support\Jobs;
 
-use App\Support\App;
-use App\Support\Bus\Queueable;
-use App\Support\Client\Client;
-use App\Support\Client\InternalSettingsTrait;
-use App\Support\Console\Artisan;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 
 abstract class QueueableJob extends Job implements ShouldQueue
 {
-    use Queueable, InternalSettingsTrait;
-
-    public function __construct()
-    {
-        $this->captureCurrentSettings();
-    }
-
-    public function handle()
-    {
-        if (App::runningSolelyInConsole()) {
-            if ($runningCommand = Artisan::lastRunningCommand()) {
-                $this->setForcedInternalSettings($runningCommand->settings());
-            }
-        }
-        $this->withInternalSettings(function () {
-            parent::handle();
-        });
-    }
+    use InteractsWithQueue, Queueable, SerializesModels;
 }

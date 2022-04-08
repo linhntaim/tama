@@ -31,15 +31,15 @@ abstract class Schedule
 
     protected abstract function handling();
 
-    public function __invoke(): static
+    final public function __invoke(): static
     {
-        Log::info(sprintf('Schedule [%s] started.', $this->className()));
-        $this->handleBefore();
-        $this->withInternalSettings(function () {
+        return $this->withInternalSettings(function () {
+            Log::info(sprintf('Schedule [%s] started.', $this->className()));
+            $this->handleBefore();
             $this->handling();
+            $this->handleAfter();
+            Log::info(sprintf('Schedule [%s] ended.', $this->className()));
+            return $this;
         });
-        $this->handleAfter();
-        Log::info(sprintf('Schedule [%s] ended.', $this->className()));
-        return $this;
     }
 }
