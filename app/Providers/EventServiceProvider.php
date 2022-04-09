@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Events\CoinIdentificationEvent;
 use App\Events\TrialEvent;
+use App\Listeners\CoinIdentificationListener;
 use App\Listeners\TrialListener;
 use App\Listeners\TrialQueueableListener;
 use Illuminate\Auth\Events\Registered;
@@ -23,6 +25,9 @@ class EventServiceProvider extends ServiceProvider
         TrialEvent::class => [
             TrialListener::class,
             TrialQueueableListener::class,
+        ],
+        CoinIdentificationEvent::class => [
+            CoinIdentificationListener::class,
         ],
     ];
 
