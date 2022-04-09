@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+    <!-- Basic authentication -->
+    <!-- Default: disabled, remove comment to enable (note to make the line with // turn to comment) -->
+    <!-- More at https://github.com/nabehiro/HttpAuthModule -->
+    <!--
+    <configSections>
+        <section name="httpAuthModule" type="System.Configuration.NameValueFileSectionHandler"/>
+    </configSections>
+    <httpAuthModule>
+        <add key="AuthMode" value="Basic"/>
+        <add key="Realm" value="SecureZone"/>
+        // Ignore: IPs
+        <add key="IgnoreIPAddresses" value="127.0.0.1"/>
+        // Ignore: Images & Health check
+        <add key="IgnorePathRegex" value="\.(jpg|jpeg|png|gif|svg|ico)$|200\.html$"/>
+        // Other must fill username and password
+        <add key="Credentials" value="starter:Starter@123456"/>
+    </httpAuthModule>
+    -->
+    <system.web>
+        <!-- Set default charset -->
+        <globalization
+                fileEncoding="utf-8"
+                responseEncoding="utf-8"
+        />
+    </system.web>
+    <system.webServer>
+        <!-- If basic authentication is enabled, remove comment
+        <modules>
+            <add type="HttpAuthModule.HttpAuthModule" name="HttpAuthModule"/>
+        </modules>
+        -->
+        <!-- Set default document -->
+        <!-- Default: disabled, 'cause MS Azure App Services don't like it) -->
+        <!--
+        <defaultDocument enabled="true">
+            <files>
+                <add value="index.php"/>
+                <add value="index.html"/>
+                <add value="index.htm"/>
+            </files>
+        </defaultDocument>
+        -->
+        <!-- Set mime for some specific file extension -->
+        <staticContent>
+            <remove fileExtension=".json"/>
+            <remove fileExtension=".woff"/>
+            <remove fileExtension=".woff2"/>
+            <remove fileExtension=".otf"/>
+            <remove fileExtension=".csv"/>
+            <remove fileExtension=".txt"/>
+            <remove fileExtension=".mp4"/>
+            <mimeMap fileExtension=".json" mimeType="application/json"/>
+            <mimeMap fileExtension=".woff" mimeType="font/woff"/>
+            <mimeMap fileExtension=".woff2" mimeType="font/woff2"/>
+            <mimeMap fileExtension=".otf" mimeType="font/opentype"/>
+            <mimeMap fileExtension=".csv" mimeType="text/csv"/>
+            <mimeMap fileExtension=".txt" mimeType="text/plain"/>
+            <mimeMap fileExtension=".mp4" mimeType="video/mp4"/>
+        </staticContent>
+        <handlers>
+            <!-- Allow to include .html file in other .html files -->
+            <add name="SSINC-html"
+                 path="*.html"
+                 verb="*"
+                 modules="ServerSideIncludeModule"
+                 resourceType="File"
+                 requireAccess="Script"/>
+        </handlers>
+        <httpProtocol>
+            <customHeaders>
+                <!-- Enable cross-domain accessing -->
+                <add name="Access-Control-Allow-Origin" value="*"/>
+                <add name="Access-Control-Allow-Headers"
+                     value="Accept, Authorization, Content-Type, Device, Origin, Referer, User-Agent, X-Authorization, X-Client-Id, X-Device, X-Requested-With, X-Settings, X-Screen"/>
+                <add name="Access-Control-Allow-Methods" value="OPTIONS, GET, POST, PUT, DELETE"/>
+                <add name="Access-Control-Max-Age" value="86400"/>
+
+                <!-- Force to use HTTPS -->
+                <add name="Strict-Transport-Security" value="max-age=86400; includeSubDomains"/>
+
+                <!-- Not allow browsers to change content type of response -->
+                <add name="X-Content-Type-Options" value="nosniff"/>
+
+                <!-- Not allow browsers to open downloaded file directly -->
+                <add name="X-Download-Options" value="noopen"/>
+
+                <!-- Not allow browsers to open the website in an iframe of other websites -->
+                <add name="X-Frame-Options" value="sameorigin"/>
+
+                <!-- Prevent from XSS attack -->
+                <add name="X-XSS-Protection" value="1; mode=block"/>
+
+                <!-- Allow to load resources from known places only -->
+                <!--
+                <add name="Content-Security-Policy" value="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: fonts.googleapis.com fonts.gstatic.com *.googletagmanager.com *.google-analytics.com"/>
+                <add name="X-Content-Security-Policy" value="allow 'self' 'unsafe-inline' 'unsafe-eval' data: blob: fonts.googleapis.com fonts.gstatic.com *.googletagmanager.com *.google-analytics.com"/>
+                <add name="X-WebKit-CSP" value="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: fonts.googleapis.com fonts.gstatic.com *.googletagmanager.com *.google-analytics.com"/>
+                -->
+
+                <!-- Cache for static files only, ignore other requests -->
+                <remove name="Cache-Control"/>
+                <add name="Cache-Control" value="no-cache, no-store, private"/>
+                <add name="Pragma" value="no-cache"/>
+            </customHeaders>
+        </httpProtocol>
+        <rewrite>
+            <outboundRules>
+                <!-- Cache for static files only, ignore other requests -->
+                <rule name="cache_control_on_static_files">
+                    <match serverVariable="RESPONSE_Cache_Control" pattern=".*"/>
+                    <conditions>
+                        <add input="{REQUEST_FILENAME}" pattern="\.(html|jpg|jpeg|png|gif|svg|ico|css|js|json|woff|woff2|mp4)$"/>
+                    </conditions>
+                    <action type="Rewrite" value="max-age=84600, public"/>
+                </rule>
+            </outboundRules>
+            <rules>
+                <!-- Redirect Trailing Slashes If Not A Folder... -->
+                <rule name="Redirect Trailing Slashes If Not A Folder..." stopProcessing="true">
+                    <match url="^(.*)/$" ignoreCase="false" />
+                    <conditions>
+                        <add input="{REQUEST_FILENAME}" matchType="IsDirectory" ignoreCase="false" negate="true" />
+                    </conditions>
+                    <action type="Redirect" redirectType="Permanent" url="/{R:1}" />
+                </rule>
+                <!-- Send Requests To Front Controller... -->
+                <rule name="Send Requests To Front Controller..." stopProcessing="true">
+                    <match url="^" ignoreCase="false"/>
+                    <conditions logicalGrouping="MatchAll">
+                        <add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true"/>
+                        <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true"/>
+                    </conditions>
+                    <action type="Rewrite" url="index.php" appendQueryString="true"/>
+                </rule>
+            </rules>
+        </rewrite>
+    </system.webServer>
+</configuration>

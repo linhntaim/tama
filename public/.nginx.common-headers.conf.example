@@ -1,0 +1,25 @@
+### Enable cross-domain accessing
+add_header Access-Control-Allow-Origin "*" always;
+add_header Access-Control-Allow-Headers "Accept, Authorization, Content-Type, Origin, Referer, User-Agent, X-Authorization, X-Client-Id, X-Device, X-Requested-With, X-Settings, X-Screen";
+add_header Access-Control-Allow-Methods "OPTIONS, GET, POST, PUT, DELETE";
+add_header Access-Control-Max-Age 86400;
+
+### Force to use HTTPS
+add_header Strict-Transport-Security "max-age=86400; includeSubDomains";
+
+### Not allow browsers to change content type of response
+add_header X-Content-Type-Options "nosniff";
+
+### Not allow browsers to open downloaded file directly
+add_header X-Download-Options "noopen";
+
+### Not allow browsers to open the website in an iframe of other websites
+add_header X-Frame-Options "sameorigin";
+
+### Prevent from XSS attack
+add_header X-XSS-Protection "1; mode=block";
+
+### Allow to load resources from known places only
+add_header Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: fonts.googleapis.com fonts.gstatic.com *.googletagmanager.com *.google-analytics.com";
+add_header X-Content-Security-Policy "allow 'self' 'unsafe-inline' 'unsafe-eval' data: blob: fonts.googleapis.com fonts.gstatic.com *.googletagmanager.com *.google-analytics.com";
+add_header X-WebKit-CSP "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: fonts.googleapis.com fonts.gstatic.com *.googletagmanager.com *.google-analytics.com";
