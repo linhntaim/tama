@@ -2,8 +2,8 @@
 
 namespace App\Support\Console;
 
-use App\Support\App;
 use App\Support\Console\Schedules\Schedule;
+use App\Support\Facades\App;
 use App\Support\Jobs\Job;
 use Illuminate\Console\Scheduling\Event as ConsoleScheduleEvent;
 use Illuminate\Console\Scheduling\Schedule as ConsoleSchedule;

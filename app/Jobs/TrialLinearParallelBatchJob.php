@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Support\App;
+use App\Support\Facades\App;
 use App\Support\Jobs\ParallelBatchJob;
 use Illuminate\Support\Facades\Log;
 

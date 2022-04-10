@@ -2,10 +2,10 @@
 
 namespace App\Support\Jobs;
 
-use App\Support\App;
 use App\Support\ClassTrait;
 use App\Support\Client\InternalSettingsTrait;
 use App\Support\Console\Artisan;
+use App\Support\Facades\App;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
 use Throwable;
