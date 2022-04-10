@@ -7,17 +7,20 @@
 namespace App\Providers;
 
 use App\Exceptions\Handler;
+use App\Support\Cache\RateLimiter;
 use App\Support\Client\Manager as ClientManager;
 use App\Support\Console\Sheller;
 use App\Support\Http\Request;
 use App\Support\Log\LineFormatter;
 use App\Support\Log\LogManager;
+use Illuminate\Cache\RateLimiter as BaseRateLimiter;
 use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Contracts\Support\DeferrableProvider;
 use Illuminate\Support\Facades\Facade;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 
-class AppServiceProvider extends ServiceProvider
+class AppServiceProvider extends ServiceProvider implements DeferrableProvider
 {
     /**
      * Register any application services.
@@ -29,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerRequest();
         $this->registerExceptionHandler();
         $this->registerLog();
+        $this->registerCache();
         $this->registerShell();
         $this->registerClient();
     }
@@ -57,6 +61,15 @@ class AppServiceProvider extends ServiceProvider
             return new LogManager($app);
         });
         Facade::clearResolvedInstance('log');
+    }
+
+    protected function registerCache()
+    {
+        $this->app->singleton(BaseRateLimiter::class, function ($app) {
+            return new RateLimiter($app->make('cache')->driver(
+                $app['config']->get('cache.limiter')
+            ));
+        });
     }
 
     protected function registerShell()
@@ -97,5 +110,12 @@ class AppServiceProvider extends ServiceProvider
                 $config->set("logging.channels.$channel.permission", 0777);
             }
         }
+    }
+
+    public function provides()
+    {
+        return [
+            BaseRateLimiter::class,
+        ];
     }
 }
