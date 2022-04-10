@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Support\ModelProviders\ModelProvider;
+use App\Support\Models\ModelProvider;
 
 /**
  * @property User|null $model

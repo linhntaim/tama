@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support\ModelProviders;
+namespace App\Support\Models\QueryConditions;
 
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
@@ -14,12 +14,15 @@ class WhereCondition extends QueryCondition
 
     protected mixed $value;
 
-    public function __construct(string|array|Closure|Expression $name, mixed $value, string $operator = '=')
+    protected string $boolean;
+
+    public function __construct(string|array|Closure|Expression $name, mixed $value, string $operator = '=', $boolean = 'and')
     {
         $this
             ->setName($name)
             ->setValue($value)
-            ->setOperator($operator);
+            ->setOperator($operator)
+            ->setBoolean($boolean);
     }
 
     public function setName(string|array|Closure|Expression $name): static
@@ -40,8 +43,14 @@ class WhereCondition extends QueryCondition
         return $this;
     }
 
+    public function setBoolean(string $boolean): static
+    {
+        $this->boolean = $boolean;
+        return $this;
+    }
+
     public function __invoke(Builder $query): Builder
     {
-        return $query->where($this->name, $this->operator, $this->value);
+        return $query->where($this->name, $this->operator, $this->value, $this->boolean);
     }
 }

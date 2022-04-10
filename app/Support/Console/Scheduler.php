@@ -37,7 +37,7 @@ class Scheduler
         return $this;
     }
 
-    protected function addParams(...$params): static
+    protected function addParams(mixed ...$params): static
     {
         array_push($this->params, ...$params);
         return $this;

@@ -130,11 +130,7 @@ if (!function_exists('filled_array')) {
 }
 
 if (!function_exists('join_paths')) {
-    /**
-     * @param string[] $paths
-     * @return string
-     */
-    function join_paths(...$paths): string
+    function join_paths(string ...$paths): string
     {
         return implode(
             DIRECTORY_SEPARATOR,
@@ -144,11 +140,7 @@ if (!function_exists('join_paths')) {
 }
 
 if (!function_exists('join_urls')) {
-    /**
-     * @param string[] $urls
-     * @return string
-     */
-    function join_urls(...$urls): string
+    function join_urls(string ...$urls): string
     {
         return implode(
             '/',
@@ -189,6 +181,13 @@ if (!function_exists('mkdir_recursive')) {
     function mkdir_recursive(string $directory, int $permissions = 0777, $context = null): bool
     {
         return mkdir($directory, $permissions, true, $context);
+    }
+}
+
+if (!function_exists('modify')) {
+    function modify($value, callable $callback = null)
+    {
+        return is_null($callback) ? $value : $callback($value);
     }
 }
 
@@ -244,7 +243,7 @@ if (!function_exists('trim_more')) {
 }
 
 if (!function_exists('with_debug')) {
-    function with_debug(Closure $callback, ...$args): string
+    function with_debug(Closure $callback, mixed ...$args): string
     {
         config(['app.debug' => true]);
         $called = value($callback, ...$args);

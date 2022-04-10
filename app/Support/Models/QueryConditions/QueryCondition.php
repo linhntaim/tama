@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support\ModelProviders;
+namespace App\Support\Models\QueryConditions;
 
 use Illuminate\Database\Eloquent\Builder;
 

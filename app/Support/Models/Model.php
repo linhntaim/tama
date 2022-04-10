@@ -4,10 +4,8 @@ namespace App\Support\Models;
 
 use Illuminate\Database\Eloquent\Model as BaseModel;
 
-abstract class Model extends BaseModel implements IModel
+abstract class Model extends BaseModel
 {
-    use ModelTrait;
-
     public array $uniques = [];
 
     public function __construct(array $attributes = [])

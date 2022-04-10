@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Support\ModelProviders;
+namespace App\Support\Models\QueryConditions;
 
+use App\Support\Models\ModelProvider;
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Expression;

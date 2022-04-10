@@ -1,9 +1,14 @@
 <?php
 
-namespace App\Support\ModelProviders;
+namespace App\Support\Models;
 
 use App\Support\Exceptions\DatabaseException;
-use App\Support\Models\Model;
+use App\Support\Models\QueryConditions\LimitCondition;
+use App\Support\Models\QueryConditions\QueryCondition;
+use App\Support\Models\QueryConditions\SelectCondition;
+use App\Support\Models\QueryConditions\SortCondition;
+use App\Support\Models\QueryConditions\WhereCondition;
+use App\Support\Models\QueryConditions\WithCondition;
 use Closure;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -77,9 +82,31 @@ abstract class ModelProvider
         return $this;
     }
 
+    public function with(string|array $relations, string|Closure|null $callback = null): static
+    {
+        $this->wheres[] = new WithCondition(
+            $callback instanceof Closure
+                ? [$relations => $callback]
+                : (is_string($relations) ? func_get_args() : $relations)
+        );
+        return $this;
+    }
+
+    public function select(array|string $column = '*', string ...$columns): static
+    {
+        $this->wheres[] = new SelectCondition(is_array($column) ? $column : func_get_args());
+        return $this;
+    }
+
     public function sort(string|Closure|Expression $by, string $direction = self::SORT_ASC): static
     {
         $this->wheres[] = new SortCondition($by, $direction);
+        return $this;
+    }
+
+    public function limit(int $limit, int $skip = 0): static
+    {
+        $this->wheres[] = new LimitCondition($limit, $skip);
         return $this;
     }
 
