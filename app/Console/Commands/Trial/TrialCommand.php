@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands\Trial;
 
-use App\Support\App;
 use App\Support\Console\Commands\Command;
+use App\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 
 class TrialCommand extends Command

@@ -6,8 +6,8 @@
 
 namespace App\Exceptions;
 
-use App\Support\App;
 use App\Support\Console\Artisan;
+use App\Support\Facades\App;
 use App\Support\Http\Request;
 use App\Support\Http\ResponseTrait;
 use Illuminate\Auth\AuthenticationException;

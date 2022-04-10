@@ -7,6 +7,7 @@
 use App\Support\Client\Client;
 use App\Support\Client\DateTimer;
 use App\Support\Client\NumberFormatter;
+use Illuminate\Support\Str;
 
 const JSON_READABLE = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_LINE_TERMINATORS;
 const JSON_PRETTY = JSON_READABLE | JSON_PRETTY_PRINT;
@@ -103,6 +104,17 @@ if (!function_exists('describe_var')) {
     }
 }
 
+if (!function_exists('filled_array')) {
+    function filled_array(array $array, array $default = null, $nullable = false, Closure $keyTransform = null): array
+    {
+        $filled = [];
+        foreach ($array as $key => $value) {
+            $filled[$keyTransform ? $keyTransform($key) : $key] = $value ?: $default[$key] ?? null;
+        }
+        return $nullable ? $filled : array_filter($filled);
+    }
+}
+
 if (!function_exists('join_paths')) {
     /**
      * @param string[] $paths
@@ -173,6 +185,13 @@ if (!function_exists('name_starter')) {
     }
 }
 
+if (!function_exists('nullify_empty_array')) {
+    function nullify_empty_array(array $array): ?array
+    {
+        return count($array) ? $array : null;
+    }
+}
+
 if (!function_exists('number_formatter')) {
     function number_formatter(): NumberFormatter
     {
@@ -184,6 +203,15 @@ if (!function_exists('rtrim_more')) {
     function rtrim_more(string $string, string $characters = ''): string
     {
         return rtrim($string, " \t\n\r\0\x0B" . $characters);
+    }
+}
+
+if (!function_exists('snaky_filled_array')) {
+    function snaky_filled_array(array $array, array $default = null, $nullable = false): array
+    {
+        return filled_array($array, $default, $nullable, function ($key) {
+            return Str::snake($key);
+        });
     }
 }
 
