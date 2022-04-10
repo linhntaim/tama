@@ -12,6 +12,13 @@ use Illuminate\Support\Str;
 const JSON_READABLE = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_LINE_TERMINATORS;
 const JSON_PRETTY = JSON_READABLE | JSON_PRETTY_PRINT;
 
+if (!function_exists('class_use')) {
+    function class_use(object|string $object_or_class, string $trait): bool
+    {
+        return in_array($trait, class_uses_recursive($object_or_class));
+    }
+}
+
 if (!function_exists('config_starter')) {
     function config_starter(array|string|null $key = null, $default = null): mixed
     {
@@ -101,6 +108,13 @@ if (!function_exists('describe_var')) {
             return '{callable}';
         }
         return (string)$value;
+    }
+}
+
+if (!function_exists('empty_string')) {
+    function empty_string(?string $string, $trimmed = false): bool
+    {
+        return is_null($string) || (($trimmed ? trim($string) : $string) === '');
     }
 }
 
