@@ -5,8 +5,7 @@ namespace App\Models;
 use App\Support\ModelProviders\ModelProvider;
 
 /**
- * @method User newModel()
- * @property User $model
+ * @property User|null $model
  */
 class UserProvider extends ModelProvider
 {

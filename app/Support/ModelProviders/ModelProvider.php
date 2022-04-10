@@ -26,14 +26,6 @@ abstract class ModelProvider
     public const SORT_ASC = 'asc';
     public const SORT_DESC = 'desc';
 
-    /**
-     * @throws DatabaseException
-     */
-    public static function instance(Model|callable|int|string $model = null): static
-    {
-        return new static($model);
-    }
-
     protected string $modelClass;
 
     protected ?Model $model = null;
@@ -130,7 +122,7 @@ abstract class ModelProvider
                 $this->model = $model;
             }
             else {
-                $this->model = $this->firstByKey($model);
+                $this->model = $this->firstByUnique($model);
             }
         }
         return $this->model;
@@ -238,7 +230,7 @@ abstract class ModelProvider
     /**
      * @throws DatabaseException
      */
-    public function executeDelete(Builder|Model $query): bool
+    protected function executeDelete(Builder|Model $query): bool
     {
         $this->catch(function () use ($query) {
             return $this->force(false) && $this->modelUseSoftDeletes()
@@ -259,7 +251,7 @@ abstract class ModelProvider
     /**
      * @throws DatabaseException
      */
-    public function executeAll(Builder $query): Collection
+    protected function executeAll(Builder $query): Collection
     {
         return $this->catch(function () use ($query) {
             return $query->get();
@@ -269,7 +261,7 @@ abstract class ModelProvider
     /**
      * @throws DatabaseException
      */
-    public function executePagination(Builder $query, int $perPage = self::PER_PAGE): LengthAwarePaginator
+    protected function executePagination(Builder $query, int $perPage = self::PER_PAGE): LengthAwarePaginator
     {
         return $this->catch(function () use ($query, $perPage) {
             return $query->paginate($perPage);
@@ -279,7 +271,7 @@ abstract class ModelProvider
     /**
      * @throws DatabaseException
      */
-    public function executeFirst(Builder $query): ?Model
+    protected function executeFirst(Builder $query): ?Model
     {
         $model = $this->catch(function () use ($query) {
             return $this->strict(true) ? $query->firstOrFail() : $query->first();
@@ -290,7 +282,7 @@ abstract class ModelProvider
     /**
      * @throws DatabaseException
      */
-    public function executeCount(Builder $query): int
+    protected function executeCount(Builder $query): int
     {
         return $this->catch(function () use ($query) {
             return $query->count();
@@ -309,20 +301,36 @@ abstract class ModelProvider
     public function queryWhere(array $conditions = []): Builder
     {
         $query = $this->whereQuery();
-        foreach ($conditions as $name => $value) {
-            if (method_exists($this, $method = 'whereBy' . Str::studly($name))) {
-                $this->{$method}($query, $value, $conditions);
-            }
-            elseif ($value instanceof QueryCondition) {
+        foreach ($conditions as $column => $value) {
+            if ($value instanceof QueryCondition) {
                 $value($query);
             }
             elseif (is_callable($value)) {
                 $value($query, $value, $conditions);
             }
+            elseif (is_int($column)) {
+                if (is_array($value) && count($value) > 0) {
+                    if (isset($value['column'])) {
+                        $query->where(
+                            $value['column'],
+                            $value['operator'] ?? '=',
+                            $value['value'] ?? null,
+                            $value['boolean'] ?? 'and',
+                        );
+                    }
+                    elseif (isset($value[0])) {
+                        $query->where($value[0], $value[1] ?? null, $value[2] ?? null, $value[3] ?? 'and');
+                    }
+                    else {
+                        $query->where($value);
+                    }
+                }
+            }
+            elseif (method_exists($this, $method = 'whereBy' . Str::studly($column))) {
+                $this->{$method}($query, $value, $conditions);
+            }
             else {
-                !is_array($value)
-                    ? $query->where($name, $value)
-                    : $query->whereIn($name, $value);
+                $query->where($column, $value);
             }
         }
         return $query;
@@ -409,6 +417,18 @@ abstract class ModelProvider
     public function firstByKey(int|string $key): ?Model
     {
         return $this->first([$this->newModel()->getKeyName() => $key]);
+    }
+
+    /**
+     * @throws DatabaseException
+     */
+    public function firstByUnique(int|string $unique): ?Model
+    {
+        $uniqueWhere = [];
+        foreach ($this->newModel()->uniques as $key) {
+            $uniqueWhere[$key] = $unique;
+        }
+        return $this->first([['column' => $uniqueWhere, 'boolean' => 'or']]);
     }
 
     /**
