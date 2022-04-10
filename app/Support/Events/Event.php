@@ -2,9 +2,9 @@
 
 namespace App\Support\Events;
 
-use App\Support\App;
 use App\Support\Client\InternalSettingsTrait;
 use App\Support\Console\Artisan;
+use App\Support\Facades\App;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;

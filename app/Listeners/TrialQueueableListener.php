@@ -3,7 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\TrialEvent;
-use App\Support\App;
+use App\Support\Facades\App;
 use App\Support\Listeners\QueueableListener;
 use Illuminate\Support\Facades\Log;
 
