@@ -2,22 +2,15 @@
 
 namespace App\Support\Http;
 
-use App\Support\Http\Resources\IModelResource;
-use App\Support\Http\Resources\ModelResource;
 use App\Support\Http\Resources\ResponseResource;
-use App\Support\Models\Model;
-use Closure;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
-use Illuminate\Pagination\AbstractCursorPaginator;
-use Illuminate\Pagination\AbstractPaginator;
-use Illuminate\Support\Collection;
 use JsonSerializable;
 
-trait ResponseTrait
+trait Responses
 {
     protected function responseContent(
         Request $request,

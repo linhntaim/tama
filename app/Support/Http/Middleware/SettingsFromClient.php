@@ -1,17 +1,15 @@
 <?php
 
-/**
- * Base
- */
+namespace App\Support\Http\Middleware;
 
-namespace App\Support\Client;
-
-use App\Http\Middleware\EncryptCookies;
+use App\Support\Client\Manager;
+use App\Support\Client\Settings;
 use App\Support\Configuration;
+use App\Support\Facades\Client;
 use App\Support\Http\Request;
 use Closure;
 
-class ClientMiddleware
+class SettingsFromClient
 {
     public function handle(Request $request, Closure $next, ?string $source = null)
     {

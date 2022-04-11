@@ -21,6 +21,14 @@ class ModelResource extends Resource implements IModelResource
 
     public bool $preserveKeys = false;
 
+    public function resolve($request = null): array
+    {
+        if (is_null($this->resource)) {
+            return [];
+        }
+        return parent::resolve($request);
+    }
+
     public function toArrayResponse($request): array
     {
         return (new ResourceResponse($this))->toArray($request);

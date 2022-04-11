@@ -5,7 +5,7 @@ namespace App\Support\Http\Resources;
 /**
  * @property IWrappedResource $resource
  */
-trait ResourceResponseTrait
+trait ResourceResponseWrapper
 {
     protected function wrapper(): ?string
     {
@@ -26,6 +26,10 @@ trait ResourceResponseTrait
 
     protected function wrap($data, $with = [], $additional = []): array
     {
-        return parent::wrap(nullify_empty_array($data), $with, $additional);
+        return parent::wrap(
+            $this->resource instanceof Resource ? nullify_empty_array($data) : $data,
+            $with,
+            $additional
+        );
     }
 }

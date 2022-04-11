@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Base
- */
-
 return [
     'app' => [
         'id' => env('APP_ID'),

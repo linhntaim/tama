@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Base
- */
-
 namespace App\Support\Exceptions;
 
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;

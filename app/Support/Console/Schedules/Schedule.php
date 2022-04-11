@@ -3,14 +3,14 @@
 namespace App\Support\Console\Schedules;
 
 use App\Support\ClassTrait;
-use App\Support\Client\InternalSettingsTrait;
-use App\Support\Console\Artisan;
+use App\Support\Client\InternalSettings;
 use App\Support\Facades\App;
+use App\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 
 abstract class Schedule
 {
-    use ClassTrait, InternalSettingsTrait;
+    use ClassTrait, InternalSettings;
 
     public function __construct()
     {

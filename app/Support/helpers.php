@@ -1,12 +1,8 @@
 <?php
 
-/**
- * Base
- */
-
-use App\Support\Client\Client;
 use App\Support\Client\DateTimer;
 use App\Support\Client\NumberFormatter;
+use App\Support\Facades\Client;
 use Illuminate\Support\Str;
 
 const JSON_READABLE = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_LINE_TERMINATORS;

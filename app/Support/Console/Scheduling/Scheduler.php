@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Support\Console;
+namespace App\Support\Console\Scheduling;
 
+use App\Support\Console\Application;
 use App\Support\Console\Schedules\Schedule;
 use App\Support\Facades\App;
 use App\Support\Jobs\Job;

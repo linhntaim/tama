@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Base
- */
-
 namespace App\Support\Services;
 
 use App\Support\Facades\RateLimiter;

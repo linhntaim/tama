@@ -2,7 +2,6 @@
 
 namespace App\Support\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Support\Http\Request;
 use App\Support\Http\Resources\ModelResource;
 use App\Support\Http\Resources\ResponseResource;

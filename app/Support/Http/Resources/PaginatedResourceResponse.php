@@ -6,7 +6,7 @@ use Illuminate\Http\Resources\Json\PaginatedResourceResponse as BasePaginatedRes
 
 class PaginatedResourceResponse extends BasePaginatedResourceResponse implements ArrayResponsible
 {
-    use ResourceResponseTrait;
+    use ResourceResponseWrapper;
 
     public function toArray($request): array
     {

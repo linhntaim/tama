@@ -10,7 +10,7 @@ use JsonSerializable;
 
 class Resource extends BaseResource implements IWrappedResource
 {
-    use WrappedResourceTrait, ModelResourceTransformer;
+    use ResourceWrapper, ModelResourceTransformer;
 
     public function setResource(mixed $resource): static
     {

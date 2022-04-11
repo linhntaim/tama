@@ -3,12 +3,12 @@
 namespace App\Support\Http\Middleware;
 
 use App\Support\Http\Request;
-use App\Support\Http\ResponseTrait;
+use App\Support\Http\Responses;
 use Closure;
 
 class PrioritizeHtmlIndex
 {
-    use ResponseTrait;
+    use Responses;
 
     protected function htmlIndexFile(Request $request): ?string
     {
