@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Base
- */
-
 namespace App\Support\Http;
 
 use Illuminate\Http\Request as BaseRequest;

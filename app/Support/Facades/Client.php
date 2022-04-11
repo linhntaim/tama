@@ -1,11 +1,11 @@
 <?php
 
-/**
- * Base
- */
+namespace App\Support\Facades;
 
-namespace App\Support\Client;
-
+use App\Support\Client\DateTimer;
+use App\Support\Client\Manager;
+use App\Support\Client\NumberFormatter;
+use App\Support\Client\Settings;
 use Closure;
 use Illuminate\Support\Facades\Facade;
 

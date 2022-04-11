@@ -15,7 +15,7 @@ class PrerequisiteController extends ApiController
     {
         return $this
             ->registerDataset($request)
-            ->responseJsonWith($this->dataset);
+            ->response($request, $this->dataset);
     }
 
     protected function attachDataset($name, $data): static

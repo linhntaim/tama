@@ -1,18 +1,14 @@
 <?php
 
-/**
- * Base
- */
-
 namespace App\Support\Console\Commands;
 
 use App\Support\ClassTrait;
-use App\Support\Client\InternalSettingsTrait;
+use App\Support\Client\InternalSettings;
 use App\Support\Console\Application;
-use App\Support\Console\Shell;
+use App\Support\Console\ExecutionWrap;
 use App\Support\Console\Sheller;
-use App\Support\Console\WrapCommandTrait;
 use App\Support\Exceptions\ShellException;
+use App\Support\Facades\Shell;
 use Illuminate\Console\Command as BaseCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -24,7 +20,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 abstract class Command extends BaseCommand
 {
-    use ClassTrait, WrapCommandTrait, InternalSettingsTrait;
+    use ClassTrait, ExecutionWrap, InternalSettings;
 
     public const OPTION_DEBUG = 'x-debug';
     public const PARAMETER_DEBUG = '--' . self::OPTION_DEBUG;

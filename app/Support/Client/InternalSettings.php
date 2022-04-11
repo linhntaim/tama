@@ -2,9 +2,10 @@
 
 namespace App\Support\Client;
 
+use App\Support\Facades\Client;
 use Closure;
 
-trait InternalSettingsTrait
+trait InternalSettings
 {
     protected ?array $currentSettings = null;
 

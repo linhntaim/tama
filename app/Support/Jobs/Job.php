@@ -3,16 +3,16 @@
 namespace App\Support\Jobs;
 
 use App\Support\ClassTrait;
-use App\Support\Client\InternalSettingsTrait;
-use App\Support\Console\Artisan;
+use App\Support\Client\InternalSettings;
 use App\Support\Facades\App;
+use App\Support\Facades\Artisan;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
 abstract class Job
 {
-    use ClassTrait, Dispatchable, InternalSettingsTrait;
+    use ClassTrait, Dispatchable, InternalSettings;
 
     public function __construct()
     {
