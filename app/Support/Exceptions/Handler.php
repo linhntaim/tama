@@ -2,10 +2,10 @@
 
 namespace App\Support\Exceptions;
 
-use App\Support\Facades\Artisan;
 use App\Support\Facades\App;
+use App\Support\Facades\Artisan;
 use App\Support\Http\Request;
-use App\Support\Http\ResponseTrait;
+use App\Support\Http\Responses;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
@@ -16,7 +16,7 @@ use Throwable;
 
 class Handler extends ExceptionHandler
 {
-    use ResponseTrait;
+    use Responses;
 
     /**
      * @throws BindingResolutionException

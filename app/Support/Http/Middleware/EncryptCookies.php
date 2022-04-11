@@ -11,12 +11,12 @@ class EncryptCookies extends Middleware
 
     public static function ran(): bool
     {
-        return static::$ran;
+        return self::$ran;
     }
 
     public function handle($request, Closure $next)
     {
-        static::$ran = true;
+        self::$ran = true;
         return parent::handle($request, $next);
     }
 }

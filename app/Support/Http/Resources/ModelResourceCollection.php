@@ -16,6 +16,9 @@ class ModelResourceCollection extends ResourceCollection implements IModelResour
         if (!is_null($collects)) {
             $this->collects = $collects;
         }
+        if (is_null($resource)) {
+            $resource = [];
+        }
 
         parent::__construct($resource);
     }

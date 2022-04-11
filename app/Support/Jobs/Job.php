@@ -4,8 +4,8 @@ namespace App\Support\Jobs;
 
 use App\Support\ClassTrait;
 use App\Support\Client\InternalSettings;
-use App\Support\Facades\Artisan;
 use App\Support\Facades\App;
+use App\Support\Facades\Artisan;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
 use Throwable;

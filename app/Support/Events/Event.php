@@ -3,8 +3,8 @@
 namespace App\Support\Events;
 
 use App\Support\Client\InternalSettings;
-use App\Support\Facades\Artisan;
 use App\Support\Facades\App;
+use App\Support\Facades\Artisan;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;

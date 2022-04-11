@@ -2,7 +2,7 @@
 
 namespace App\Support\Http\Resources;
 
-trait WrappedResourceTrait
+trait ResourceWrapper
 {
     protected ?string $wrapped = null;
 

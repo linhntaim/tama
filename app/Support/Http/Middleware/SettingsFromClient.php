@@ -2,8 +2,10 @@
 
 namespace App\Support\Http\Middleware;
 
-use App\Http\Middleware\EncryptCookies;
+use App\Support\Client\Manager;
+use App\Support\Client\Settings;
 use App\Support\Configuration;
+use App\Support\Facades\Client;
 use App\Support\Http\Request;
 use Closure;
 

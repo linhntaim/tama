@@ -4,8 +4,8 @@ namespace App\Support\Console\Schedules;
 
 use App\Support\ClassTrait;
 use App\Support\Client\InternalSettings;
-use App\Support\Facades\Artisan;
 use App\Support\Facades\App;
+use App\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 
 abstract class Schedule

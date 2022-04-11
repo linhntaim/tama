@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Support\Http\MiddlewareEncryptCookies as Middleware;
+use App\Support\Http\Middleware\EncryptCookies as Middleware;
 
 class EncryptCookies extends Middleware
 {

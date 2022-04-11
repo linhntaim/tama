@@ -2,6 +2,7 @@
 
 namespace App\Support\Client;
 
+use App\Support\Facades\Client;
 use Closure;
 
 trait InternalSettings

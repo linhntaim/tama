@@ -2,11 +2,11 @@
 
 namespace App\Support\Console;
 
-use App\Support\Facades\Client;
 use App\Support\Client\Settings;
 use App\Support\Console\Application as Artisan;
 use App\Support\Console\Commands\Command;
 use App\Support\Facades\App;
+use App\Support\Facades\Client;
 use Closure;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Facades\Log;

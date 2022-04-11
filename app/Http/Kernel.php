@@ -3,9 +3,9 @@
 namespace App\Http;
 
 use App\Support\Http\Kernel as HttpKernel;
-use App\Support\Http\Middleware\SettingsFromClient;
 use App\Support\Http\Middleware\EnableDebug;
 use App\Support\Http\Middleware\PrioritizeHtmlIndex;
+use App\Support\Http\Middleware\SettingsFromClient;
 
 class Kernel extends HttpKernel
 {

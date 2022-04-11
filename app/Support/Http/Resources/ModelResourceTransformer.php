@@ -31,6 +31,12 @@ trait ModelResourceTransformer
             return new $modelResourceClass($resource);
         }
 
+        if (is_null($resource)
+            && is_string($modelResourceClass)
+            && is_subclass_of($modelResourceClass, IModelResource::class)) {
+            return new $modelResourceClass(null);
+        }
+
         return null;
     }
 

@@ -10,7 +10,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
 use JsonSerializable;
 
-trait ResponseTrait
+trait Responses
 {
     protected function responseContent(
         Request $request,

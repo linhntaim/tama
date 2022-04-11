@@ -6,7 +6,7 @@ use Illuminate\Http\Resources\Json\ResourceResponse as BaseResourceResponse;
 
 class ResourceResponse extends BaseResourceResponse implements ArrayResponsible
 {
-    use ResourceResponseTrait;
+    use ResourceResponseWrapper;
 
     public function toArray($request): array
     {
