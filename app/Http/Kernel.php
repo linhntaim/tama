@@ -2,7 +2,10 @@
 
 namespace App\Http;
 
-use Illuminate\Foundation\Http\Kernel as HttpKernel;
+use App\Support\Http\Kernel as HttpKernel;
+use App\Support\Http\Middleware\SettingsFromClient;
+use App\Support\Http\Middleware\EnableDebug;
+use App\Support\Http\Middleware\PrioritizeHtmlIndex;
 
 class Kernel extends HttpKernel
 {
@@ -30,6 +33,8 @@ class Kernel extends HttpKernel
      */
     protected $middlewareGroups = [
         'web' => [
+            EnableDebug::class,
+            PrioritizeHtmlIndex::class,
             \App\Http\Middleware\EncryptCookies::class,
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \Illuminate\Session\Middleware\StartSession::class,
@@ -37,12 +42,14 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            SettingsFromClient::class,
         ],
 
         'api' => [
             // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            SettingsFromClient::class,
         ],
     ];
 
