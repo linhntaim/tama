@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support\Console;
+namespace App\Support\Facades;
 
 use Closure;
 use Illuminate\Support\Facades\Facade;

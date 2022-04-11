@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Base
- */
-
 namespace App\Providers;
 
 use App\Exceptions\Handler;

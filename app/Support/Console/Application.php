@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Base
- */
-
 namespace App\Support\Console;
 
 use App\Support\Client\Settings;
@@ -20,7 +16,7 @@ use Throwable;
 
 class Application extends BaseApplication
 {
-    use WrapCommandTrait;
+    use ExecutionWrap;
 
     /**
      * @var RunningCommand[]

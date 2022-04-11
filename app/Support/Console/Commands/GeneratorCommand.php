@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Base
- */
-
 namespace App\Support\Console\Commands;
 
 use Illuminate\Console\Concerns\CreatesMatchingTest;
