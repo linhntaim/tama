@@ -1,19 +1,50 @@
 <?php
 
-namespace App\Support\Http;
+namespace App\Support\Http\Resources;
 
 use App\Support\Exceptions\Exception;
+use App\Support\Http\Request;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
+use JsonSerializable;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
 
-class ResponsePayload implements Arrayable
+class ResponseResource extends Resource
 {
-    public static function create(bool|string|array|Throwable|null $source = null): static
+    protected ?string $wrapped = '_data';
+
+    public static function from(mixed $resource = null, mixed ...$args): static
     {
-        return new static($source);
+        return $resource instanceof ResponseResource
+            ? $resource
+            : tap(new static($resource), function (ResponseResource $responseResource) use ($resource, $args) {
+                if (is_bool($resource)) {
+                    $responseResource
+                        ->setResource(null)
+                        ->setStatus($resource);
+                }
+                elseif (is_string($resource)) {
+                    $responseResource
+                        ->setResource(null)
+                        ->setStatus(false)
+                        ->setMessages($resource);
+                }
+                elseif (is_array($resource)) {
+                    $responseResource
+                        ->setStatus(true);
+                }
+                elseif ($resource instanceof Throwable) {
+                    $responseResource
+                        ->setResource(null)
+                        ->setException($resource);
+                }
+                elseif ($resource = $responseResource->modelResourceFrom($resource, $args[0] ?? ModelResource::class)) {
+                    $responseResource->setResource($resource);
+                }
+            });
     }
 
     protected array $headers = [];
@@ -26,30 +57,7 @@ class ResponsePayload implements Arrayable
 
     protected ?Throwable $throwable = null;
 
-    /**
-     * @var array|string[]|null
-     */
     protected ?array $messages = null;
-
-    protected ?array $data = null;
-
-    public function __construct(bool|string|array|Throwable|null $source = null)
-    {
-        if (is_bool($source)) {
-            $this->setStatus($source);
-        }
-        elseif (is_string($source)) {
-            $this->setStatus(false)
-                ->setMessages($source);
-        }
-        elseif (is_array($source)) {
-            $this->setStatus(true)
-                ->setData($source);
-        }
-        elseif ($source instanceof Throwable) {
-            $this->setException($source);
-        }
-    }
 
     public function setHeaders(array $headers, bool $fresh = false): static
     {
@@ -141,33 +149,32 @@ class ResponsePayload implements Arrayable
                 $this->setMessages($throwable->getMessage());
             }
         }
-        if (is_null($this->data)) {
+        if (is_null($this->resource)) {
             if ($throwable instanceof ValidationException) {
-                $this->setData([
+                $this->setResource([
                     'validation' => $throwable->errors(),
                 ]);
             }
             elseif ($throwable instanceof Exception) {
                 if (count($data = $throwable->getData())) {
-                    $this->setData($data);
+                    $this->setResource($data);
                 }
             }
         }
         return $this;
     }
 
-    public function getException(bool $debug = false): ?Throwable
+    public function getException(): ?Throwable
     {
-        return config('app.debug') || $debug ? $this->throwable : null;
+        return config('app.debug') ? $this->throwable : null;
     }
 
-    public function getExceptionAsArray(bool $debug = false): ?array
+    public function getExceptionAsArray(): ?array
     {
-        if (is_null($this->throwable) || (!config('app.debug') && !$debug)) {
+        if (is_null($exception = $this->getException())) {
             return null;
         }
         $exceptions = [];
-        $exception = $this->throwable;
         do {
             $exceptions[] = [
                 'class' => get_debug_type($exception),
@@ -182,15 +189,10 @@ class ResponsePayload implements Arrayable
         return $exceptions;
     }
 
-    public function setMessages(array|string|null $messages, bool $fresh = false): static
+    public function setMessages(array|string|null $messages): static
     {
         if (!is_null($messages)) {
-            if ($fresh) {
-                $this->messages = (array)$messages;
-            }
-            else {
-                $this->messages = array_merge($this->messages ?? [], (array)$messages);
-            }
+            $this->messages = (array)$messages;
         }
         return $this;
     }
@@ -200,33 +202,38 @@ class ResponsePayload implements Arrayable
         return $this->messages;
     }
 
-    public function setData(?array $data, bool $fresh = false): static
+    public function with($request): array
     {
-        if (!is_null($data)) {
-            if ($fresh) {
-                $this->data = $data;
-            }
-            else {
-                $this->data = array_merge($this->data ?? [], $data);
-            }
-        }
-        return $this;
-    }
-
-    public function getData(): ?array
-    {
-        return $this->data;
-    }
-
-    public function toArray(bool $debug = false): array
-    {
-        return [
+        return array_merge(parent::with($request), [
             '_status' => $this->getStatus(),
             '_status_code' => $this->getStatusCode(),
             '_error_code' => $this->getErrorCode(),
-            '_exception' => $this->getExceptionAsArray($debug),
+            '_exception' => $this->getExceptionAsArray(),
             '_messages' => $this->getMessages(),
-            '_data' => $this->getData(),
-        ];
+        ]);
+    }
+
+    public function jsonOptions(): int
+    {
+        return JSON_READABLE;
+    }
+
+    /**
+     * @param Request $request
+     * @param JsonResponse $response
+     */
+    public function withResponse($request, $response)
+    {
+        $response
+            ->setStatusCode($this->getStatusCode())
+            ->withHeaders($this->getHeaders());
+    }
+
+    public function toArray($request): array|Arrayable|JsonSerializable
+    {
+        if ($this->resource instanceof IModelResource) {
+            return $this->resource->toArrayResponse($request);
+        }
+        return parent::toArray($request);
     }
 }

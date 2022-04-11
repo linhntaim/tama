@@ -2,17 +2,11 @@
 
 namespace App\Support\Http\Resources;
 
-use Illuminate\Http\Resources\Json\PaginatedResourceResponse;
+use Illuminate\Http\Resources\Json\PaginatedResourceResponse as BasePaginatedResourceResponse;
 
-/**
- * @property IJsonResource $resource
- */
-class ArrayPaginatedResourceResponse extends PaginatedResourceResponse implements ArrayResponsable
+class PaginatedResourceResponse extends BasePaginatedResourceResponse implements ArrayResponsible
 {
-    protected function wrapper(): ?string
-    {
-        return $this->resource->getWrapper();
-    }
+    use ResourceResponseTrait;
 
     public function toArray($request): array
     {

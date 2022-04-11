@@ -13,15 +13,14 @@ class UserController extends ApiController
 {
     public function index(Request $request): JsonResponse
     {
-        return $this->responseJsonResource(
+        return $this->responseModel(
             $request,
             $request->has('page')
                 ? new LengthAwarePaginator(User::factory()->count(10)->make(), 1000, 10, 1)
                 : ($request->has('id')
                 ? User::factory()->make()
                 : User::factory()->count(10)->make()),
-            TrialUserResource::class,
-            ['resource_class' => TrialUserResource::class]
+            TrialUserResource::class
         );
     }
 }

@@ -94,21 +94,30 @@ class Handler extends ExceptionHandler
             || $request->is(['api', 'api/*']);
     }
 
+    /**
+     * @throws BindingResolutionException
+     */
     protected function prepareJsonResponse($request, Throwable $e): JsonResponse
     {
-        return $this->responseJsonWith($e);
+        return $this->responseResource($this->request(), $e);
     }
 
+    /**
+     * @throws BindingResolutionException
+     */
     protected function unauthenticated($request, AuthenticationException $exception): SymfonyResponse
     {
         return $this->shouldReturnJson($request, $exception)
-            ? $this->responseJsonWith($exception)
+            ? $this->responseResource($this->request(), $exception)
             : redirect()->guest($exception->redirectTo() ?? route('login'));
     }
 
+    /**
+     * @throws BindingResolutionException
+     */
     protected function invalidJson($request, ValidationException $exception): JsonResponse
     {
-        return $this->responseJsonWith($exception);
+        return $this->responseResource($this->request(), $exception);
     }
 
     public function renderForConsole($output, Throwable $e)

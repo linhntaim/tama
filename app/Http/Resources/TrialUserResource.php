@@ -14,8 +14,18 @@ class TrialUserResource extends UserResource
         return [
             $this->merge(parent::toArray($request)),
             $this->merge([
-                'transformed_user' => $this->resourceTransform(
+                'daddy' => $this->modelResourceTransform(
                     User::factory()->make(),
+                    UserResource::class,
+                    $request
+                ),
+                'mummy' => $this->modelResourceTransform(
+                    User::factory()->make(),
+                    UserResource::class,
+                    $request
+                ),
+                'children' => $this->modelResourceTransform(
+                    User::factory()->count(2)->make(),
                     UserResource::class,
                     $request
                 ),

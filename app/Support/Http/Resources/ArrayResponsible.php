@@ -2,7 +2,7 @@
 
 namespace App\Support\Http\Resources;
 
-interface ArrayResponsable
+interface ArrayResponsible
 {
     public function toArray($request): array;
 }

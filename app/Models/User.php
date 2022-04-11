@@ -34,6 +34,17 @@ class User extends Authenticatable
         'password',
     ];
 
+    protected $visible = [
+        'id',
+        'name',
+        'email',
+        'sd_st_email_verified_at',
+    ];
+
+    protected $appends = [
+        'sd_st_email_verified_at',
+    ];
+
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -59,6 +70,20 @@ class User extends Authenticatable
     {
         return Attribute::make(
             set: fn($value) => static::hashPassword($value),
+        );
+    }
+
+    protected function sdStEmailVerifiedAt(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => is_null($this->attributes['email_verified_at'])
+                ? null
+                : date_timer()->compound(
+                    'shortDate',
+                    ' ',
+                    'shortTime',
+                    $this->attributes['email_verified_at']
+                ),
         );
     }
 }

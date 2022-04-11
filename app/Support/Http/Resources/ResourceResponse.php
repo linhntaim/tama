@@ -2,17 +2,11 @@
 
 namespace App\Support\Http\Resources;
 
-use Illuminate\Http\Resources\Json\ResourceResponse;
+use Illuminate\Http\Resources\Json\ResourceResponse as BaseResourceResponse;
 
-/**
- * @property IJsonResource $resource
- */
-class ArrayResourceResponse extends ResourceResponse implements ArrayResponsable
+class ResourceResponse extends BaseResourceResponse implements ArrayResponsible
 {
-    protected function wrapper(): ?string
-    {
-        return $this->resource->getWrapper();
-    }
+    use ResourceResponseTrait;
 
     public function toArray($request): array
     {

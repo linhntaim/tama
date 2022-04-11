@@ -2,23 +2,31 @@
 
 namespace App\Support\Http\Resources;
 
-use App\Support\Http\Request;
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Pagination\AbstractCursorPaginator;
 use Illuminate\Pagination\AbstractPaginator;
-use JsonSerializable;
 
-class JsonResourceCollection extends ResourceCollection implements IJsonResource
+class ModelResourceCollection extends ResourceCollection implements IModelResource
 {
-    use JsonResourceTrait, ResourceTransformTrait;
+    protected ?string $wrapped = 'models';
+
+    public bool $preserveKeys = false;
+
+    public function __construct($resource, ?string $collects = null)
+    {
+        if (!is_null($collects)) {
+            $this->collects = $collects;
+        }
+
+        parent::__construct($resource);
+    }
 
     public function toArrayResponse($request): array
     {
         if ($this->resource instanceof AbstractPaginator || $this->resource instanceof AbstractCursorPaginator) {
             return $this->prepareArrayPaginatedResponse($request);
         }
-        return (new ArrayResourceResponse($this))->toArray($request);
+
+        return (new ResourceResponse($this))->toArray($request);
     }
 
     protected function prepareArrayPaginatedResponse($request): array
@@ -30,15 +38,6 @@ class JsonResourceCollection extends ResourceCollection implements IJsonResource
             $this->resource->appends($this->queryParameters);
         }
 
-        return (new ArrayPaginatedResourceResponse($this))->toArray($request);
-    }
-
-    /**
-     * @param Request $request
-     * @return array|Arrayable|JsonSerializable
-     */
-    public function toArray($request): array|Arrayable|JsonSerializable
-    {
-        return parent::toArray($request);
+        return (new PaginatedResourceResponse($this))->toArray($request);
     }
 }

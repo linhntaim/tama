@@ -185,7 +185,7 @@ if (!function_exists('mkdir_recursive')) {
 }
 
 if (!function_exists('modify')) {
-    function modify($value, callable $callback = null)
+    function modify($value, ?Closure $callback = null)
     {
         return is_null($callback) ? $value : $callback($value);
     }
@@ -232,6 +232,19 @@ if (!function_exists('stringable')) {
     function stringable(mixed $value): bool
     {
         return is_string($value) || (is_object($value) && method_exists($value, '__toString'));
+    }
+}
+
+if (!function_exists('take')) {
+    function take($value, ?Closure $callback = null)
+    {
+        if (is_null($callback)) {
+            return $value;
+        }
+
+        $callback($value);
+
+        return $value;
     }
 }
 

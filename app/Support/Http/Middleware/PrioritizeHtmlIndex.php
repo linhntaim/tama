@@ -33,7 +33,7 @@ class PrioritizeHtmlIndex
     public function handle(Request $request, Closure $next)
     {
         if ($htmlIndexFile = $this->htmlIndexFile($request)) {
-            return $this->responseFileAsContent($htmlIndexFile);
+            return $this->responseFileAsContent($request, $htmlIndexFile);
         }
         return $next($request);
     }
