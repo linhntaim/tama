@@ -12,6 +12,13 @@ use Illuminate\Support\Str;
 const JSON_READABLE = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_LINE_TERMINATORS;
 const JSON_PRETTY = JSON_READABLE | JSON_PRETTY_PRINT;
 
+if (!function_exists('class_use')) {
+    function class_use(object|string $object_or_class, string $trait): bool
+    {
+        return in_array($trait, class_uses_recursive($object_or_class));
+    }
+}
+
 if (!function_exists('config_starter')) {
     function config_starter(array|string|null $key = null, $default = null): mixed
     {
@@ -104,6 +111,13 @@ if (!function_exists('describe_var')) {
     }
 }
 
+if (!function_exists('empty_string')) {
+    function empty_string(?string $string, $trimmed = false): bool
+    {
+        return is_null($string) || (($trimmed ? trim($string) : $string) === '');
+    }
+}
+
 if (!function_exists('filled_array')) {
     function filled_array(array $array, array $default = null, $nullable = false, Closure $keyTransform = null): array
     {
@@ -116,11 +130,7 @@ if (!function_exists('filled_array')) {
 }
 
 if (!function_exists('join_paths')) {
-    /**
-     * @param string[] $paths
-     * @return string
-     */
-    function join_paths(...$paths): string
+    function join_paths(string ...$paths): string
     {
         return implode(
             DIRECTORY_SEPARATOR,
@@ -130,11 +140,7 @@ if (!function_exists('join_paths')) {
 }
 
 if (!function_exists('join_urls')) {
-    /**
-     * @param string[] $urls
-     * @return string
-     */
-    function join_urls(...$urls): string
+    function join_urls(string ...$urls): string
     {
         return implode(
             '/',
@@ -175,6 +181,13 @@ if (!function_exists('mkdir_recursive')) {
     function mkdir_recursive(string $directory, int $permissions = 0777, $context = null): bool
     {
         return mkdir($directory, $permissions, true, $context);
+    }
+}
+
+if (!function_exists('modify')) {
+    function modify($value, ?Closure $callback = null)
+    {
+        return is_null($callback) ? $value : $callback($value);
     }
 }
 
@@ -222,6 +235,19 @@ if (!function_exists('stringable')) {
     }
 }
 
+if (!function_exists('take')) {
+    function take($value, ?Closure $callback = null)
+    {
+        if (is_null($callback)) {
+            return $value;
+        }
+
+        $callback($value);
+
+        return $value;
+    }
+}
+
 if (!function_exists('trim_more')) {
     function trim_more(string $string, string $characters = ''): string
     {
@@ -230,7 +256,7 @@ if (!function_exists('trim_more')) {
 }
 
 if (!function_exists('with_debug')) {
-    function with_debug(Closure $callback, ...$args): string
+    function with_debug(Closure $callback, mixed ...$args): string
     {
         config(['app.debug' => true]);
         $called = value($callback, ...$args);
