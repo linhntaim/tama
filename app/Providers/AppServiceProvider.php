@@ -14,6 +14,7 @@ use App\Support\Log\LineFormatter;
 use App\Support\Log\LogManager;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Support\Facades\Facade;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 
@@ -80,6 +81,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureApp();
         $this->configureLog();
+        $this->configureMail();
     }
 
     protected function configureApp()
@@ -96,6 +98,14 @@ class AppServiceProvider extends ServiceProvider
             if (in_array($channel, $storageChannels)) {
                 $config->set("logging.channels.$channel.permission", 0777);
             }
+        }
+    }
+
+    protected function configureMail()
+    {
+        $alwaysTo = config_starter('mail.always_to');
+        if ($alwaysTo['address']) {
+            Mail::alwaysTo($alwaysTo['address'], $alwaysTo['name']);
         }
     }
 }
