@@ -35,6 +35,12 @@ return [
             ],
         ],
     ],
+    'mail' => [
+        'always_to' => [
+            'address' => env('MAIL_ALWAYS_TO_ADDRESS'),
+            'name' => env('MAIL_ALWAYS_TO_NAME'),
+        ],
+    ],
     'client' => [
         'default' => 'default',
         'settings' => [

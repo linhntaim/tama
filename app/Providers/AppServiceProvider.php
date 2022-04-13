@@ -13,6 +13,7 @@ use Illuminate\Cache\RateLimiter as BaseRateLimiter;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Support\DeferrableProvider;
 use Illuminate\Support\Facades\Facade;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 
@@ -89,6 +90,7 @@ class AppServiceProvider extends ServiceProvider implements DeferrableProvider
     {
         $this->configureApp();
         $this->configureLog();
+        $this->configureMail();
     }
 
     protected function configureApp()
@@ -108,7 +110,15 @@ class AppServiceProvider extends ServiceProvider implements DeferrableProvider
         }
     }
 
-    public function provides()
+    protected function configureMail()
+    {
+        $alwaysTo = config_starter('mail.always_to');
+        if ($alwaysTo['address']) {
+            Mail::alwaysTo($alwaysTo['address'], $alwaysTo['name']);
+        }
+    }
+
+    public function provides(): array
     {
         return [
             BaseRateLimiter::class,
