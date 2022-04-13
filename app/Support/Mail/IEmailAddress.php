@@ -2,7 +2,7 @@
 
 namespace App\Support\Mail;
 
-interface IEmalAddress
+interface IEmailAddress
 {
     public function getEmailAddress(): string;
 

@@ -2,11 +2,11 @@
 
 namespace App\Mail;
 
-use App\Support\Mail\Mailable;
+use App\Support\Mail\QueueableMailable;
 
-class TrialViewQueueableMailable extends Mailable
+class TrialViewQueueableMailable extends QueueableMailable
 {
-    protected function sendBefore()
+    public function build()
     {
         $this->view('trial', [
             'date' => date_timer()->compound('longDate', ' ', 'longTime'),

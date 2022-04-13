@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Base
- */
-
 namespace App\Console\Commands;
 
 use App\Support\Console\Commands\Command;

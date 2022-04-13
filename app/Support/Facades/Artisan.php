@@ -1,12 +1,9 @@
 <?php
 
-/**
- * Base
- */
-
-namespace App\Support\Console;
+namespace App\Support\Facades;
 
 use App\Console\Kernel;
+use App\Support\Console\RunningCommand;
 use Illuminate\Support\Facades\Artisan as BaseArtisan;
 use Throwable;
 

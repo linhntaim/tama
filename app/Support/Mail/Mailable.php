@@ -2,17 +2,19 @@
 
 namespace App\Support\Mail;
 
-use App\Support\App;
 use App\Support\ClassTrait;
-use App\Support\Client\Client;
-use App\Support\Client\InternalSettingsTrait;
-use App\Support\Console\Artisan;
+use App\Support\Client\InternalSettings;
+use App\Support\Facades\App;
+use App\Support\Facades\Artisan;
+use App\Support\Facades\Client;
 use Illuminate\Mail\Mailable as BaseMailable;
 use Illuminate\Support\Facades\Log;
 
 abstract class Mailable extends BaseMailable
 {
-    use ClassTrait, InternalSettingsTrait;
+    use ClassTrait, InternalSettings;
+
+    protected string $baseTemplate = 'emails.';
 
     protected bool $viewOnLocale = false;
 
@@ -28,29 +30,15 @@ abstract class Mailable extends BaseMailable
         }
     }
 
-    protected function emptyAddress($property = 'to'): static
-    {
-        $this->{$property} = [];
-        return $this;
-    }
-
     protected function normalizeRecipient($recipient): object
     {
-        if ($recipient instanceof IEmalAddress) {
+        if ($recipient instanceof IEmailAddress) {
             return (object)[
                 'email' => $recipient->getEmailAddress(),
                 'name' => $recipient->getEmailName(),
             ];
         }
         return parent::normalizeRecipient($recipient);
-    }
-
-    public function buildViewData(): array
-    {
-        return array_merge(parent::buildViewData(), [
-            'locale' => Client::settings()->getLocale(),
-            'charset' => 'utf-8',
-        ]);
     }
 
     public function separatedTos(bool $value = true): static
@@ -67,6 +55,10 @@ abstract class Mailable extends BaseMailable
     {
     }
 
+    public function build()
+    {
+    }
+
     public function send($mailer)
     {
         if (App::runningSolelyInConsole()) {
@@ -77,7 +69,7 @@ abstract class Mailable extends BaseMailable
         $this->withInternalSettings(function () use ($mailer) {
             Log::info(sprintf('Mailable [%s] started.', $this->className()));
             $this->sendBefore();
-            if (!$this->jointTos) {
+            if ($this->jointTos) {
                 $sentMessage = parent::send($mailer);
             }
             else {
@@ -98,15 +90,52 @@ abstract class Mailable extends BaseMailable
         $this->to = $tos;
     }
 
+    protected function buildViewTemplate($view): string
+    {
+        return $this->baseTemplate . $view;
+    }
+
     protected function buildView(): array|string
     {
-        if ($this->viewOnLocale && isset($this->view)) {
-            $originView = $this->view;
-            $this->view .= '.' . app()->getLocale();
-            $view = parent::buildView();
-            $this->view = $originView;
-            return $view;
+        if ($hasView = !is_null($originView = $this->view ?? null)) {
+            $this->view = $this->buildViewTemplate($this->view);
         }
-        return parent::buildView();
+        if ($hasTextView = !is_null($originTextView = $this->textView ?? null)) {
+            $this->textView = $this->buildViewTemplate($this->textView);
+        }
+        if ($hasMarkdown = !is_null($originMarkdown = $this->markdown ?? null)) {
+            $this->markdown = $this->buildViewTemplate($this->markdown);
+        }
+        if ($this->viewOnLocale) {
+            $locale = App::getLocale();
+            if ($hasView) {
+                $this->view .= '.' . $locale;
+            }
+            if ($hasTextView) {
+                $this->textView .= '.' . $locale;
+            }
+            if ($hasMarkdown) {
+                $this->markdown .= '.' . $locale;
+            }
+        }
+        $view = parent::buildView();
+        if ($hasView) {
+            $this->view = $originView;
+        }
+        if ($hasTextView) {
+            $this->textView = $originTextView;
+        }
+        if ($hasMarkdown) {
+            $this->markdown = $originMarkdown;
+        }
+        return $view;
+    }
+
+    public function buildViewData(): array
+    {
+        return array_merge(parent::buildViewData(), [
+            'locale' => Client::settings()->getLocale(),
+            'charset' => 'utf-8',
+        ]);
     }
 }

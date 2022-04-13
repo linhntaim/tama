@@ -2,20 +2,26 @@
 
 namespace App\Models;
 
-use App\Support\Mail\IEmalAddress;
+use App\Support\Models\User as Authenticatable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
  * @property string $name
  * @property string $email
  */
-class User extends Authenticatable implements IEmalAddress
+class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
+
+    public static function hashPassword($password): string
+    {
+        return Hash::make($password);
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -26,6 +32,17 @@ class User extends Authenticatable implements IEmalAddress
         'name',
         'email',
         'password',
+    ];
+
+    protected $visible = [
+        'id',
+        'name',
+        'email',
+        'sd_st_email_verified_at',
+    ];
+
+    protected $appends = [
+        'sd_st_email_verified_at',
     ];
 
     /**
@@ -47,13 +64,26 @@ class User extends Authenticatable implements IEmalAddress
         'email_verified_at' => 'datetime',
     ];
 
-    public function getEmailAddress(): string
+    public array $uniques = ['email'];
+
+    protected function password(): Attribute
     {
-        return $this->email;
+        return Attribute::make(
+            set: fn($value) => static::hashPassword($value),
+        );
     }
 
-    public function getEmailName(): ?string
+    protected function sdStEmailVerifiedAt(): Attribute
     {
-        return $this->name;
+        return Attribute::make(
+            get: fn() => is_null($this->attributes['email_verified_at'])
+                ? null
+                : date_timer()->compound(
+                    'shortDate',
+                    ' ',
+                    'shortTime',
+                    $this->attributes['email_verified_at']
+                ),
+        );
     }
 }

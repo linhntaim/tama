@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Support\Console;
+namespace App\Support\Console\Scheduling;
 
-use App\Support\App;
+use App\Support\Console\Application;
 use App\Support\Console\Schedules\Schedule;
+use App\Support\Facades\App;
 use App\Support\Jobs\Job;
 use Illuminate\Console\Scheduling\Event as ConsoleScheduleEvent;
 use Illuminate\Console\Scheduling\Schedule as ConsoleSchedule;
@@ -37,7 +38,7 @@ class Scheduler
         return $this;
     }
 
-    protected function addParams(...$params): static
+    protected function addParams(mixed ...$params): static
     {
         array_push($this->params, ...$params);
         return $this;

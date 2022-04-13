@@ -6,8 +6,10 @@ use App\Support\Mail\Mailable;
 
 class TrialMailable extends Mailable
 {
-    protected function sendBefore()
+    public function build()
     {
-        $this->text(date_timer()->compound('longDate', ' ', 'longTime'));
+        $this->text('trial_plain', [
+            'date' => date_timer()->compound('longDate', ' ', 'longTime'),
+        ]);
     }
 }

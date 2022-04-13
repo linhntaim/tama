@@ -3,12 +3,12 @@
 namespace App\Support\Http\Middleware;
 
 use App\Support\Http\Request;
-use App\Support\Http\ResponseTrait;
+use App\Support\Http\Responses;
 use Closure;
 
 class PrioritizeHtmlIndex
 {
-    use ResponseTrait;
+    use Responses;
 
     protected function htmlIndexFile(Request $request): ?string
     {
@@ -33,7 +33,7 @@ class PrioritizeHtmlIndex
     public function handle(Request $request, Closure $next)
     {
         if ($htmlIndexFile = $this->htmlIndexFile($request)) {
-            return $this->responseFileAsContent($htmlIndexFile);
+            return $this->responseFileAsContent($request, $htmlIndexFile);
         }
         return $next($request);
     }

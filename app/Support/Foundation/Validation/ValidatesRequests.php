@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Support\Http;
+namespace App\Support\Foundation\Validation;
 
+use App\Support\Http\Request;
 use Illuminate\Contracts\Validation\Factory as ValidationFactory;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Validation\ValidationException;

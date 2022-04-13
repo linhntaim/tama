@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Base
- */
-
 namespace App\Support\Client;
 
 use Carbon\Carbon;

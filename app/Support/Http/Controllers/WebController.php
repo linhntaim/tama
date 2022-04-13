@@ -2,13 +2,18 @@
 
 namespace App\Support\Http\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Support\Http\Request;
 use Illuminate\Contracts\View\View;
 
 class WebController extends Controller
 {
-    protected function response(string $view, array $data = [], array $mergeData = []): View
+    protected function response(
+        Request $request,
+        string  $view,
+        array   $data = [],
+        array   $mergeData = []
+    ): View
     {
-        return $this->responseView($view, $data, $mergeData);
+        return $this->responseView($request, $view, $data, $mergeData);
     }
 }

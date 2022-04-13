@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support;
+namespace App\Support\Facades;
 
 use Illuminate\Support\Facades\App as BaseApp;
 

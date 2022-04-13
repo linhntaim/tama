@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Base
- */
-
 namespace App\Support\Client;
 
 class NumberFormatter extends SettingsApplier
@@ -65,11 +61,11 @@ class NumberFormatter extends SettingsApplier
 
     public function fromFormatPoint(string $formattedNumber): float
     {
-        return (float)preg_replace('/[^\d\.]+/', '', $formattedNumber);
+        return (float)preg_replace('/[^\d.].+/', '', $formattedNumber);
     }
 
     public function fromFormatComma(string $formattedNumber): float
     {
-        return (float)str_replace(',', '.', preg_replace('/[^\d\,]+/', '', $formattedNumber));
+        return (float)str_replace(',', '.', preg_replace('/[^\d,]+/', '', $formattedNumber));
     }
 }

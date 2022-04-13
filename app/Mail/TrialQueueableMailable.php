@@ -2,12 +2,14 @@
 
 namespace App\Mail;
 
-use App\Support\Mail\Mailable;
+use App\Support\Mail\QueueableMailable;
 
-class TrialQueueableMailable extends Mailable
+class TrialQueueableMailable extends QueueableMailable
 {
-    protected function sendBefore()
+    public function build()
     {
-        $this->text(date_timer()->compound('longDate', ' ', 'longTime'));
+        $this->text('trial_plain', [
+            'date' => date_timer()->compound('longDate', ' ', 'longTime'),
+        ]);
     }
 }

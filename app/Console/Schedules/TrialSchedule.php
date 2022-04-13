@@ -2,8 +2,8 @@
 
 namespace App\Console\Schedules;
 
-use App\Support\App;
 use App\Support\Console\Schedules\Schedule;
+use App\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 
 class TrialSchedule extends Schedule

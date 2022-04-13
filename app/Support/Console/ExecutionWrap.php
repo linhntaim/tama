@@ -2,11 +2,11 @@
 
 namespace App\Support\Console;
 
-use App\Support\App;
-use App\Support\Client\Client;
 use App\Support\Client\Settings;
 use App\Support\Console\Application as Artisan;
 use App\Support\Console\Commands\Command;
+use App\Support\Facades\App;
+use App\Support\Facades\Client;
 use Closure;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Facades\Log;
@@ -15,7 +15,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Throwable;
 
-trait WrapCommandTrait
+trait ExecutionWrap
 {
     protected function wrapCanLog(SymfonyCommand $command, InputInterface $input): bool
     {

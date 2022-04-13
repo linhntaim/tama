@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Base
- */
-
 namespace App\Support\Log;
 
 use Illuminate\Log\LogManager as BaseLogManager;

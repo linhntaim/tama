@@ -5,9 +5,9 @@ namespace App\Support\Mail;
 use Illuminate\Mail\SentMessage;
 use Illuminate\Support\Facades\Mail;
 
-trait SendMailTrait
+trait SendMail
 {
-    protected function sendMail(Mailable $mailable, $to = null, $cc = null, $bcc = null, bool $separatedTos = false): ?SentMessage
+    protected function sendMail(Mailable $mailable, $to = null, $cc = null, $bcc = null, bool $separatedTos = false): SentMessage|int|null
     {
         return Mail::send(
             $mailable
