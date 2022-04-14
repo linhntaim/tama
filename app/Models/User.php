@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Support\Models\User as Authenticatable;
+use App\Support\Notifications\INotifiable;
+use App\Support\Notifications\INotifier;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,7 +16,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string $name
  * @property string $email
  */
-class User extends Authenticatable
+class User extends Authenticatable implements INotifiable, INotifier
 {
     use HasApiTokens, HasFactory, Notifiable;
 
@@ -85,5 +87,15 @@ class User extends Authenticatable
                     $this->attributes['email_verified_at']
                 ),
         );
+    }
+
+    public function getNotifierKey()
+    {
+        return $this->getKey();
+    }
+
+    public function getNotifierDisplayName(): string
+    {
+        return $this->name;
     }
 }
