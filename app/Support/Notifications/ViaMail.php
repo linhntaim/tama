@@ -6,5 +6,5 @@ use App\Support\Mail\Mailable;
 
 interface ViaMail
 {
-    public function toMail(INotifiable $notifiable): Mailable;
+    public function toMail(INotifiable $notifiable): ?Mailable;
 }

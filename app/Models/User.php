@@ -5,10 +5,10 @@ namespace App\Models;
 use App\Support\Models\User as Authenticatable;
 use App\Support\Notifications\INotifiable;
 use App\Support\Notifications\INotifier;
+use App\Support\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\HasApiTokens;
 
@@ -19,6 +19,9 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable implements INotifiable, INotifier
 {
     use HasApiTokens, HasFactory, Notifiable;
+
+    public const SYSTEM_ID = 1;
+    public const OWNER_ID = 2;
 
     public static function hashPassword($password): string
     {

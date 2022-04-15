@@ -10,12 +10,7 @@ use App\Support\Notifications\ViaMail;
 
 class TrialMailNotification extends Notification implements ViaMail
 {
-    public function toMail(INotifiable $notifiable): Mailable
-    {
-        return $this->dataMailable($notifiable)->to($notifiable);
-    }
-
-    public function dataMailable(INotifiable $notifiable): Mailable
+    public function dataMailable(INotifiable $notifiable): ?Mailable
     {
         return (new TrialMailable())
             ->with('notifier', $this->notifier);

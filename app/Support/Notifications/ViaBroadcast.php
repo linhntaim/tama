@@ -2,7 +2,9 @@
 
 namespace App\Support\Notifications;
 
+use Illuminate\Notifications\Messages\BroadcastMessage;
+
 interface ViaBroadcast
 {
-    public function toArray(INotifiable $notifiable): array;
+    public function toBroadcast(INotifiable $notifiable): BroadcastMessage;
 }

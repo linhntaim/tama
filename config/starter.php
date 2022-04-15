@@ -41,6 +41,22 @@ return [
             'name' => env('MAIL_ALWAYS_TO_NAME'),
         ],
     ],
+    'database' => [
+        'seeders' => [
+            'users' => [
+                'system' => [
+                    'email' => env('USER_SYSTEM_EMAIL'),
+                    'name' => env('USER_SYSTEM_NAME'),
+                    'password' => env('USER_SYSTEM_PASSWORD'),
+                ],
+                'owner' => [
+                    'email' => env('USER_OWNER_EMAIL'),
+                    'name' => env('USER_OWNER_NAME'),
+                    'password' => env('USER_OWNER_PASSWORD'),
+                ],
+            ],
+        ],
+    ],
     'client' => [
         'default' => 'default',
         'settings' => [

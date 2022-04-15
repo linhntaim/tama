@@ -9,13 +9,9 @@ use App\Support\Notifications\ViaDatabase;
 
 class TrialDatabaseNotification extends Notification implements ViaDatabase
 {
-    public function toDatabase(INotifiable $notifiable): array
+    protected function dataDatabase(INotifiable $notifiable): array
     {
         return [
-            'notifier' => $this->notifier ? [
-                'type' => $this->notifier::class,
-                'id' => $this->notifier->getNotifierKey(),
-            ] : null,
             'date' => DateTimer::databaseNow(),
         ];
     }
