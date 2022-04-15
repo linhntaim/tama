@@ -4,9 +4,11 @@ namespace App\Support\Mail;
 
 use App\Support\ClassTrait;
 use App\Support\Client\InternalSettings;
+use App\Support\Exceptions\Exception;
 use App\Support\Facades\App;
 use App\Support\Facades\Artisan;
 use App\Support\Facades\Client;
+use App\Support\Notifications\INotifiable;
 use Illuminate\Mail\Mailable as BaseMailable;
 use Illuminate\Support\Facades\Log;
 
@@ -30,8 +32,41 @@ abstract class Mailable extends BaseMailable
         }
     }
 
+    /**
+     * @throws Exception
+     */
     protected function normalizeRecipient($recipient): object
     {
+        if (is_array($recipient)) {
+            if (!($count = count($recipient))) {
+                throw new Exception('Email address is empty.');
+            }
+            if (isset($recipient['email'])) {
+                return (object)$recipient;
+            }
+            if ($count == 1) {
+                foreach ($recipient as $email => $name) {
+                    if (is_string($email)) {
+                        return (object)[
+                            'email' => $email,
+                            'name' => $name,
+                        ];
+                    }
+                    else {
+                        return (object)['email' => $email];
+                    }
+                }
+            }
+
+            $recipient = array_values($recipient);
+            return (object)[
+                'email' => $recipient[0],
+                'name' => $recipient[1] ?? null,
+            ];
+        }
+        if ($recipient instanceof INotifiable) {
+            return $this->normalizeRecipient($recipient->routeNotificationFor('mail'));
+        }
         if ($recipient instanceof IEmailAddress) {
             return (object)[
                 'email' => $recipient->getEmailAddress(),

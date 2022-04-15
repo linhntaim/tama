@@ -15,4 +15,9 @@ class App extends BaseApp
     {
         return config('app.debug');
     }
+
+    public static function runningInProduction(): bool
+    {
+        return config('app.env') === 'production';
+    }
 }

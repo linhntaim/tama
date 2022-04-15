@@ -242,11 +242,18 @@ class MigrateCommand extends ForceCommand
             $this->composer->dumpAutoloads();
             $this->info('Migrate changed successfully.');
         }
+        if (!in_array('notifications', $migrationTables)) {
+            if ($this->confirm('Migrate table of notifications?')) {
+                if ($this->call('notifications:table') != self::SUCCESS) {
+                    return false;
+                }
+            }
+        }
         return true;
     }
 
     protected function migrateSeed(): bool
     {
-        return true;
+        return $this->call('db:seed') != self::SUCCESS;
     }
 }

@@ -2,7 +2,7 @@
 
 namespace App\Support\Mail;
 
-class SimpleEmailAddress
+class SimpleEmailAddress implements IEmailAddress
 {
     public string $email;
 
@@ -12,5 +12,15 @@ class SimpleEmailAddress
     {
         $this->email = $email;
         $this->name = $name;
+    }
+
+    public function getEmailAddress(): string
+    {
+        return $this->email;
+    }
+
+    public function getEmailName(): ?string
+    {
+        return $this->name;
     }
 }

@@ -481,4 +481,25 @@ abstract class ModelProvider
     {
         return $this->executeDelete($this->queryByKeys($keys));
     }
+
+    /**
+     * @throws DatabaseException
+     */
+    public function generateUniqueValue($column, int|Closure|null $length = null): string
+    {
+        if (is_null($length)) {
+            $callback = method_exists($this, $method = 'makeUnique' . Str::studly($column))
+                ? fn() => $this->{$method}()
+                : fn() => Str::random(40);
+        }
+        elseif (is_int($length)) {
+            $callback = fn() => Str::random($length);
+        }
+        else {
+            $callback = $length;
+        }
+        while (($unique = $callback()) && $this->has([new WhereCondition($column, $unique)])) {
+        }
+        return $unique;
+    }
 }
