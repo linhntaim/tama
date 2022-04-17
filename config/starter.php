@@ -57,6 +57,10 @@ return [
             ],
         ],
     ],
+    'filesystems' => [
+        's3' => (bool)env('FILESYSTEM_AWS_S3', false),
+        'azure' => (bool)env('FILESYSTEM_AZURE_STORAGE', false),
+    ],
     'client' => [
         'default' => 'default',
         'settings' => [

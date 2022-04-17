@@ -114,6 +114,13 @@ if (!function_exists('empty_string')) {
     }
 }
 
+if (!function_exists('extension')) {
+    function extension(string $path): bool
+    {
+        return pathinfo($path, PATHINFO_EXTENSION);
+    }
+}
+
 if (!function_exists('filled_array')) {
     function filled_array(array $array, array $default = null, $nullable = false, Closure $keyTransform = null): array
     {
@@ -125,23 +132,35 @@ if (!function_exists('filled_array')) {
     }
 }
 
-if (!function_exists('join_paths')) {
-    function join_paths(string ...$paths): string
+if (!function_exists('is_base64')) {
+    function is_base64(string $string): bool
+    {
+        return base64_encode(base64_decode($string, true)) === $string;
+    }
+}
+
+if (!function_exists('slash_concat')) {
+    function slash_concat($slash = '/', string ...$parts): string
     {
         return implode(
-            DIRECTORY_SEPARATOR,
-            array_map(fn($path) => trim_more(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR), $paths)
+            $slash,
+            array_map(fn($part) => trim_more(str_replace(['\\', '/'], $slash, $part), $slash), $parts)
         );
+    }
+}
+
+if (!function_exists('join_paths')) {
+    function join_paths($relative = true, string ...$paths): string
+    {
+        return ($relative && !windows_os() ? DIRECTORY_SEPARATOR : '')
+            . slash_concat(DIRECTORY_SEPARATOR, ...$paths);
     }
 }
 
 if (!function_exists('join_urls')) {
     function join_urls(string ...$urls): string
     {
-        return implode(
-            '/',
-            array_map(fn($url) => trim_more(str_replace(['\\'], '/', $url), '/'), $urls)
-        );
+        return slash_concat('/', ...$urls);
     }
 }
 
@@ -181,7 +200,7 @@ if (!function_exists('mkdir_recursive')) {
 }
 
 if (!function_exists('modify')) {
-    function modify($value, ?Closure $callback = null)
+    function modify(mixed $value, ?Closure $callback = null): mixed
     {
         return is_null($callback) ? $value : $callback($value);
     }
@@ -232,7 +251,7 @@ if (!function_exists('stringable')) {
 }
 
 if (!function_exists('take')) {
-    function take($value, ?Closure $callback = null)
+    function take(mixed $value, ?Closure $callback = null): mixed
     {
         if (is_null($callback)) {
             return $value;
