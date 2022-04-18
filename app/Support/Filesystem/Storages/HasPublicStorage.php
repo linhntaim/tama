@@ -19,7 +19,10 @@ trait HasPublicStorage
     public function setUrl(string $url): static
     {
         if (Str::startsWith($url, $rootUrl = $this->getRootUrl() . '/')) {
-            return $this->setRelativePath(str_replace($rootUrl, '', $url), false);
+            return $this->setRelativePath(str_replace($rootUrl, '', $url), false)
+                ->setName(basename($this->getRelativePath()))
+                ->setMimeType($this->disk->mimeType($this->getRelativePath()))
+                ->setSize($this->disk->size($this->getRelativePath()));
         }
         return $this;
     }

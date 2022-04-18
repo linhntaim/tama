@@ -15,8 +15,6 @@ abstract class DiskStorage extends Storage
 
     protected string $rootPath;
 
-    protected string $visibility = Filesystem::VISIBILITY_PRIVATE;
-
     protected string $dirSeparator;
 
     protected ?string $relativePath = null;
@@ -24,9 +22,65 @@ abstract class DiskStorage extends Storage
     public function __construct(?string $diskName)
     {
         if (is_null($diskName)) {
-            throw new InvalidArgumentException('Disk must be provided.');
+            throw new InvalidArgumentException('Disk must be not null.');
         }
         $this->disk = FilesystemStorage::disk($diskName);
+    }
+
+    public function getContent(): string
+    {
+        return $this->disk->get($this->relativePath);
+    }
+
+    public function getContentAsStream()
+    {
+        return $this->disk->readStream($this->relativePath);
+    }
+
+    public function has(): bool
+    {
+        return !is_null($this->relativePath);
+    }
+
+    public function from(string|File|UploadedFile|Storage $file, ?string $in = null): static
+    {
+        if ($file instanceof Storage) {
+            $filename = compose_filename(null, $file->getExtension());
+            $resource = $file instanceof InlineStorage
+                ? $file->getContent() : $file->getContentAsStream();
+            $this->setName($file->getName())
+                ->setMimeType($file->getMimeType())
+                ->setSize($file->getSize());
+        }
+        else {
+            $file = File::from($file);
+            $filename = $file->hashName();
+            $resource = $file->openFile();
+            if ($file instanceof UploadedFile) {
+                $this
+                    ->setName($file->getClientOriginalName())
+                    ->setMimeType($file->getClientMimeType())
+                    ->setSize($file->getSize());
+            }
+            elseif ($file instanceof File) {
+                $this
+                    ->setName($file->getBasename())
+                    ->setMimeType($file->getMimeType())
+                    ->setSize($file->getSize());
+            }
+        }
+
+        $this->disk->put(
+            $relativePath = ($in ?: $this->timelyPath()) . $this->dirSeparator . $filename,
+            $resource,
+            ['visibility' => $this->visibility]
+        );
+        return $this->setRelativePath($relativePath, false);
+    }
+
+    protected function timelyPath(): string
+    {
+        return join_paths(true, date('Y'), date('m'), date('d'), date('H'));
     }
 
     public function getDisk(): Filesystem|FilesystemAdapter
@@ -48,32 +102,8 @@ abstract class DiskStorage extends Storage
         return $this;
     }
 
-    public function has(): bool
+    public function getRelativePath(): ?string
     {
-        return !is_null($this->relativePath);
-    }
-
-    public function storeFile(object|string $file, ?string $in = null): static
-    {
-        $file = File::from($file);
-        if ($file instanceof UploadedFile) {
-            $this->name = $file->getClientOriginalName();
-            $this->mimeType = $file->getClientMimeType();
-            $this->size = $file->getSize();
-        }
-        elseif ($file instanceof File) {
-            $this->name = $file->getBasename();
-            $this->mimeType = $file->getMimeType();
-            $this->size = $file->getSize();
-        }
-        return $this->setRelativePath(
-            $this->disk->putFileAs(
-                $in ?: join_paths(true, date('Y'), date('m'), date('d'), date('H')),
-                $file,
-                $file->hashName(),
-                ['visibility' => $this->visibility]
-            ),
-            false
-        );
+        return $this->relativePath;
     }
 }

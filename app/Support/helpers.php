@@ -15,6 +15,14 @@ if (!function_exists('class_use')) {
     }
 }
 
+if (!function_exists('compose_filename')) {
+    function compose_filename(?string $name = null, ?string $extension = null): string
+    {
+        return (null_or_empty_string($name) ? Str::random(40) : $name)
+            . (null_or_empty_string($extension) ? '' : '.' . $extension);
+    }
+}
+
 if (!function_exists('config_starter')) {
     function config_starter(array|string|null $key = null, $default = null): mixed
     {
@@ -139,16 +147,6 @@ if (!function_exists('is_base64')) {
     }
 }
 
-if (!function_exists('slash_concat')) {
-    function slash_concat($slash = '/', string ...$parts): string
-    {
-        return implode(
-            $slash,
-            array_map(fn($part) => trim_more(str_replace(['\\', '/'], $slash, $part), $slash), $parts)
-        );
-    }
-}
-
 if (!function_exists('join_paths')) {
     function join_paths($relative = true, string ...$paths): string
     {
@@ -213,6 +211,13 @@ if (!function_exists('name_starter')) {
     }
 }
 
+if (!function_exists('null_or_empty_string')) {
+    function null_or_empty_string(?string $string, bool $trim = true): bool
+    {
+        return is_null($string) || '' === ($trim ? trim($string) : $string);
+    }
+}
+
 if (!function_exists('nullify_empty_array')) {
     function nullify_empty_array(array $array): ?array
     {
@@ -231,6 +236,16 @@ if (!function_exists('rtrim_more')) {
     function rtrim_more(string $string, string $characters = ''): string
     {
         return rtrim($string, " \t\n\r\0\x0B" . $characters);
+    }
+}
+
+if (!function_exists('slash_concat')) {
+    function slash_concat($slash = '/', string ...$parts): string
+    {
+        return implode(
+            $slash,
+            array_map(fn($part) => trim_more(str_replace(['\\', '/'], $slash, $part), $slash), $parts)
+        );
     }
 }
 

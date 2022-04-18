@@ -10,6 +10,7 @@ use App\Support\Filesystem\Storages\InternalStorage;
 use App\Support\Filesystem\Storages\PrivateStorage;
 use App\Support\Filesystem\Storages\PublicStorage;
 use App\Support\Filesystem\Storages\Storage;
+use App\Support\Filesystem\Storages\StorageFactory;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Validator;
 
@@ -42,7 +43,7 @@ class Filer
         }
         if ($source instanceof UploadedFile) {
             return take(new static(), function (Filer $filer) use ($source) {
-                $filer->storage = (new PrivateStorage())->storeFile($source);
+                $filer->storage = (new PrivateStorage())->from($source);
             });
         }
         foreach ([
@@ -63,5 +64,33 @@ class Filer
 
     private function __construct()
     {
+    }
+
+    public function moveToStorage(Storage $toStorage): static
+    {
+        if ($toStorage::class != $this->storage::class) {
+            $this->storage = $toStorage->from($this->storage);
+        }
+        return $this;
+    }
+
+    public function moveToPublic(): static
+    {
+        return $this->moveToStorage(new PublicStorage());
+    }
+
+    public function moveToPrivate(): static
+    {
+        return $this->moveToStorage(new PrivateStorage());
+    }
+
+    public function moveToLocal(): static
+    {
+        return $this->moveToStorage(StorageFactory::localStorage());
+    }
+
+    public function moveToCloud(): static
+    {
+        return $this->moveToStorage(StorageFactory::cloudStorage());
     }
 }
