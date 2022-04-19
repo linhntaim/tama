@@ -6,18 +6,22 @@ use Illuminate\Http\File as BaseFile;
 use Illuminate\Http\UploadedFile;
 use SplFileInfo;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Symfony\Component\HttpFoundation\File\Exception\FileNotFoundException;
 
 class File extends BaseFile
 {
-    public static function from(string|SplFileInfo $file): static|UploadedFile
+    /**
+     * @throws FileNotFoundException
+     */
+    public static function from(string|SplFileInfo $file, bool $checkPath = true): static|UploadedFile
     {
         if ($file instanceof UploadedFile) {
             return $file;
         }
         elseif ($file instanceof SplFileInfo) {
-            return new static($file->getRealPath());
+            return new static($file->getRealPath(), $checkPath);
         }
-        return new static($file);
+        return new static($file, $checkPath);
     }
 
     protected function getTargetFile(string $directory, string $name = null): static

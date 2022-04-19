@@ -2,9 +2,12 @@
 
 namespace App\Support\Filesystem\Storages;
 
-class CloudStorage extends DiskStorage implements IHasPublicStorage, IHasExternalStorage
+use Illuminate\Support\Str;
+use SplFileInfo;
+
+class CloudStorage extends DiskStorage implements IHasUrlDiskStorage, IHasExternalStorage, IPublicPublishableStorage
 {
-    use HasPublicStorage;
+    use HasUrlDiskStorage;
 
     public const NAME = 'cloud';
 
@@ -14,5 +17,16 @@ class CloudStorage extends DiskStorage implements IHasPublicStorage, IHasExterna
 
         $this->rootPath = '';
         $this->dirSeparator = '/';
+    }
+
+    public function setFile(SplFileInfo|string $file): static
+    {
+        if (is_string($file)) {
+            if (Str::startsWith($file, $rootUrl = $this->getRootUrl() . '/')) {
+                $file = Str::after($file, $rootUrl);
+            }
+            $this->setRelativeFile($file);
+        }
+        return $this;
     }
 }

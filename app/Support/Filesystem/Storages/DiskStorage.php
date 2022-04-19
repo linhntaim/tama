@@ -8,6 +8,8 @@ use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage as FilesystemStorage;
 use InvalidArgumentException;
+use RuntimeException;
+use SplFileInfo;
 
 abstract class DiskStorage extends Storage
 {
@@ -17,8 +19,6 @@ abstract class DiskStorage extends Storage
 
     protected string $dirSeparator;
 
-    protected ?string $relativePath = null;
-
     public function __construct(?string $diskName)
     {
         if (is_null($diskName)) {
@@ -27,60 +27,78 @@ abstract class DiskStorage extends Storage
         $this->disk = FilesystemStorage::disk($diskName);
     }
 
-    public function getContent(): string
-    {
-        return $this->disk->get($this->relativePath);
-    }
-
-    public function getContentAsStream()
-    {
-        return $this->disk->readStream($this->relativePath);
-    }
-
-    public function has(): bool
-    {
-        return !is_null($this->relativePath);
-    }
-
-    public function from(string|File|UploadedFile|Storage $file, ?string $in = null): static
+    public function fromFile(string|SplFileInfo|Storage $file, ?string $in = null): static
     {
         if ($file instanceof Storage) {
             $filename = compose_filename(null, $file->getExtension());
             $resource = $file instanceof InlineStorage
-                ? $file->getContent() : $file->getContentAsStream();
+                ? $file->getContent() : $file->getStream();
             $this->setName($file->getName())
                 ->setMimeType($file->getMimeType())
+                ->setExtension($file->getExtension())
                 ->setSize($file->getSize());
         }
         else {
             $file = File::from($file);
             $filename = $file->hashName();
-            $resource = $file->openFile();
+            if (($resource = fopen($path = $file->getRealPath(), 'r')) === false) {
+                throw new RuntimeException(sprintf('Cannot get stream from the file [%s].', $path));
+            }
             if ($file instanceof UploadedFile) {
                 $this
                     ->setName($file->getClientOriginalName())
                     ->setMimeType($file->getClientMimeType())
+                    ->setExtension($file->getClientOriginalExtension())
                     ->setSize($file->getSize());
             }
             elseif ($file instanceof File) {
                 $this
                     ->setName($file->getBasename())
                     ->setMimeType($file->getMimeType())
+                    ->setExtension($file->getExtension())
                     ->setSize($file->getSize());
             }
         }
 
+        // prevent filename from existing
+        while ($this->disk->fileExists($file = ($in ?: $this->defaultPath()) . $this->dirSeparator . $filename)) {
+            $filename = compose_filename(null, pathinfo($filename, PATHINFO_EXTENSION));
+        }
+
         $this->disk->put(
-            $relativePath = ($in ?: $this->timelyPath()) . $this->dirSeparator . $filename,
+            $file,
             $resource,
             ['visibility' => $this->visibility]
         );
-        return $this->setRelativePath($relativePath, false);
+        return parent::setFile($file);
     }
 
-    protected function timelyPath(): string
+    public function setRelativeFile(string $file): static
     {
-        return join_paths(true, date('Y'), date('m'), date('d'), date('H'));
+        if ($this->disk->exists($file = $this->dirPath($file))) {
+            return parent::setFile($file)
+                ->setName(basename($file))
+                ->setMimeType($this->disk->mimeType($file))
+                ->setExtension(pathinfo($file, PATHINFO_EXTENSION))
+                ->setSize($this->disk->size($file));
+        }
+        return $this;
+    }
+
+    public function getContent(): string
+    {
+        return $this->disk->get($this->file);
+    }
+
+    public function getStream()
+    {
+        return $this->disk->readStream($this->file);
+    }
+
+    public function delete(): static
+    {
+        $this->disk->delete($this->file);
+        return $this;
     }
 
     public function getDisk(): Filesystem|FilesystemAdapter
@@ -93,17 +111,14 @@ abstract class DiskStorage extends Storage
         return $this->rootPath;
     }
 
-    public function setRelativePath(string $relativePath, bool $check = true): static
+    protected function dirPath(string $path, bool $relative = true): string
     {
-        $relativePath = str_replace(['\\', '/'], $this->dirSeparator, $relativePath);
-        $this->relativePath = $check
-            ? ($this->disk->fileExists($relativePath) ? $relativePath : null)
-            : $relativePath;
-        return $this;
+        $path = str_replace(['\\', '/'], $this->dirSeparator, $path);
+        return $relative ? trim_more($path, $this->dirSeparator) : rtrim_more($path, $this->dirSeparator);
     }
 
-    public function getRelativePath(): ?string
+    protected function defaultPath(): string
     {
-        return $this->relativePath;
+        return implode($this->dirSeparator, [date('Y'), date('m'), date('d'), date('H')]);
     }
 }

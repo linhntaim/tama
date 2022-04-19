@@ -12,46 +12,29 @@ use App\Support\Filesystem\Storages\PublicStorage;
 use App\Support\Filesystem\Storages\Storage;
 use App\Support\Filesystem\Storages\StorageFactory;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Validator;
+use SplFileInfo;
 
 class Filer
 {
-    public static function from($source): ?static
+    public static function from(string|SplFileInfo|Storage $file): ?static
     {
-        if (is_string($source)) {
-            if (($storage = new InlineStorage())->setData($source)->has()) {
-                return take(new static(), function (Filer $filer) use ($storage) {
-                    $filer->storage = $storage;
-                });
-            }
-            if (!Validator::make(['source' => $source], ['source' => 'url'])->fails()) {
-                foreach ([
-                             PublicStorage::class,
-                             config_starter('filesystems.s3') ? AwsS3Storage::class : null,
-                             config_starter('filesystems.azure') ? AzureBlobStorage::class : null,
-                             ExternalStorage::class,
-                         ] as $storageClass) {
-                    if (!is_null($storageClass)
-                        && ($storage = new $storageClass())->setUrl($source)->has()) {
-                        return take(new static(), function (Filer $filer) use ($storage) {
-                            $filer->storage = $storage;
-                        });
-                    }
-                }
-                return null;
-            }
-        }
-        if ($source instanceof UploadedFile) {
-            return take(new static(), function (Filer $filer) use ($source) {
-                $filer->storage = (new PrivateStorage())->from($source);
+        if ($file instanceof UploadedFile) {
+            return take(new static(), function (Filer $filer) use ($file) {
+                $filer->storage = (new PrivateStorage())->fromFile($file);
             });
         }
-        foreach ([
-                     PublicStorage::class,
-                     PrivateStorage::class,
-                     InternalStorage::class,
-                 ] as $storageClass) {
-            if (($storage = new $storageClass())->setFile($source)->has()) {
+        foreach (is_url($file) ? [
+            PublicStorage::class,
+            config_starter('filesystems.uses.s3') ? AwsS3Storage::class : null,
+            config_starter('filesystems.uses.azure') ? AzureBlobStorage::class : null,
+            ExternalStorage::class,
+        ] : [
+            InlineStorage::class,
+            PublicStorage::class,
+            PrivateStorage::class,
+            InternalStorage::class,
+        ] as $storageClass) {
+            if (!is_null($storageClass) && ($storage = new $storageClass())->setFile($file)->has()) {
                 return take(new static(), function (Filer $filer) use ($storage) {
                     $filer->storage = $storage;
                 });
@@ -66,31 +49,51 @@ class Filer
     {
     }
 
-    public function moveToStorage(Storage $toStorage): static
+    public function getName(): string
     {
-        if ($toStorage::class != $this->storage::class) {
-            $this->storage = $toStorage->from($this->storage);
-        }
+        return $this->storage->getName();
+    }
+
+    public function getMimeType(): string
+    {
+        return $this->storage->getMimeType();
+    }
+
+    public function getExtension(): string
+    {
+        return $this->storage->getExtension();
+    }
+
+    public function getSize(): string
+    {
+        return $this->storage->getSize();
+    }
+
+    public function getVisibility(): string
+    {
+        return $this->storage->getVisibility();
+    }
+
+    protected function moveToStorage(Storage $toStorage, ?string $in = null): static
+    {
+        $storage = $this->storage;
+        $this->storage = $toStorage->fromFile($this->storage, $in);
+        $storage->delete();
         return $this;
     }
 
-    public function moveToPublic(): static
+    public function storeLocally(?string $in = null): static
     {
-        return $this->moveToStorage(new PublicStorage());
+        return $this->moveToStorage(StorageFactory::localStorage()->setVisibility('private'), $in);
     }
 
-    public function moveToPrivate(): static
+    public function publishPrivate(?string $in = null): static
     {
-        return $this->moveToStorage(new PrivateStorage());
+        return $this->moveToStorage(StorageFactory::privatePublishStorage()->setVisibility('private'), $in);
     }
 
-    public function moveToLocal(): static
+    public function publishPublic(?string $in = null): static
     {
-        return $this->moveToStorage(StorageFactory::localStorage());
-    }
-
-    public function moveToCloud(): static
-    {
-        return $this->moveToStorage(StorageFactory::cloudStorage());
+        return $this->moveToStorage(StorageFactory::publicPublishStorage()->setVisibility('public'), $in);
     }
 }

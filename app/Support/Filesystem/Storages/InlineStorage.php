@@ -5,39 +5,75 @@ namespace App\Support\Filesystem\Storages;
 use App\Support\Http\File;
 use BadMethodCallException;
 use Illuminate\Http\UploadedFile;
+use SplFileInfo;
 
-class InlineStorage extends Storage
+class InlineStorage extends Storage implements IPublicPublishableStorage
 {
     public const NAME = 'inline';
 
-    protected ?string $data = null;
+    public function fromFile(string|SplFileInfo|Storage $file): static
+    {
+        if ($file instanceof Storage) {
+            return parent::setFile(base64_encode($file->getContent()))
+                ->setName($file->getName())
+                ->setMimeType($file->getMimeType())
+                ->setExtension($file->getExtension())
+                ->setSize($file->getSize());
+        }
+        $file = File::from($file);
+        if ($file instanceof UploadedFile) {
+            $this
+                ->setName($file->getClientOriginalName())
+                ->setMimeType($file->getClientMimeType())
+                ->setExtension($file->getClientOriginalExtension())
+                ->setSize($file->getSize());
+        }
+        elseif ($file instanceof File) {
+            $this
+                ->setName($file->getBasename())
+                ->setMimeType($file->getMimeType())
+                ->setExtension($file->extension())
+                ->setSize($file->getSize());
+        }
+        return parent::setFile(base64_encode($file->getContent()));
+    }
+
+    public function setFile(SplFileInfo|string $file): static
+    {
+        if (is_base64($file)) {
+            return parent::setFile($file)
+                ->setName('blob')
+                ->setMimeType('')
+                ->setExtension('')
+                ->setSize(0);
+        }
+        return $this;
+    }
+
+    public function setVisibility(string $visibility): static
+    {
+        return $this;
+    }
 
     public function getContent(): string
     {
-        return base64_decode($this->data);
+        return base64_decode($this->file);
     }
 
-    public function getContentAsStream()
+    public function getStream()
     {
-        throw new BadMethodCallException('Inline Storage does not support `getContentAsStream` method.');
+        throw new BadMethodCallException('Inline Storage does not support `getStream` method.');
     }
 
-    public function has(): bool
+    public function setData($data): static
     {
-        return !is_null($this->data);
-    }
-
-    public function from(string|UploadedFile|File|Storage $file): static
-    {
-        if (!$file instanceof Storage) {
-            $file = File::from($file);
+        if (is_base64($data)) {
+            return parent::setFile($data)
+                ->setName('blob')
+                ->setMimeType('')
+                ->setExtension('')
+                ->setSize(0);
         }
-        return $this->setData(base64_encode($file->getContent()), false);
-    }
-
-    public function setData(string $data, bool $check = true): static
-    {
-        $this->data = $check ? (is_base64($data) ? $data : null) : $data;
         return $this;
     }
 }

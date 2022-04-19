@@ -2,38 +2,44 @@
 
 namespace App\Support\Filesystem\Storages;
 
+use RuntimeException;
+
 class StorageFactory
 {
-    public static function cloudStorage(): ?CloudStorage
+    public static function privatePublishStorage(): Storage|IPublishableStorage
     {
-        if ($disk = config('filesystems.cloud')) {
-            if ($disk == 's3') {
-                if (config_starter('filesystems.s3')) {
-                    return new AwsS3Storage();
-                }
+        return take(static::create(config_starter('filesystems.storages.publish.private')), function (?Storage $storage) {
+            if (is_null($storage)) {
+                throw new RuntimeException('Private publish storage was not set');
             }
-            elseif ($disk == 'azure') {
-                if (config_starter('filesystems.azure')) {
-                    return new AzureBlobStorage();
-                }
+            if (!($storage instanceof IPublishableStorage)) {
+                throw new RuntimeException(sprintf('Storage [%s] is not a publishable storage', $storage::class));
             }
-            return new CloudStorage();
-        }
-        return null;
+        });
     }
 
-    public static function localStorage(): ?LocalStorage
+    public static function publicPublishStorage(): Storage|IPublicPublishableStorage
     {
-        if ($disk = config('filesystems.disk')) {
-            if ($disk == 'private') {
-                return new PrivateStorage();
+        return take(static::create(config_starter('filesystems.storages.publish.public')), function (?Storage $storage) {
+            if (is_null($storage)) {
+                throw new RuntimeException('Public publish storage was not set');
             }
-            elseif ($disk == 'public') {
-                return new PublicStorage();
+            if (!($storage instanceof IPublicPublishableStorage)) {
+                throw new RuntimeException(sprintf('Storage [%s] is not a publishable storage', $storage::class));
             }
-            return new LocalStorage();
-        }
-        return null;
+        });
+    }
+
+    public static function localStorage(): LocalStorage
+    {
+        return take(static::create(config_starter('filesystems.storages.local')), function (?Storage $storage) {
+            if (is_null($storage)) {
+                throw new RuntimeException('Local storage was not set');
+            }
+            if (!($storage instanceof LocalStorage)) {
+                throw new RuntimeException(sprintf('Storage [%s] is not a local storage', $storage::class));
+            }
+        });
     }
 
     public static function create($name): ?Storage
@@ -41,10 +47,10 @@ class StorageFactory
         return match ($name) {
             's3' => new AwsS3Storage(),
             'azure' => new AzureBlobStorage(),
-            'cloud' => new CloudStorage(),
+            //'cloud' => new CloudStorage(),
             'public' => new PublicStorage(),
             'private' => new PrivateStorage(),
-            'local' => new LocalStorage(),
+            //'local' => new LocalStorage(),
             'internal' => new InternalStorage(),
             'external' => new ExternalStorage(),
             'inline' => new InlineStorage(),

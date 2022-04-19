@@ -3,7 +3,9 @@
 use App\Support\Client\DateTimer;
 use App\Support\Client\NumberFormatter;
 use App\Support\Facades\Client;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Symfony\Component\Mime\MimeTypes;
 
 const JSON_READABLE = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_LINE_TERMINATORS;
 const JSON_PRETTY = JSON_READABLE | JSON_PRETTY_PRINT;
@@ -140,10 +142,25 @@ if (!function_exists('filled_array')) {
     }
 }
 
-if (!function_exists('is_base64')) {
-    function is_base64(string $string): bool
+if (!function_exists('guess_extension')) {
+    function guess_extension(string $mimeType): string
     {
-        return base64_encode(base64_decode($string, true)) === $string;
+        return MimeTypes::getDefault()->getExtensions($mimeType)[0] ?? '';
+    }
+}
+
+if (!function_exists('is_base64')) {
+    function is_base64($string): bool
+    {
+        return is_string($string)
+            && base64_encode(base64_decode($string, true)) === $string;
+    }
+}
+
+if (!function_exists('is_url')) {
+    function is_url($string): bool
+    {
+        return !Validator::make(['url' => $string], ['url' => 'string|url'])->fails();
     }
 }
 

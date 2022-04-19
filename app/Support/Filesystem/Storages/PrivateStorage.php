@@ -2,7 +2,7 @@
 
 namespace App\Support\Filesystem\Storages;
 
-class PrivateStorage extends LocalStorage
+class PrivateStorage extends LocalStorage implements IPublishableStorage
 {
     public const NAME = 'private';
 

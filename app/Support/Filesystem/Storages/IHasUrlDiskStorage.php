@@ -2,7 +2,7 @@
 
 namespace App\Support\Filesystem\Storages;
 
-interface IHasPublicStorage extends IHasUrlStorage
+interface IHasUrlDiskStorage extends IHasUrlStorage
 {
     public function getRootUrl(): string;
 }

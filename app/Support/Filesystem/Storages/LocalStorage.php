@@ -15,21 +15,25 @@ class LocalStorage extends DiskStorage implements IHasInternalStorage
         parent::__construct($diskName ?: config('filesystems.default'));
 
         $this->dirSeparator = DIRECTORY_SEPARATOR;
-        $this->rootPath = join_paths(false, $this->disk->path(''));
+        $this->rootPath = $this->dirPath($this->disk->path(''), false);
     }
 
     public function setFile(string|SplFileInfo $file): static
     {
-        if (($file = File::from($file)) instanceof File
+        if (($f = File::from($file, false)) instanceof File
+            && $f->isFile()
             && Str::startsWith(
-                $path = join_paths(false, $file->getRealPath()),
-                $rootPath = $this->rootPath . DIRECTORY_SEPARATOR
+                $path = $this->dirPath($f->getRealPath(), false),
+                $rootPath = $this->rootPath . $this->dirSeparator
             )) {
-            return $this
-                ->setRelativePath(str_replace($rootPath, '', $path), false)
-                ->setName($file->getBasename())
-                ->setMimeType($file->getMimeType())
-                ->setSize($file->getSize());
+            return parent::setFile(Str::after($path, $rootPath))
+                ->setName($f->getBasename())
+                ->setMimeType($f->getMimeType())
+                ->setExtension($f->getExtension())
+                ->setSize($f->getSize());
+        }
+        if (is_string($file)) {
+            return $this->setRelativeFile($file);
         }
         return $this;
     }
@@ -41,6 +45,6 @@ class LocalStorage extends DiskStorage implements IHasInternalStorage
 
     public function getRealPath(): string
     {
-        return $this->rootPath . $this->dirSeparator . $this->relativePath;
+        return $this->rootPath . $this->dirSeparator . $this->file;
     }
 }

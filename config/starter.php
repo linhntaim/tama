@@ -58,8 +58,17 @@ return [
         ],
     ],
     'filesystems' => [
-        's3' => (bool)env('FILESYSTEM_AWS_S3', false),
-        'azure' => (bool)env('FILESYSTEM_AZURE_STORAGE', false),
+        'uses' => [
+            's3' => (bool)env('FILESYSTEM_USES_AWS_S3', false),
+            'azure' => (bool)env('FILESYSTEM_USES_AZURE_STORAGE', false),
+        ],
+        'storages' => [
+            'local' => env('FILESYSTEM_LOCAL_STORAGE', 'private'),
+            'publish' => [
+                'private' => env('FILESYSTEM_PRIVATE_PUBLISH_STORAGE', 'private'),
+                'public' => env('FILESYSTEM_PUBLIC_PUBLISH_STORAGE', 'public'),
+            ],
+        ],
     ],
     'client' => [
         'default' => 'default',

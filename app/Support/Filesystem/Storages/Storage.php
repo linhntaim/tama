@@ -2,21 +2,49 @@
 
 namespace App\Support\Filesystem\Storages;
 
-use App\Support\Http\File;
 use Illuminate\Contracts\Filesystem\Filesystem;
-use Illuminate\Http\UploadedFile;
+use SplFileInfo;
 
 abstract class Storage
 {
     public const NAME = 'storage';
 
+    protected mixed $file = null;
+
     protected string $name;
 
     protected string $mimeType;
 
+    protected string $extension;
+
     protected int $size;
 
     protected string $visibility = Filesystem::VISIBILITY_PRIVATE;
+
+    public abstract function fromFile(string|SplFileInfo|Storage $file): static;
+
+    public function setFile(string|SplFileInfo $file): static
+    {
+        $this->file = $file;
+        return $this;
+    }
+
+    public function getFile(): mixed
+    {
+        return $this->file;
+    }
+
+    public abstract function getContent(): string;
+
+    /**
+     * @return resource
+     */
+    public abstract function getStream();
+
+    public function has(): bool
+    {
+        return !is_null($this->file);
+    }
 
     public function setName(string $name): static
     {
@@ -40,6 +68,17 @@ abstract class Storage
         return $this->mimeType;
     }
 
+    public function setExtension(string $extension): static
+    {
+        $this->extension = $extension;
+        return $this;
+    }
+
+    public function getExtension(): string
+    {
+        return $this->extension;
+    }
+
     public function setSize(int $size): static
     {
         $this->size = $size;
@@ -49,11 +88,6 @@ abstract class Storage
     public function getSize(): int
     {
         return $this->size;
-    }
-
-    public function getExtension(): string
-    {
-        return pathinfo($this->name, PATHINFO_EXTENSION);
     }
 
     public function setVisibility(string $visibility): static
@@ -67,14 +101,8 @@ abstract class Storage
         return $this->visibility;
     }
 
-    public abstract function getContent(): string;
-
-    /**
-     * @return resource
-     */
-    public abstract function getContentAsStream();
-
-    public abstract function has(): bool;
-
-    public abstract function from(string|UploadedFile|File|Storage $file): static;
+    public function delete(): static
+    {
+        return $this;
+    }
 }
