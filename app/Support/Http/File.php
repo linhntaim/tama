@@ -2,11 +2,12 @@
 
 namespace App\Support\Http;
 
+use App\Support\Exceptions\FileException;
+use App\Support\Exceptions\FileNotFoundException;
 use Illuminate\Http\File as BaseFile;
 use Illuminate\Http\UploadedFile;
 use SplFileInfo;
-use Symfony\Component\HttpFoundation\File\Exception\FileException;
-use Symfony\Component\HttpFoundation\File\Exception\FileNotFoundException;
+use Symfony\Component\HttpFoundation\File\Exception\FileNotFoundException as SymfonyFileNotFoundException;
 
 class File extends BaseFile
 {
@@ -21,9 +22,17 @@ class File extends BaseFile
         elseif ($file instanceof SplFileInfo) {
             return new static($file->getRealPath(), $checkPath);
         }
-        return new static($file, $checkPath);
+        try {
+            return new static($file, $checkPath);
+        }
+        catch (SymfonyFileNotFoundException $exception) {
+            throw new FileNotFoundException($file);
+        }
     }
 
+    /**
+     * @throws FileException
+     */
     protected function getTargetFile(string $directory, string $name = null): static
     {
         if (!is_dir($directory)) {
@@ -40,6 +49,9 @@ class File extends BaseFile
         return new static($target, false);
     }
 
+    /**
+     * @throws FileException
+     */
     public function copy(string $directory, string $name = null): static
     {
         $target = $this->getTargetFile($directory, $name);

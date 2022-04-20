@@ -5,7 +5,10 @@ namespace App\Support\Filesystem\Storages;
 use Illuminate\Support\Str;
 use SplFileInfo;
 
-class CloudStorage extends DiskStorage implements IHasUrlDiskStorage, IHasExternalStorage, IPublicPublishableStorage
+class CloudStorage extends DiskStorage implements IHasUrlDiskStorage,
+                                                  IHasExternalStorage,
+                                                  IPublicPublishableStorage,
+                                                  IEditableStorage
 {
     use HasUrlDiskStorage;
 

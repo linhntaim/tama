@@ -15,6 +15,7 @@ class StorageFactory
             if (!($storage instanceof IPublishableStorage)) {
                 throw new RuntimeException(sprintf('Storage [%s] is not a publishable storage', $storage::class));
             }
+            $storage->setVisibility('private');
         });
     }
 
@@ -27,6 +28,7 @@ class StorageFactory
             if (!($storage instanceof IPublicPublishableStorage)) {
                 throw new RuntimeException(sprintf('Storage [%s] is not a publishable storage', $storage::class));
             }
+            $storage->setVisibility('public');
         });
     }
 
@@ -39,6 +41,7 @@ class StorageFactory
             if (!($storage instanceof LocalStorage)) {
                 throw new RuntimeException(sprintf('Storage [%s] is not a local storage', $storage::class));
             }
+            $storage->setVisibility('private');
         });
     }
 

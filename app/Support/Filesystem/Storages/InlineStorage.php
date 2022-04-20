@@ -2,6 +2,7 @@
 
 namespace App\Support\Filesystem\Storages;
 
+use App\Support\Exceptions\FileNotFoundException;
 use App\Support\Http\File;
 use BadMethodCallException;
 use Illuminate\Http\UploadedFile;
@@ -11,6 +12,9 @@ class InlineStorage extends Storage implements IPublicPublishableStorage
 {
     public const NAME = 'inline';
 
+    /**
+     * @throws FileNotFoundException
+     */
     public function fromFile(string|SplFileInfo|Storage $file): static
     {
         if ($file instanceof Storage) {

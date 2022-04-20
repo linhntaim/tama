@@ -2,6 +2,7 @@
 
 namespace App\Support\Filesystem\Storages;
 
+use App\Support\Exceptions\FileNotFoundException;
 use App\Support\Http\File;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Filesystem\FilesystemAdapter;
@@ -27,6 +28,9 @@ abstract class DiskStorage extends Storage
         $this->disk = FilesystemStorage::disk($diskName);
     }
 
+    /**
+     * @throws FileNotFoundException
+     */
     public function fromFile(string|SplFileInfo|Storage $file, ?string $in = null): static
     {
         if ($file instanceof Storage) {
@@ -61,7 +65,8 @@ abstract class DiskStorage extends Storage
         }
 
         // prevent filename from existing
-        while ($this->disk->fileExists($file = ($in ?: $this->defaultPath()) . $this->dirSeparator . $filename)) {
+        $in = $in ? $this->dirPath($in) : $this->defaultPath();
+        while ($this->disk->fileExists($file = $in . $this->dirSeparator . $filename)) {
             $filename = compose_filename(null, pathinfo($filename, PATHINFO_EXTENSION));
         }
 

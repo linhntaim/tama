@@ -11,7 +11,7 @@ use SplFileInfo;
 /**
  * @property File|UploadedFile|null $file
  */
-class InternalStorage extends Storage implements IHasInternalStorage
+class InternalStorage extends Storage implements IDirectEditableStorage
 {
     public const NAME = 'internal';
 

@@ -2,6 +2,7 @@
 
 use App\Support\Client\DateTimer;
 use App\Support\Client\NumberFormatter;
+use App\Support\Exceptions\FileException;
 use App\Support\Facades\Client;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -149,6 +150,13 @@ if (!function_exists('guess_extension')) {
     }
 }
 
+if (!function_exists('guess_mime_type')) {
+    function guess_mime_type(string $extension): string
+    {
+        return MimeTypes::getDefault()->getMimeTypes($extension)[0] ?? '';
+    }
+}
+
 if (!function_exists('is_base64')) {
     function is_base64($string): bool
     {
@@ -208,9 +216,31 @@ if (!function_exists('ltrim_more')) {
 }
 
 if (!function_exists('mkdir_recursive')) {
+    /**
+     * @throws FileException
+     */
     function mkdir_recursive(string $directory, int $permissions = 0777, $context = null): bool
     {
-        return mkdir($directory, $permissions, true, $context);
+        if (!is_dir($directory)) {
+            if (false === @mkdir($directory, $permissions, true, $context) && !is_dir($directory)) {
+                throw new FileException(sprintf('Unable to create the "%s" directory.', $directory));
+            }
+        }
+        return true;
+    }
+}
+
+if (!function_exists('mkdir_for_writing')) {
+    /**
+     * @throws FileException
+     */
+    function mkdir_for_writing(string $directory, $context = null): bool
+    {
+        mkdir_recursive($directory, 0777, $context);
+        if (!is_writable($directory)) {
+            throw new FileException(sprintf('Unable to write in the "%s" directory.', $directory));
+        }
+        return true;
     }
 }
 

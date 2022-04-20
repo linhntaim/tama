@@ -40,7 +40,7 @@ trait ModelResourceTransformer
         return null;
     }
 
-    protected function modelResourceTransform($resource, $modelResourceClass, Request $request, $wrap = null): ?array
+    protected function modelResourceTransform($resource, $modelResourceClass, ?Request $request = null, ?string $wrap = null): ?array
     {
         return modify(
             $this->modelResourceFrom($resource, $modelResourceClass),

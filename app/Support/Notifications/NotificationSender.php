@@ -4,6 +4,7 @@ namespace App\Support\Notifications;
 
 use App\Support\Client\IHasSettings;
 use App\Support\Exceptions\DatabaseException;
+use App\Support\Exceptions\Exception;
 use App\Support\Facades\App;
 use App\Support\Facades\Artisan;
 use App\Support\Facades\Client;
@@ -54,7 +55,7 @@ class NotificationSender extends BaseNotificationSender
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
      */
     protected function generateNotificationId(): string
     {

@@ -2,11 +2,14 @@
 
 namespace App\Support\Filesystem\Storages;
 
+use App\Support\Exceptions\FileException;
+use App\Support\Filesystem\Filers\Filer;
 use App\Support\Http\File;
 use Illuminate\Support\Str;
+use RuntimeException;
 use SplFileInfo;
 
-class LocalStorage extends DiskStorage implements IHasInternalStorage
+class LocalStorage extends DiskStorage implements IDirectEditableStorage
 {
     public const NAME = 'local';
 
@@ -46,5 +49,28 @@ class LocalStorage extends DiskStorage implements IHasInternalStorage
     public function getRealPath(): string
     {
         return $this->rootPath . $this->dirSeparator . $this->file;
+    }
+
+    /**
+     * @throws FileException
+     */
+    public function create(?string $in = null, ?string $name = null, ?string $extension = null): static
+    {
+        // prevent filename from existing
+        $in = $in ? $this->dirPath($in) : $this->defaultPath();
+        while ($this->disk->fileExists($file = $in . $this->dirSeparator . compose_filename(null, $extension))) {
+        }
+
+        $realpath = $this->rootPath . $this->dirSeparator . $file;
+        mkdir_for_writing(dirname($realpath));
+        if (($f = fopen($realpath, Filer::FILE_MODE_WRITE_FRESHLY)) === false) {
+            throw new RuntimeException(sprintf('Cannot create a file at [%s]', $realpath));
+        }
+        fclose($f);
+        return parent::setFile($file)
+            ->setName($name ? compose_filename($name, $extension) : basename($file))
+            ->setMimeType(guess_mime_type($extension))
+            ->setExtension($extension)
+            ->setSize(0);
     }
 }
