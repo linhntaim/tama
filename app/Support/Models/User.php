@@ -2,6 +2,7 @@
 
 namespace App\Support\Models;
 
+use App\Support\Mail\IEmailAddress;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Auth\MustVerifyEmail;
 use Illuminate\Auth\Passwords\CanResetPassword;
@@ -13,7 +14,18 @@ use Illuminate\Foundation\Auth\Access\Authorizable;
 class User extends Model implements
     AuthenticatableContract,
     AuthorizableContract,
-    CanResetPasswordContract
+    CanResetPasswordContract,
+    IEmailAddress
 {
     use Authenticatable, Authorizable, CanResetPassword, MustVerifyEmail;
+
+    public function getEmailAddress(): string
+    {
+        return $this->email;
+    }
+
+    public function getEmailName(): ?string
+    {
+        return $this->name;
+    }
 }

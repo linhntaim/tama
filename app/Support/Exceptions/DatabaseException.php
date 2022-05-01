@@ -7,12 +7,12 @@ use Throwable;
 
 class DatabaseException extends Exception
 {
-    public static function from(Throwable $throwable): static
+    public static function from(Throwable $throwable, string|array|null $message = null): static
     {
-        return new static('', $throwable);
+        return new static($message, $throwable);
     }
 
-    public function __construct(string $message = '', ?Throwable $previous = null)
+    public function __construct(string|array|null $message = null, ?Throwable $previous = null)
     {
         if ($previous instanceof PDOException && empty($message)) {
             $message = $previous->errorInfo[2] ?? $previous->getMessage();

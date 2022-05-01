@@ -2,21 +2,29 @@
 
 namespace App\Models;
 
+use App\Support\Models\HasProtected;
+use App\Support\Models\IProtected;
 use App\Support\Models\User as Authenticatable;
+use App\Support\Notifications\INotifiable;
+use App\Support\Notifications\INotifier;
+use App\Support\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
+ * @property int $id
  * @property string $name
  * @property string $email
  */
-class User extends Authenticatable
+class User extends Authenticatable implements INotifiable, INotifier, IProtected
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, HasProtected;
+
+    public const SYSTEM_ID = 1;
+    public const OWNER_ID = 2;
 
     public static function hashPassword($password): string
     {
@@ -85,5 +93,23 @@ class User extends Authenticatable
                     $this->attributes['email_verified_at']
                 ),
         );
+    }
+
+    public function getNotifierKey()
+    {
+        return $this->getKey();
+    }
+
+    public function getNotifierDisplayName(): string
+    {
+        return $this->name;
+    }
+
+    public function getProtectedValues(): array
+    {
+        return [
+            self::SYSTEM_ID,
+            self::OWNER_ID,
+        ];
     }
 }
