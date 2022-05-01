@@ -3,6 +3,7 @@
 namespace App\Support\Models;
 
 use App\Support\Exceptions\DatabaseException;
+use App\Support\Exceptions\Exception;
 use App\Support\Models\QueryConditions\LimitCondition;
 use App\Support\Models\QueryConditions\QueryCondition;
 use App\Support\Models\QueryConditions\SelectCondition;
@@ -23,6 +24,7 @@ use Throwable;
  * @method bool force(bool $newValue)
  * @method bool strict(bool $newValue)
  * @method bool pinned(bool $newValue)
+ * @method bool protected (bool $newValue)
  * @method array wheres(array $newValue)
  */
 abstract class ModelProvider
@@ -43,10 +45,18 @@ abstract class ModelProvider
 
     protected bool $pinned = false;
 
+    protected bool $protected = true;
+
     /**
      * @var array|QueryCondition[]
      */
     protected array $wheres = [];
+
+    protected ?int $read = null;
+
+    protected int $perRead = 1000;
+
+    protected ?Builder $queryRead = null;
 
     /**
      * @throws DatabaseException
@@ -79,6 +89,12 @@ abstract class ModelProvider
     public function pinModel(): static
     {
         $this->pinned = true;
+        return $this;
+    }
+
+    public function skipProtected(): static
+    {
+        $this->protected = false;
         return $this;
     }
 
@@ -137,7 +153,7 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
      */
     public function model(Model|callable|int|string $model = null): ?Model
     {
@@ -156,7 +172,7 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
      */
     public function withModel(mixed $model = null): static
     {
@@ -201,7 +217,7 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
      */
     public function catch(Closure $callback): mixed
     {
@@ -209,12 +225,12 @@ abstract class ModelProvider
             return $callback();
         }
         catch (Throwable $exception) {
-            throw DatabaseException::from($exception);
+            throw ($exception instanceof Exception ? $exceotion : DatabaseException::from($exception));
         }
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
      */
     public function createWithAttributes(array $attributes = []): Model
     {
@@ -224,20 +240,23 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
      */
     public function firstOrCreateWithAttributes(array $attributes = [], array $values = []): Model
     {
         return $this->model = $this->catch(function () use ($attributes, $values) {
-            return $this->newQuery()->firstOrCreate($attributes, $values);
+            return $this->catchProtectedModel(
+                $this->newQuery()->firstOrCreate($attributes, $values)
+            );
         });
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
      */
     public function updateWithAttributes(array $attributes = []): Model
     {
+        $this->catchProtectedModel($this->model);
         $this->catch(function () use ($attributes) {
             return $this->model->update($attributes);
         });
@@ -245,17 +264,22 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
      */
     public function updateOrCreateWithAttributes(array $attributes, array $values = []): Model
     {
         return $this->model = $this->catch(function () use ($attributes, $values) {
-            return $this->newQuery()->updateOrCreate($attributes, $values);
+            return tap($this->newQuery()->firstOrNew($attributes), function (Model $instance) use ($values) {
+                if ($instance->exists) {
+                    $this->catchProtectedModel($instance);
+                }
+                $instance->fill($values)->save();
+            });
         });
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
      */
     protected function executeDelete(Builder|Model $query): bool
     {
@@ -268,15 +292,30 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException
+     * @throws Exception
      */
-    public function delete(): bool
+    protected function catchProtectedModel($model, string $message = 'Cannot modify protected model.'): ?Model
     {
-        return $this->executeDelete($this->model);
+        if ($model instanceof IProtected
+            && $model->isProtected()
+            && $this->protected(true)) {
+            throw new Exception($message);
+        }
+        return $model;
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
+     */
+    public function delete(): bool
+    {
+        return $this->executeDelete(
+            $this->catchProtectedModel($this->model)
+        );
+    }
+
+    /**
+     * @throws DatabaseException|Exception
      */
     protected function executeAll(Builder $query): Collection
     {
@@ -286,7 +325,7 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
      */
     protected function executePagination(Builder $query, int $perPage = self::PER_PAGE): LengthAwarePaginator
     {
@@ -296,7 +335,7 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
      */
     protected function executeFirst(Builder $query): ?Model
     {
@@ -307,7 +346,7 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
      */
     protected function executeCount(Builder $query): int
     {
@@ -316,9 +355,18 @@ abstract class ModelProvider
         });
     }
 
+    public function protectedQuery(): Builder
+    {
+        $model = $this->newModel();
+        if ($model instanceof IProtected && $this->protected(true)) {
+            return $this->query()->whereNotIn($model->getProtectedKey(), $model->getProtectedValues());
+        }
+        return $this->query();
+    }
+
     public function whereQuery(): Builder
     {
-        $query = $this->query();
+        $query = $this->protectedQuery();
         foreach ($this->wheres([]) as $queryCondition) {
             $queryCondition($query);
         }
@@ -364,36 +412,49 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
      */
     public function all(array $conditions = []): Collection
     {
         return $this->executeAll($this->queryWhere($conditions));
     }
 
-    /**
-     * @throws DatabaseException
-     */
-    public function pagination(array $conditions = [], int $perPage = self::PER_PAGE): LengthAwarePaginator
+    public function readStart(array $conditions = [], ?int $perRead = 1000): static
     {
-        return $this->executePagination($this->queryWhere($conditions), $perPage);
+        $this->readEnd();
+
+        $this->read = 0;
+        $this->perRead = $perRead;
+        $this->queryRead = $this->queryWhere($conditions);
+        return $this;
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
      */
-    public function firstPagination(array $conditions = [], int $perPage = self::PER_PAGE): Collection
+    public function read(&$more = true): Collection
     {
-        $conditions[] = new LimitCondition($perPage);
-        return $this->executeAll($this->queryWhere($conditions));
+        $more = true;
+        ++$this->read;
+        if (($all = $this->executeAll(
+                (clone $this->queryRead)
+                    ->skip(($this->read - 1) * $this->perRead)
+                    ->take($this->perRead + 1)
+            ))->count() > $this->perRead) {
+            $all->pop();
+        }
+        else {
+            $more = false;
+            $this->readEnd();
+        }
+        return $all;
     }
 
-    /**
-     * @throws DatabaseException
-     */
-    public function first(array $conditions = []): ?Model
+    public function readEnd(): static
     {
-        return $this->executeFirst($this->queryWhere($conditions));
+        $this->read = null;
+        $this->queryRead = null;
+        return $this;
     }
 
     /**
@@ -413,7 +474,32 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
+     */
+    public function pagination(array $conditions = [], int $perPage = self::PER_PAGE): LengthAwarePaginator
+    {
+        return $this->executePagination($this->queryWhere($conditions), $perPage);
+    }
+
+    /**
+     * @throws DatabaseException|Exception
+     */
+    public function firstPagination(array $conditions = [], int $perPage = self::PER_PAGE): Collection
+    {
+        $conditions[] = new LimitCondition($perPage);
+        return $this->executeAll($this->queryWhere($conditions));
+    }
+
+    /**
+     * @throws DatabaseException|Exception
+     */
+    public function first(array $conditions = []): ?Model
+    {
+        return $this->executeFirst($this->queryWhere($conditions));
+    }
+
+    /**
+     * @throws DatabaseException|Exception
      */
     public function count(array $conditions = []): int
     {
@@ -421,7 +507,7 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
      */
     public function has(array $conditions = []): bool
     {
@@ -439,7 +525,7 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
      */
     public function firstByKey(int|string $key): ?Model
     {
@@ -447,7 +533,7 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
      */
     public function firstByUnique(int|string $unique): ?Model
     {
@@ -459,7 +545,7 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
      */
     public function allByKeys(array $keys): Collection
     {
@@ -467,7 +553,7 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
      */
     public function deleteByKey(int|string $key)
     {
@@ -475,7 +561,7 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
      */
     public function deleteByKeys(array $keys)
     {
@@ -483,7 +569,7 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
      */
     public function generateUniqueValue($column, int|Closure|null $length = null): string
     {

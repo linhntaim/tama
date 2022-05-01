@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Support\Exceptions\DatabaseException;
+use App\Support\Exceptions\Exception;
 use App\Support\Models\ModelProvider;
 
 /**
@@ -16,7 +17,7 @@ class UserProvider extends ModelProvider
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
      */
     public function system(): ?User
     {
@@ -24,7 +25,7 @@ class UserProvider extends ModelProvider
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
      */
     public function owner(): ?User
     {
