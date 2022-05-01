@@ -17,7 +17,7 @@ class EncryptController extends ApiController
         $this->validate($request, [
             'data' => 'required|string',
         ]);
-        return $this->responseJsonWith([
+        return $this->responseResource($request, [
             'encrypted' => encrypt($request->input('data')),
         ]);
     }
@@ -30,7 +30,7 @@ class EncryptController extends ApiController
         $this->validate($request, [
             'data' => 'required|string',
         ]);
-        return $this->responseJsonWith([
+        return $this->response($request, [
             'decrypted' => decrypt($request->input('data')),
         ]);
     }

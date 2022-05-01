@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Base
- */
-
 return [
     'formats' => [
         'short_date_0' => ':yyyy-:mm-:dd',

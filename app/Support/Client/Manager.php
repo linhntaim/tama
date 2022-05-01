@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Base
- */
-
 namespace App\Support\Client;
 
 use Closure;
@@ -71,7 +67,7 @@ class Manager
         return $this->settings->hasChanges();
     }
 
-    public function settingsTemporary(Settings|string|array|null $settings, Closure $callback, ...$args): mixed
+    public function settingsTemporary(Settings|string|array|null $settings, Closure $callback, mixed ...$args): mixed
     {
         if ($this->settings->isDiffFrom($settings)) {
             $origin = $this->settings();

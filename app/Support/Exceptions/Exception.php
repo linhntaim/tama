@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Base
- */
-
 namespace App\Support\Exceptions;
 
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
@@ -11,9 +7,9 @@ use Throwable;
 
 class Exception extends \Exception implements HttpExceptionInterface
 {
-    public static function from(Throwable $throwable): static
+    public static function from(Throwable $throwable, string|array|null $message = null): static
     {
-        return new static(null, 0, $throwable);
+        return new static($message, 0, $throwable);
     }
 
     /**

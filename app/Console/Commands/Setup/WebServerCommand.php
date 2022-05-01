@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Base
- */
-
 namespace App\Console\Commands\Setup;
 
 use App\Support\Console\Commands\ForceCommand;

@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Base
- */
-
 namespace App\Providers;
 
 use App\Exceptions\Handler;
@@ -13,10 +9,13 @@ use App\Support\Console\Sheller;
 use App\Support\Http\Request;
 use App\Support\Log\LineFormatter;
 use App\Support\Log\LogManager;
+use App\Support\Notifications\ChannelManager;
 use Illuminate\Cache\RateLimiter as BaseRateLimiter;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Support\DeferrableProvider;
+use Illuminate\Notifications\ChannelManager as BaseChannelManager;
 use Illuminate\Support\Facades\Facade;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 
@@ -33,6 +32,7 @@ class AppServiceProvider extends ServiceProvider implements DeferrableProvider
         $this->registerExceptionHandler();
         $this->registerLog();
         $this->registerCache();
+        $this->registerNotification();
         $this->registerShell();
         $this->registerClient();
     }
@@ -61,6 +61,14 @@ class AppServiceProvider extends ServiceProvider implements DeferrableProvider
             return new LogManager($app);
         });
         Facade::clearResolvedInstance('log');
+    }
+
+    protected function registerNotification()
+    {
+        $this->app->singleton(BaseChannelManager::class, function ($app) {
+            return new ChannelManager($app);
+        });
+        Facade::clearResolvedInstance(BaseChannelManager::class);
     }
 
     protected function registerCache()
@@ -93,6 +101,7 @@ class AppServiceProvider extends ServiceProvider implements DeferrableProvider
     {
         $this->configureApp();
         $this->configureLog();
+        $this->configureMail();
     }
 
     protected function configureApp()
@@ -112,7 +121,15 @@ class AppServiceProvider extends ServiceProvider implements DeferrableProvider
         }
     }
 
-    public function provides()
+    protected function configureMail()
+    {
+        $alwaysTo = config_starter('mail.always_to');
+        if ($alwaysTo['address']) {
+            Mail::alwaysTo($alwaysTo['address'], $alwaysTo['name']);
+        }
+    }
+
+    public function provides(): array
     {
         return [
             BaseRateLimiter::class,

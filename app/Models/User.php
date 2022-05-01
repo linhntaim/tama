@@ -2,15 +2,34 @@
 
 namespace App\Models;
 
+use App\Support\Models\HasProtected;
+use App\Support\Models\IProtected;
+use App\Support\Models\User as Authenticatable;
+use App\Support\Notifications\INotifiable;
+use App\Support\Notifications\INotifier;
+use App\Support\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $email
+ */
+class User extends Authenticatable implements INotifiable, INotifier, IProtected
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, HasProtected;
+
+    public const SYSTEM_ID = 1;
+    public const OWNER_ID = 2;
+
+    public static function hashPassword($password): string
+    {
+        return Hash::make($password);
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -21,6 +40,17 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+    ];
+
+    protected $visible = [
+        'id',
+        'name',
+        'email',
+        'sd_st_email_verified_at',
+    ];
+
+    protected $appends = [
+        'sd_st_email_verified_at',
     ];
 
     /**
@@ -41,4 +71,45 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public array $uniques = ['email'];
+
+    protected function password(): Attribute
+    {
+        return Attribute::make(
+            set: fn($value) => static::hashPassword($value),
+        );
+    }
+
+    protected function sdStEmailVerifiedAt(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => is_null($this->attributes['email_verified_at'])
+                ? null
+                : date_timer()->compound(
+                    'shortDate',
+                    ' ',
+                    'shortTime',
+                    $this->attributes['email_verified_at']
+                ),
+        );
+    }
+
+    public function getNotifierKey()
+    {
+        return $this->getKey();
+    }
+
+    public function getNotifierDisplayName(): string
+    {
+        return $this->name;
+    }
+
+    public function getProtectedValues(): array
+    {
+        return [
+            self::SYSTEM_ID,
+            self::OWNER_ID,
+        ];
+    }
 }

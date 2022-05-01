@@ -3,9 +3,9 @@
 namespace App\Support\Listeners;
 
 use App\Support\ClassTrait;
-use App\Support\Console\Artisan;
 use App\Support\Events\Event;
 use App\Support\Facades\App;
+use App\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
