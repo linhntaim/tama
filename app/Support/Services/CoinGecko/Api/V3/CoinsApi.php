@@ -4,9 +4,9 @@ namespace App\Support\Services\CoinGecko\Api\V3;
 
 class CoinsApi extends Api
 {
-    public function __construct()
+    public function getBaseUrl(): string
     {
-        $this->baseUrl .= '/coins';
+        return parent::getBaseUrl() . '/coins';
     }
 
     public function list(

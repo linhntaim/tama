@@ -11,6 +11,25 @@ use Symfony\Component\Mime\MimeTypes;
 const JSON_READABLE = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_LINE_TERMINATORS;
 const JSON_PRETTY = JSON_READABLE | JSON_PRETTY_PRINT;
 
+if (!function_exists('array_associated_map')) {
+    function array_associated_map(array $array, array $associatedKeys): array
+    {
+        $associatedArray = [];
+        $array = array_values($array);
+        $i = 0;
+        foreach ($associatedKeys as $index => $associatedKey) {
+            if (is_int($index) && is_string($associatedKey)) {
+                $associatedArray[$associatedKey] = $array[$i];
+            }
+            elseif (is_string($index) && is_callable($associatedKey)) {
+                $associatedArray[$index] = $associatedKey($array[$i]);
+            }
+            ++$i;
+        }
+        return $associatedArray;
+    }
+}
+
 if (!function_exists('class_use')) {
     function class_use(object|string $object_or_class, string $trait): bool
     {

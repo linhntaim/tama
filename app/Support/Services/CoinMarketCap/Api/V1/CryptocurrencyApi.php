@@ -4,11 +4,9 @@ namespace App\Support\Services\CoinMarketCap\Api\V1;
 
 class CryptocurrencyApi extends Api
 {
-    public function __construct($apiKey = null)
+    public function getBaseUrl(): string
     {
-        parent::__construct($apiKey);
-
-        $this->baseUrl .= '/Cryptocurrency';
+        return parent::getBaseUrl() . '/cryptocurrency';
     }
 
     public function map(
