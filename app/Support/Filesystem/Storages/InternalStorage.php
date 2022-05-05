@@ -7,6 +7,8 @@ use BadMethodCallException;
 use Illuminate\Http\UploadedFile;
 use RuntimeException;
 use SplFileInfo;
+use Symfony\Component\HttpFoundation\BinaryFileResponse as SymfonyBinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse as SymfonyStreamedResponse;
 
 /**
  * @property File|UploadedFile|null $file
@@ -65,5 +67,15 @@ class InternalStorage extends Storage implements IDirectEditableStorage
     public function getRealPath(): string
     {
         return $this->file->getRealPath();
+    }
+
+    public function responseFile(array $headers = []): SymfonyBinaryFileResponse|SymfonyStreamedResponse
+    {
+        return response()->download($this->getRealPath(), $this->name, $headers, 'inline');
+    }
+
+    public function responseDownload(array $headers = []): SymfonyBinaryFileResponse|SymfonyStreamedResponse
+    {
+        return response()->download($this->getRealPath(), $this->name, $headers);
     }
 }

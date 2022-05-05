@@ -17,7 +17,8 @@ class UserProvider extends ModelProvider
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     public function system(): ?User
     {
@@ -25,7 +26,8 @@ class UserProvider extends ModelProvider
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     public function owner(): ?User
     {
