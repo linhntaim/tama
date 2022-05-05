@@ -16,7 +16,7 @@ class PublicStorage extends LocalStorage implements IHasUrlDiskStorage, IPublicP
     {
         parent::__construct('public');
 
-        $this->visibility = Filesystem::VISIBILITY_PUBLIC;
+        $this->setVisibility(Filesystem::VISIBILITY_PUBLIC);
     }
 
     public function setFile(string|SplFileInfo $file): static

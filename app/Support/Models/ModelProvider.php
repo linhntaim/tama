@@ -13,7 +13,7 @@ use App\Support\Models\QueryConditions\WithCondition;
 use Closure;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Query\Expression;
 use Illuminate\Support\Str;
@@ -58,13 +58,22 @@ abstract class ModelProvider
 
     protected ?Builder $queryRead = null;
 
+    protected ?int $write = null;
+
+    protected ?bool $writeStrict = null;
+
+    protected ?array $writes = null;
+
+    protected int $perWrite = 1000;
+
     /**
      * @throws DatabaseException
+     * @throws Exception
      */
     public function __construct(Model|callable|int|string $model = null)
     {
         $modelClass = $this->modelClass();
-        if (!is_subclass_of($modelClass, Model::class)) {
+        if (!is_a($modelClass, Model::class, true)) {
             throw new RuntimeException("Class [$modelClass] is not a model class.");
         }
         $this->modelClass = $modelClass;
@@ -122,7 +131,9 @@ abstract class ModelProvider
 
     public function limit(int $limit, int $skip = 0): static
     {
-        $this->wheres[] = new LimitCondition($limit, $skip);
+        if ($limit > 0) {
+            $this->wheres[] = new LimitCondition($limit, $skip);
+        }
         return $this;
     }
 
@@ -153,7 +164,8 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     public function model(Model|callable|int|string $model = null): ?Model
     {
@@ -172,7 +184,8 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     public function withModel(mixed $model = null): static
     {
@@ -217,7 +230,8 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     public function catch(Closure $callback): mixed
     {
@@ -225,12 +239,16 @@ abstract class ModelProvider
             return $callback();
         }
         catch (Throwable $exception) {
-            throw ($exception instanceof Exception ? $exceotion : DatabaseException::from($exception));
+            if ($exception instanceof Exception) {
+                throw $exception;
+            }
+            throw DatabaseException::from($exception);
         }
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     public function createWithAttributes(array $attributes = []): Model
     {
@@ -240,7 +258,8 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     public function firstOrCreateWithAttributes(array $attributes = [], array $values = []): Model
     {
@@ -252,7 +271,8 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     public function updateWithAttributes(array $attributes = []): Model
     {
@@ -264,7 +284,8 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     public function updateOrCreateWithAttributes(array $attributes, array $values = []): Model
     {
@@ -279,7 +300,8 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     protected function executeDelete(Builder|Model $query): bool
     {
@@ -305,7 +327,8 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     public function delete(): bool
     {
@@ -315,9 +338,10 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
-    protected function executeAll(Builder $query): Collection
+    protected function executeAll(Builder $query): EloquentCollection
     {
         return $this->catch(function () use ($query) {
             return $query->get();
@@ -325,7 +349,8 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     protected function executePagination(Builder $query, int $perPage = self::PER_PAGE): LengthAwarePaginator
     {
@@ -335,7 +360,8 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     protected function executeFirst(Builder $query): ?Model
     {
@@ -346,7 +372,8 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     protected function executeCount(Builder $query): int
     {
@@ -412,27 +439,49 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
-    public function all(array $conditions = []): Collection
+    public function deleteAll(array $conditions = []): bool
+    {
+        return $this->executeDelete($this->queryWhere($conditions));
+    }
+
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
+    public function all(array $conditions = []): EloquentCollection
     {
         return $this->executeAll($this->queryWhere($conditions));
     }
 
-    public function readStart(array $conditions = [], ?int $perRead = 1000): static
+    public function readStart(int $perRead = 1000): static
     {
         $this->readEnd();
 
         $this->read = 0;
         $this->perRead = $perRead;
+        return $this;
+    }
+
+    public function readQueryPrepare(array $conditions = []): static
+    {
         $this->queryRead = $this->queryWhere($conditions);
         return $this;
     }
 
+    public function readQueryClear(): static
+    {
+        $this->queryRead = null;
+        return $this;
+    }
+
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
-    public function read(&$more = true): Collection
+    public function read(bool &$more = true): EloquentCollection
     {
         $more = true;
         ++$this->read;
@@ -453,14 +502,80 @@ abstract class ModelProvider
     public function readEnd(): static
     {
         $this->read = null;
-        $this->queryRead = null;
+        return $this->readQueryClear();
+    }
+
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
+    public function writeStart(int $perWrite = 1000, bool $ignore = false): static
+    {
+        $this->writeEnd();
+
+        $this->writeStrict = !$ignore;
+        $this->write = 0;
+        $this->writes = [];
+        $this->perWrite = $perWrite;
+        return $this;
+    }
+
+    protected function writeRestart(): static
+    {
+        $this->write = 0;
+        $this->writes = null;
+        $this->writes = [];
         return $this;
     }
 
     /**
      * @throws DatabaseException
+     * @throws Exception
      */
-    public function next(array $conditions = [], int $perPage = self::PER_PAGE, &$hasMore = false): Collection
+    protected function writeMany(): static
+    {
+        if (count($this->writes ?? [])) {
+            $this->catch(function () {
+                return $this->writeStrict
+                    ? $this->newQuery()->insert($this->writes)
+                    : $this->newQuery()->insertOrIgnore($this->writes);
+            });
+        }
+        return $this;
+    }
+
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
+    public function write(array $attributes): static
+    {
+        ++$this->write;
+        $this->writes[] = $attributes;
+        if ($this->write == $this->perWrite) {
+            return $this->writeMany()->writeRestart();
+        }
+        return $this;
+    }
+
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
+    public function writeEnd(): static
+    {
+        $this->writeMany();
+
+        $this->write = null;
+        $this->writes = null;
+        return $this;
+    }
+
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
+    public function next(array $conditions = [], int $perPage = self::PER_PAGE, &$hasMore = false): EloquentCollection
     {
         $collection = $this->firstPagination($conditions, $perPage + 1);
         if ($collection->count() > $perPage) {
@@ -474,7 +589,8 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     public function pagination(array $conditions = [], int $perPage = self::PER_PAGE): LengthAwarePaginator
     {
@@ -482,16 +598,18 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
-    public function firstPagination(array $conditions = [], int $perPage = self::PER_PAGE): Collection
+    public function firstPagination(array $conditions = [], int $perPage = self::PER_PAGE): EloquentCollection
     {
         $conditions[] = new LimitCondition($perPage);
         return $this->executeAll($this->queryWhere($conditions));
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     public function first(array $conditions = []): ?Model
     {
@@ -499,7 +617,8 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     public function count(array $conditions = []): int
     {
@@ -507,7 +626,8 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     public function has(array $conditions = []): bool
     {
@@ -525,7 +645,8 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     public function firstByKey(int|string $key): ?Model
     {
@@ -533,7 +654,8 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     public function firstByUnique(int|string $unique): ?Model
     {
@@ -545,15 +667,17 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
-    public function allByKeys(array $keys): Collection
+    public function allByKeys(array $keys): EloquentCollection
     {
         return $this->all([$this->newModel()->getKeyName() => $keys]);
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     public function deleteByKey(int|string $key)
     {
@@ -561,7 +685,8 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     public function deleteByKeys(array $keys)
     {
@@ -569,7 +694,8 @@ abstract class ModelProvider
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     public function generateUniqueValue($column, int|Closure|null $length = null): string
     {
@@ -587,5 +713,22 @@ abstract class ModelProvider
         while (($unique = $callback()) && $this->has([new WhereCondition($column, $unique)])) {
         }
         return $unique;
+    }
+
+    public function retrieveKey($model)
+    {
+        return $model instanceof Model ? $model->getKey() : $model;
+    }
+
+    public function retrieveKeys($models): array
+    {
+        if (is_array($models)) {
+            $models = collect($models);
+        }
+        return $models
+            ->map(function ($model) {
+                return $this->retrieveKey($model);
+            })
+            ->all();
     }
 }

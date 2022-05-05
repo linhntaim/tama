@@ -19,7 +19,9 @@ abstract class Storage
 
     protected int $size;
 
-    protected string $visibility = Filesystem::VISIBILITY_PRIVATE;
+    protected array $options = [
+        'visibility' => Filesystem::VISIBILITY_PRIVATE,
+    ];
 
     public abstract function fromFile(string|SplFileInfo|Storage $file): static;
 
@@ -92,13 +94,18 @@ abstract class Storage
 
     public function setVisibility(string $visibility): static
     {
-        $this->visibility = $visibility;
+        $this->options['visibility'] = $visibility;
         return $this;
     }
 
     public function getVisibility(): string
     {
-        return $this->visibility;
+        return $this->options['visibility'];
+    }
+
+    public function getOptions(): array
+    {
+        return $this->options;
     }
 
     public function delete(): static

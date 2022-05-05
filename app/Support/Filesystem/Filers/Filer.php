@@ -2,11 +2,14 @@
 
 namespace App\Support\Filesystem\Filers;
 
+use App\Models\File;
 use App\Support\Exceptions\FileException;
 use App\Support\Filesystem\Storages\AwsS3Storage;
 use App\Support\Filesystem\Storages\AzureBlobStorage;
 use App\Support\Filesystem\Storages\ExternalStorage;
 use App\Support\Filesystem\Storages\IDirectEditableStorage;
+use App\Support\Filesystem\Storages\IHasExternalStorage;
+use App\Support\Filesystem\Storages\IHasInternalStorage;
 use App\Support\Filesystem\Storages\InternalStorage;
 use App\Support\Filesystem\Storages\PrivateStorage;
 use App\Support\Filesystem\Storages\PublicStorage;
@@ -29,9 +32,38 @@ class Filer
     public const FILE_MODE_CREATE_THEN_WRITE_AND_READ = 'x+';
     public const FILE_MODE_WRITE_ONLY = 'c';
     public const FILE_MODE_WRITE_AND_READ = 'c+';
+    public const FILE_MODE_READS = [
+        self::FILE_MODE_READ_ONLY,
+        self::FILE_MODE_READ_AND_WRITE,
+        self::FILE_MODE_WRITE_AND_READ_FRESHLY,
+        self::FILE_MODE_WRITE_APPEND_AND_READ,
+        self::FILE_MODE_CREATE_THEN_WRITE_AND_READ,
+        self::FILE_MODE_WRITE_AND_READ,
+    ];
 
-    public static function from(string|SplFileInfo|Storage $file): ?static
+    public static function from(string|SplFileInfo|Storage|Filer|File $file): ?static
     {
+        if ($file instanceof File) {
+            return take(new static(), function (Filer $filer) use ($file) {
+                $filer->storage = take(
+                    StorageFactory::create($file->storage),
+                    function (Storage $storage) use ($file) {
+                        $storage->setFile($file->file);
+                        // TODO: Set other properties
+                    }
+                );
+            });
+        }
+        if ($file instanceof Filer) {
+            return take(new static(), function (Filer $filer) use ($file) {
+                $filer->storage = $file->storage;
+            });
+        }
+        if ($file instanceof Storage) {
+            return take(new static(), function (Filer $filer) use ($file) {
+                $filer->storage = $file;
+            });
+        }
         if ($file instanceof UploadedFile) {
             return take(new static(), function (Filer $filer) use ($file) {
                 $filer->storage = (new PrivateStorage())->fromFile($file);
@@ -63,7 +95,15 @@ class Filer
         });
     }
 
-    protected Storage $storage;
+    protected ?Storage $storage = null;
+
+    protected ?SplFileObject $openingFile = null;
+
+    protected bool $skipEmpty = false;
+
+    protected int $readingLine = -1;
+
+    protected int $writingLine = -1;
 
     private function __construct()
     {
@@ -84,42 +124,71 @@ class Filer
         return $this->storage->getExtension();
     }
 
-    public function getSize(): string
+    public function getSize(): int
     {
         return $this->storage->getSize();
     }
 
-    public function getVisibility(): string
+    public function getRealPath(): ?string
     {
-        return $this->storage->getVisibility();
+        return $this->storage instanceof IHasInternalStorage ? $this->storage->getRealPath() : null;
     }
 
-    protected function moveToStorage(Storage $toStorage, ?string $in = null): static
+    public function getUrl(): ?string
+    {
+        return $this->storage instanceof IHasExternalStorage ? $this->storage->getUrl() : null;
+    }
+
+    public function getStorage(): string
+    {
+        return $this->storage::NAME;
+    }
+
+    public function getOptions(): array
+    {
+        return $this->storage->getOptions();
+    }
+
+    public function getFile(): string
+    {
+        return $this->storage->getFile();
+    }
+
+    public function internal(): bool
+    {
+        return $this->storage instanceof IHasInternalStorage;
+    }
+
+    protected function moveToStorage(Storage $toStorage, ?string $in = null, bool $duplicate = false): static
     {
         $storage = $this->storage;
         $this->storage = $toStorage->fromFile($this->storage, $in);
-        $storage->delete();
+        if (!$duplicate) {
+            $storage->delete();
+        }
         return $this;
     }
 
-    public function storeLocally(?string $in = null): static
+    public function storeLocally(?string $in = null, bool $duplicate = false): static
     {
-        return $this->moveToStorage(StorageFactory::localStorage(), $in);
+        return $this->moveToStorage(StorageFactory::localStorage(), $in, $duplicate);
     }
 
-    public function publishPrivate(?string $in = null): static
+    public function publishPrivate(?string $in = null, bool $duplicate = false): static
     {
-        return $this->moveToStorage(StorageFactory::privatePublishStorage(), $in);
+        return $this->moveToStorage(StorageFactory::privatePublishStorage(), $in, $duplicate);
     }
 
-    public function publishPublic(?string $in = null): static
+    public function publishPublic(?string $in = null, bool $duplicate = false): static
     {
-        return $this->moveToStorage(StorageFactory::publicPublishStorage(), $in);
+        return $this->moveToStorage(StorageFactory::publicPublishStorage(), $in, $duplicate);
     }
 
-    protected ?SplFileObject $openingFile = null;
-
-    protected bool $skipEmpty = false;
+    public function delete()
+    {
+        $this->storage->delete();
+        $this->storage = null;
+    }
 
     /**
      * @throws FileException
@@ -143,7 +212,12 @@ class Filer
 
     public function close(): static
     {
-        $this->openingFile = null;
+        if (!is_null($this->openingFile)) {
+            $this->openingFile = null;
+            $this->readingLine = -1;
+            $this->writingLine = -1;
+            clearstatcache(true, $this->storage->getRealPath());
+        }
         return $this;
     }
 
@@ -162,7 +236,8 @@ class Filer
      */
     public function write($data): static
     {
-        if ($this->openingFile->fwrite($data) === false) {
+        ++$this->writingLine;
+        if ($this->openingFile->fwrite($data) === 0) {
             throw new FileException('Cannot write into the file.');
         }
         return $this;
@@ -179,14 +254,16 @@ class Filer
     }
 
     /**
-     * @param string $data
+     * @param string|array|string[] $data
      * @param bool $close
      * @return static
      * @throws FileException
      */
     public function writeAll($data, bool $close = true): static
     {
-        $this->write($data);
+        foreach ((array)$data as $line) {
+            $this->writeln($line);
+        }
         $close && $this->close();
         return $this;
     }
@@ -199,30 +276,51 @@ class Filer
         return $this->open(self::FILE_MODE_READ_ONLY);
     }
 
-    public function read(): mixed
+    /**
+     * @return string|null
+     * @throws FileException
+     */
+    public function read()
     {
+        ++$this->readingLine;
         if ($this->openingFile->eof()) {
             return null;
         }
-        if (null_or_empty_string($read = $this->openingFile->fgets()) && $this->skipEmpty) {
+        if (($read = $this->openingFile->fgets()) === false) {
+            throw new FileException(sprintf('Could not read at line %d.', $this->readingLine()));
+        }
+        if ($this->skipEmpty && null_or_empty_string($read)) {
             return $this->read();
         }
         return $read;
     }
 
+    public function seekingLine($line): static
+    {
+        $this->openingFile->seek($line);
+        $this->readingLine = $line - 1;
+        return $this;
+    }
+
+    /**
+     * @return int Zero-based line index.
+     */
+    public function readingLine(): int
+    {
+        return $this->readingLine;
+    }
+
     /**
      * @throws FileException
      */
-    public function readAll(bool $close = true): mixed
+    public function readAll(bool $close = true): array
     {
-        if (($size = $this->openingFile->getSize()) === false) {
-            throw new FileException('File could not retrieve its size.');
-        }
-        if (($read = $this->openingFile->fread($size)) === false) {
-            throw new FileException('File could not read.');
+        $all = [];
+        while (!is_null($read = $this->read())) {
+            $all[$this->readingLine()] = $read;
         }
         $close && $this->close();
-        return $read;
+        return $all;
     }
 
     public function __destruct()

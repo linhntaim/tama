@@ -73,7 +73,7 @@ abstract class DiskStorage extends Storage
         $this->disk->put(
             $file,
             $resource,
-            ['visibility' => $this->visibility]
+            ['visibility' => $this->getVisibility()]
         );
         return parent::setFile($file);
     }
@@ -88,6 +88,11 @@ abstract class DiskStorage extends Storage
                 ->setSize($this->disk->size($file));
         }
         return $this;
+    }
+
+    public function getSize(): int
+    {
+        return $this->disk->size($this->file);
     }
 
     public function getContent(): string

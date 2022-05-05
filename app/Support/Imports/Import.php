@@ -1,18 +1,22 @@
 <?php
 
-namespace App\Support\Exports;
+namespace App\Support\Imports;
 
 use App\Models\File;
 use App\Support\Exceptions\FileException;
+use App\Support\Exports\Export;
 use App\Support\Filesystem\Filers\Filer;
+use App\Support\Foundation\Validation\Validates;
 use App\Support\UnlimitedResource;
 use InvalidArgumentException;
 
-abstract class Export
+abstract class Import
 {
-    use UnlimitedResource;
+    use Validates, UnlimitedResource;
 
-    public const NAME = 'export';
+    public const NAME = 'import';
+
+    public abstract static function sample(): Export;
 
     protected int $count = 0;
 
@@ -29,16 +33,9 @@ abstract class Export
         return static::NAME;
     }
 
-    protected function filerClass(): string
+    protected function getFiler(File $file): Filer
     {
-        return Filer::class;
-    }
-
-    protected function getFiler(?File $file = null): Filer
-    {
-        return modify($this->filerClass(), function ($filerClass) use ($file) {
-            return is_null($file) ? $filerClass::create() : $filerClass::from($file);
-        });
+        return Filer::from($file);
     }
 
     public function enableChunk(int $chunkSize = 1000): static
@@ -66,42 +63,45 @@ abstract class Export
         return $this->chunkEnded;
     }
 
-    protected function data()
+    /**
+     * @param Filer $filer
+     * @return string|null
+     * @throws FileException
+     */
+    protected function data($filer)
     {
-        return null;
+        return $filer->read();
     }
 
     /**
      * @param Filer $filer
      * @throws FileException
      */
-    protected function exportBefore($filer)
+    protected function importBefore($filer)
     {
-        $filer->openForWriting(false);
+        $filer->openForReading()
+            ->seekingLine($this->dataIndex + 1);
     }
 
     /**
      * @param Filer $filer
      */
-    protected function exportAfter($filer)
+    protected function importAfter($filer)
     {
         $filer->close();
-        if ($this->chunkEnded()) {
-            $filer->publishPrivate();
-        }
     }
 
     /**
      * @param Filer $filer
      * @throws FileException
      */
-    protected function export($filer)
+    protected function import($filer)
     {
         $this->chunkDataIndex = -1;
-        while (!is_null($data = $this->data())) {
-            ++$this->dataIndex;
+        while (!is_null($data = $this->data($filer))) {
+            $this->dataIndex = $filer->readingLine();
             ++$this->chunkDataIndex;
-            $this->store($filer, $data);
+            $this->store($data);
             ++$this->count;
 
             if ($this->chunkSize
@@ -112,29 +112,21 @@ abstract class Export
         $this->chunkEnded = true;
     }
 
-    /**
-     * @param Filer $filer
-     * @param $data
-     * @throws FileException
-     */
-    protected function store($filer, $data)
-    {
-        $filer->writeln($data);
-    }
+    protected abstract function store($data);
 
     public function count(): int
     {
         return $this->count;
     }
 
-    public function __invoke(?File $file = null): Filer
+    public function __invoke(File $file): static
     {
-        return $this->unlimitedResource(function () use ($file) {
+        $this->unlimitedResource(function () use ($file) {
             $filer = $this->getFiler($file);
-            $this->exportBefore($filer);
-            $this->export($filer);
-            $this->exportAfter($filer);
-            return $filer;
+            $this->importBefore($filer);
+            $this->import($filer);
+            $this->importAfter($filer);
         });
+        return $this;
     }
 }

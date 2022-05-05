@@ -8,6 +8,8 @@ use App\Support\Exports\ModelCsvExport;
 
 class TrialUserCsvExport extends ModelCsvExport
 {
+    public const NAME = 'trial_users';
+
     protected function modelProviderClass(): string
     {
         return UserProvider::class;
@@ -18,7 +20,7 @@ class TrialUserCsvExport extends ModelCsvExport
         return TrialUserExportResource::class;
     }
 
-    protected function headers(): ?array
+    protected function headers(): array
     {
         return [
             'ID',
