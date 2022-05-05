@@ -41,11 +41,6 @@ class LocalStorage extends DiskStorage implements IDirectEditableStorage
         return $this;
     }
 
-    public function getFile(): File
-    {
-        return new File($this->getRealPath());
-    }
-
     public function getRealPath(): string
     {
         return $this->rootPath . $this->dirSeparator . $this->file;
