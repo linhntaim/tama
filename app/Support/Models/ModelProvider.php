@@ -14,6 +14,7 @@ use Closure;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Query\Expression;
 use Illuminate\Support\Str;
@@ -239,7 +240,8 @@ abstract class ModelProvider
             return $callback();
         }
         catch (Throwable $exception) {
-            if ($exception instanceof Exception) {
+            if ($exception instanceof Exception
+                || $exception instanceof ModelNotFoundException) {
                 throw $exception;
             }
             throw DatabaseException::from($exception);
@@ -431,20 +433,14 @@ abstract class ModelProvider
             elseif (method_exists($this, $method = 'whereBy' . Str::studly($column))) {
                 $this->{$method}($query, $value, $conditions);
             }
+            elseif (is_array($value)) {
+                $query->whereIn($column, $value);
+            }
             else {
                 $query->where($column, $value);
             }
         }
         return $query;
-    }
-
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
-    public function deleteAll(array $conditions = []): bool
-    {
-        return $this->executeDelete($this->queryWhere($conditions));
     }
 
     /**
@@ -679,18 +675,27 @@ abstract class ModelProvider
      * @throws DatabaseException
      * @throws Exception
      */
-    public function deleteByKey(int|string $key)
+    public function deleteAll(array $conditions = []): bool
     {
-        return $this->executeDelete($this->queryByKey($key));
+        return $this->executeDelete($this->queryWhere($conditions));
     }
 
     /**
      * @throws DatabaseException
      * @throws Exception
      */
-    public function deleteByKeys(array $keys)
+    public function deleteByKey(int|string $key): bool
     {
-        return $this->executeDelete($this->queryByKeys($keys));
+        return $this->deleteAll([$this->newModel()->getKeyName() => $key]);
+    }
+
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
+    public function deleteByKeys(array $keys): bool
+    {
+        return $this->deleteAll([$this->newModel()->getKeyName() => $keys]);
     }
 
     /**

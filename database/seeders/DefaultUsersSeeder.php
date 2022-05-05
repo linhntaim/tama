@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\UserProvider;
 use App\Support\Exceptions\DatabaseException;
+use App\Support\Exceptions\Exception;
 use App\Support\Facades\App;
 use Illuminate\Support\Str;
 
@@ -13,6 +14,7 @@ class DefaultUsersSeeder extends Seeder
 
     /**
      * @throws DatabaseException
+     * @throws Exception
      */
     public function run()
     {
@@ -27,6 +29,7 @@ class DefaultUsersSeeder extends Seeder
 
     /**
      * @throws DatabaseException
+     * @throws Exception
      */
     protected function createUser(array $attributes, string $defaultName = 'User')
     {

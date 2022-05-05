@@ -12,7 +12,7 @@ use Illuminate\Pagination\AbstractCursorPaginator;
 use Illuminate\Pagination\AbstractPaginator;
 use Illuminate\Support\Collection;
 
-class ApiController extends Controller
+abstract class ApiController extends Controller
 {
     protected function response(Request $request, mixed $resource = null, mixed ...$args): JsonResponse
     {

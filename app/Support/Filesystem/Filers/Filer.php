@@ -10,14 +10,18 @@ use App\Support\Filesystem\Storages\ExternalStorage;
 use App\Support\Filesystem\Storages\IDirectEditableStorage;
 use App\Support\Filesystem\Storages\IHasExternalStorage;
 use App\Support\Filesystem\Storages\IHasInternalStorage;
+use App\Support\Filesystem\Storages\InlineStorage;
 use App\Support\Filesystem\Storages\InternalStorage;
 use App\Support\Filesystem\Storages\PrivateStorage;
 use App\Support\Filesystem\Storages\PublicStorage;
 use App\Support\Filesystem\Storages\Storage;
 use App\Support\Filesystem\Storages\StorageFactory;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Http\UploadedFile;
 use SplFileInfo;
 use SplFileObject;
+use Symfony\Component\HttpFoundation\BinaryFileResponse as SymfonyBinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse as SymfonyStreamedResponse;
 use Throwable;
 
 class Filer
@@ -48,8 +52,13 @@ class Filer
                 $filer->storage = take(
                     StorageFactory::create($file->storage),
                     function (Storage $storage) use ($file) {
-                        $storage->setFile($file->file);
-                        // TODO: Set other properties
+                        $storage
+                            ->setFile($file->file)
+                            ->setName($file->name)
+                            ->setMimeType($file->mime)
+                            ->setExtension($file->extension)
+                            ->setSize($file->size)
+                            ->setOptions($file->options);
                     }
                 );
             });
@@ -167,6 +176,11 @@ class Filer
             $storage->delete();
         }
         return $this;
+    }
+
+    public function storeInline(string $visibility = Filesystem::VISIBILITY_PRIVATE, bool $duplicate = false): static
+    {
+        return $this->moveToStorage((new InlineStorage())->setVisibility($visibility), null, $duplicate);
     }
 
     public function storeLocally(?string $in = null, bool $duplicate = false): static
@@ -326,5 +340,15 @@ class Filer
     public function __destruct()
     {
         $this->close();
+    }
+
+    public function responseFile(array $headers = []): SymfonyBinaryFileResponse|SymfonyStreamedResponse
+    {
+        return $this->storage->responseFile($headers);
+    }
+
+    public function responseDownload(array $headers = []): SymfonyBinaryFileResponse|SymfonyStreamedResponse
+    {
+        return $this->storage->responseDownload($headers);
     }
 }

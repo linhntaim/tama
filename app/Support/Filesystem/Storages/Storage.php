@@ -4,6 +4,8 @@ namespace App\Support\Filesystem\Storages;
 
 use Illuminate\Contracts\Filesystem\Filesystem;
 use SplFileInfo;
+use Symfony\Component\HttpFoundation\BinaryFileResponse as SymfonyBinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse as SymfonyStreamedResponse;
 
 abstract class Storage
 {
@@ -103,6 +105,12 @@ abstract class Storage
         return $this->options['visibility'];
     }
 
+    public function setOptions(array $options): static
+    {
+        $this->options = $options;
+        return $this;
+    }
+
     public function getOptions(): array
     {
         return $this->options;
@@ -111,5 +119,23 @@ abstract class Storage
     public function delete(): static
     {
         return $this;
+    }
+
+    public function responseFile(array $headers = []): SymfonyBinaryFileResponse|SymfonyStreamedResponse
+    {
+        return response()->streamDownload(function () {
+            echo $this->getContent();
+        }, $this->name, $headers + [
+                'Content-Type' => $this->mimeType,
+            ], 'inline');
+    }
+
+    public function responseDownload(array $headers = []): SymfonyBinaryFileResponse|SymfonyStreamedResponse
+    {
+        return response()->streamDownload(function () {
+            echo $this->getContent();
+        }, $this->name, $headers + [
+                'Content-Type' => $this->mimeType,
+            ]);
     }
 }

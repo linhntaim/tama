@@ -5,10 +5,12 @@ namespace App\Models;
 use App\Support\Exceptions\DatabaseException;
 use App\Support\Exceptions\Exception;
 use App\Support\Filesystem\Filers\Filer;
+use App\Support\Models\Model;
 use App\Support\Models\ModelProvider;
 
 /**
  * @property File|null $model
+ * @method File model(Model|callable|int|string $model = null)
  * @method File createWithAttributes(array $attributes = [])
  * @method File updateWithAttributes(array $attributes = [])
  */
@@ -65,5 +67,21 @@ class FileProvider extends ModelProvider
         return $this->updateWithAttributes([
             'title' => $title,
         ]);
+    }
+
+    public function delete(): bool
+    {
+        Filer::from($this->model)->delete();
+        return parent::delete();
+    }
+
+    public function deleteAll(array $conditions = []): bool
+    {
+        $all = $this->all($conditions);
+        parent::deleteAll($conditions);
+        foreach ($all as $model) {
+            Filer::from($model)->delete();
+        }
+        return true;
     }
 }

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\EncryptController;
 use App\Http\Controllers\Api\PrerequisiteController;
+use App\Http\Controllers\Api\FileController;
 use App\Http\Controllers\Api\Trial\EventController as TrialEventController;
 use App\Http\Controllers\Api\Trial\JobController as TrialJobController;
 use App\Http\Controllers\Api\Trial\UserController;
@@ -20,6 +21,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('prerequisite', [PrerequisiteController::class, 'index']);
+Route::get('file/{id}', [FileController::class, 'show']);
 Route::post('encrypt', [EncryptController::class, 'encrypt']);
 Route::post('decrypt', [EncryptController::class, 'decrypt']);
 
