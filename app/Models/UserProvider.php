@@ -4,11 +4,13 @@ namespace App\Models;
 
 use App\Support\Exceptions\DatabaseException;
 use App\Support\Exceptions\Exception;
+use App\Support\Models\Model;
 use App\Support\Models\ModelProvider;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
  * @property User|null $model
+ * @method  User|null model(Model|callable|int|string $model = null, bool $byUnique = true)
  * @method  User|null firstByKey(int|string $key)
  */
 class UserProvider extends ModelProvider

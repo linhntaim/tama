@@ -2,6 +2,8 @@
 
 namespace App\Support\Http;
 
+use App\Support\Exports\Export;
+use App\Support\Filesystem\Filers\Filer;
 use App\Support\Http\Resources\ResponseResource;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\View\View;
@@ -9,6 +11,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
 use JsonSerializable;
+use SplFileInfo;
+use Symfony\Component\HttpFoundation\BinaryFileResponse as SymfonyBinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse as SymfonyStreamedResponse;
 
 trait Responses
 {
@@ -22,14 +27,24 @@ trait Responses
         return response($content, $status, $headers);
     }
 
-    protected function responseFileAsContent(
-        Request $request,
-        string  $file,
-        int     $status = 200,
-        array   $headers = []
-    ): Response
+    protected function responseFile(
+        Request            $request,
+        SplFileInfo|string $file,
+        array              $headers = []
+    ): SymfonyBinaryFileResponse
     {
-        return $this->responseContent($request, file_get_contents($file), $status, $headers);
+        return response()->file($file, $headers);
+    }
+
+    protected function responseDownload(
+        Request            $request,
+        SplFileInfo|string $file,
+        ?string            $name = null,
+        array              $headers = [],
+        string             $disposition = 'attachment'
+    ): SymfonyBinaryFileResponse
+    {
+        return response()->download($file, $name, $headers, $disposition);
     }
 
     protected function responseView(
@@ -78,5 +93,14 @@ trait Responses
                     ? $callback : null
             )
         );
+    }
+
+    protected function responseExport(Export $export, array $headers = []): SymfonyBinaryFileResponse|SymfonyStreamedResponse
+    {
+        return with($export->disableChunk()(), function (Filer $filer) use ($headers) {
+            return take($filer->responseContentDownload($headers), function () use ($filer) {
+                $filer->delete();
+            });
+        });
     }
 }

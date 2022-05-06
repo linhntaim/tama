@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\DataExportController;
 use App\Http\Controllers\Api\EncryptController;
 use App\Http\Controllers\Api\FileController;
 use App\Http\Controllers\Api\PrerequisiteController;
@@ -23,6 +24,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('prerequisite', [PrerequisiteController::class, 'index']);
 Route::get('file/{id}', [FileController::class, 'show'])->name('file.show');
+Route::get('data-export/{id}', [DataExportController::class, 'show'])->name('data-export.show');
 Route::post('encrypt', [EncryptController::class, 'encrypt']);
 Route::post('decrypt', [EncryptController::class, 'decrypt']);
 
@@ -44,6 +46,8 @@ Route::group([
         Route::get('/', [TrialUserController::class, 'index']);
         Route::post('/', [TrialUserController::class, 'store']);
         Route::get('{id}', [TrialUserController::class, 'show']);
+        Route::post('{id}', [TrialUserController::class, 'update']);
+        Route::delete('{id}', [TrialUserController::class, 'destroy']);
     });
 });
 

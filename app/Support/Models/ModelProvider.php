@@ -170,7 +170,7 @@ abstract class ModelProvider
      * @throws DatabaseException
      * @throws Exception
      */
-    public function model(Model|callable|int|string $model = null): ?Model
+    public function model(Model|callable|int|string $model = null, bool $byUnique = true): ?Model
     {
         if (is_callable($model)) {
             $model = $model();
@@ -180,10 +180,20 @@ abstract class ModelProvider
                 $this->model = $model;
             }
             else {
-                $this->model = $this->firstByUnique($model);
+                $this->model = $byUnique ? $this->firstByUnique($model) : $this->firstByKey($model);
             }
         }
         return $this->model;
+    }
+
+    public function current(): ?Model
+    {
+        return $this->model;
+    }
+
+    public function key(): int|string
+    {
+        return $this->current()?->getKey();
     }
 
     /**
@@ -417,15 +427,19 @@ abstract class ModelProvider
             elseif (is_int($column)) {
                 if (is_array($value) && count($value) > 0) {
                     if (isset($value['column'])) {
-                        $query->where(
-                            $value['column'],
-                            $value['operator'] ?? '=',
-                            $value['value'] ?? null,
-                            $value['boolean'] ?? 'and',
-                        );
+                        $query->where(function ($query) use ($value) {
+                            $query->where(
+                                $value['column'],
+                                $value['operator'] ?? '=',
+                                $value['value'] ?? null,
+                                $value['boolean'] ?? 'and',
+                            );
+                        });
                     }
                     elseif (isset($value[0])) {
-                        $query->where($value[0], $value[1] ?? null, $value[2] ?? null, $value[3] ?? 'and');
+                        $query->where(function ($query) use ($value) {
+                            $query->where($value[0], $value[1] ?? null, $value[2] ?? null, $value[3] ?? 'and');
+                        });
                     }
                     else {
                         $query->where($value);

@@ -12,9 +12,11 @@ abstract class ModelCsvExport extends CsvExport
 {
     use ModelResourceTransformer;
 
-    protected array $conditions;
+    protected string $sortBy;
 
-    protected ModelProvider $modelProvider;
+    protected bool $sortAscending;
+
+    protected array $conditions;
 
     protected int $perRead = 1000;
 
@@ -24,16 +26,20 @@ abstract class ModelCsvExport extends CsvExport
 
     protected bool $more = true;
 
-    public function __construct(array $conditions = [], int $perRead = 1000)
+    public function __construct(array $conditions = [], string $sortBy = 'id', bool $sortAscending = true, int $perRead = 1000)
     {
         $this->data = [];
+        $this->sortBy = $sortBy;
+        $this->sortAscending = $sortAscending;
         $this->conditions = $conditions;
         $this->perRead = $perRead;
-        take($this->modelProviderClass(), function ($class) {
-            take(new $class, function (ModelProvider $modelProvider) {
-                $this->modelProvider = $modelProvider;
-            });
-        });
+    }
+
+    public function sort(string $by, bool $ascending = true): static
+    {
+        $this->sortBy = $by;
+        $this->sortAscending = $ascending;
+        return $this;
     }
 
     public function conditions(array $conditions): static
@@ -52,6 +58,12 @@ abstract class ModelCsvExport extends CsvExport
 
     protected abstract function modelResourceClass(): string;
 
+    protected function modelProvider(): ModelProvider
+    {
+        $class = $this->modelProviderClass();
+        return new $class;
+    }
+
     protected function exportBefore($filer)
     {
         parent::exportBefore($filer);
@@ -68,7 +80,8 @@ abstract class ModelCsvExport extends CsvExport
         if ($this->more) {
             $this->data = $this->modelResourceTransform(
                 with(
-                    $this->modelProvider
+                    $this->modelProvider()
+                        ->sort($this->sortBy, $this->sortAscending)
                         ->limit($this->perRead + 1, (++$this->read - 1) * $this->perRead + $this->skipDefault)
                         ->all($this->conditions),
                     function (Collection $models) {

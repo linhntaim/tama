@@ -28,6 +28,12 @@ class DataExport extends Model
         'failed_at',
     ];
 
+    protected $visible = [
+        'id',
+        'name',
+        'status',
+    ];
+
     public function export(): Attribute
     {
         return Attribute::make(
@@ -45,6 +51,6 @@ class DataExport extends Model
 
     public function file(): HasOne
     {
-        return $this->hasOne(File::class, 'file_id', 'id');
+        return $this->hasOne(File::class, 'id', 'file_id');
     }
 }

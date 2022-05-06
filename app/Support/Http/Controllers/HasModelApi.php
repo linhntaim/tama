@@ -2,13 +2,27 @@
 
 namespace App\Support\Http\Controllers;
 
+use App\Jobs\DataExportJob;
+use App\Jobs\DataImportJob;
+use App\Jobs\QueueableDataExportJob;
+use App\Jobs\QueueableDataImportJob;
+use App\Models\DataExport;
+use App\Models\DataExportProvider;
+use App\Models\DataImport;
+use App\Models\DataImportProvider;
+use App\Models\File;
+use App\Models\FileProvider;
 use App\Support\Database\DatabaseTransaction;
 use App\Support\Exceptions\DatabaseException;
 use App\Support\Exceptions\Exception;
+use App\Support\Exports\Export;
+use App\Support\Exports\ModelCsvExport;
+use App\Support\Filesystem\Filers\Filer;
 use App\Support\Http\Request;
 use App\Support\Http\Resources\ModelResource;
-use App\Support\Models\Model;
+use App\Support\Imports\Import;
 use App\Support\Models\ModelProvider;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\ValidationException;
 
 trait HasModelApi
@@ -38,16 +52,6 @@ trait HasModelApi
     }
 
     #region Index
-
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
-    public function index(Request $request)
-    {
-        return $this->indexResponse($request, $this->indexExecute($request));
-    }
-
     protected function conditionParams(Request $request): array
     {
         return [];
@@ -161,16 +165,193 @@ trait HasModelApi
     protected function indexExecute(Request $request)
     {
         return $this->modelProvider()
-            ->sort($request->sortBy($this->sortBy), $request->sortAscending($this->sortAscending))
+            ->sort(
+                $request->sortBy($this->sortBy),
+                $request->sortAscending($this->sortAscending)
+            )
             ->pagination(
                 $this->indexConditions($request),
                 $request->perPage()
             );
     }
 
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
+    public function index(Request $request)
+    {
+        if ($request->has('_export')) {
+            return $this->export($request);
+        }
+        if ($request->has('_import')) {
+            return $this->showImportSampler($request);
+        }
+        return $this->indexResponse($request, $this->indexExecute($request));
+    }
+
     protected function indexResponse(Request $request, $models)
     {
         return $this->responseModel($request, $models, $this->modelResourceClass);
+    }
+    #endregion
+
+    #region Export
+    protected function exporterClass(Request $request): ?string
+    {
+        return null;
+    }
+
+    protected function exporter(Request $request): Export
+    {
+        if (is_null($exportClass = $this->exporterClass($request))) {
+            abort(404);
+        }
+        return with(new $exportClass, function (Export $export) use ($request) {
+            if ($export instanceof ModelCsvExport) {
+                $export
+                    ->sort(
+                        $request->sortBy($this->sortBy),
+                        $request->sortAscending($this->sortAscending)
+                    )
+                    ->conditions($this->indexConditions($request));
+            }
+            return $export;
+        });
+    }
+
+    protected function exportJob(Request $request): string
+    {
+        return $request->has('queued') ? QueueableDataExportJob::class : DataExportJob::class;
+    }
+
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
+    protected function exportExecute(Request $request): DataExport
+    {
+        return (new DataExportProvider())->createWithExport(
+            $this->exporter($request),
+            $this->exportJob($request),
+        );
+    }
+
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
+    protected function export(Request $request)
+    {
+        return $this->exportResponse($request, $this->exportExecute($request));
+    }
+
+    protected function exportResponse(Request $request, DataExport $model)
+    {
+        return $this->responseModel($request, $model);
+    }
+    #endregion
+
+    #region Import
+    protected function importerClass(Request $request): ?string
+    {
+        return null;
+    }
+
+    protected function importSampler(Request $request): ?Export
+    {
+        if (is_null($importClass = $this->importerClass($request))) {
+            abort(404);
+        }
+        return $importClass::sample();
+    }
+
+    protected function showImportSampler(Request $request)
+    {
+        return $this->responseExport($this->importSampler($request));
+    }
+
+    protected function importer(Request $request): Import
+    {
+        if (is_null($importClass = $this->importerClass($request))) {
+            abort(404);
+        }
+        return new $importClass;
+    }
+
+    protected function importJob(Request $request): string
+    {
+        return $request->has('queued') ? QueueableDataImportJob::class : DataImportJob::class;
+    }
+
+    protected function importFileInputKey(Request $request): string
+    {
+        return 'file';
+    }
+
+    protected function importFileInput(Request $request): UploadedFile
+    {
+        return $request->file($this->importFileInputKey($request));
+    }
+
+    protected function importFiler(Request $request): Filer
+    {
+        return Filer::from($this->importFileInput($request));
+    }
+
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
+    protected function importFile(Request $request): File
+    {
+        return (new FileProvider())
+            ->enablePublish($request->has('queued'))
+            ->createWithFiler($this->importFiler($request));
+    }
+
+    protected function importRules(Request $request): array
+    {
+        return [
+            'file' => 'required|file|mimetypes:text/plain,text/csv',
+        ];
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    protected function importValidate(Request $request)
+    {
+        $this->validate($request, $this->importRules($request));
+    }
+
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
+    protected function importExecute(Request $request): DataImport
+    {
+        return (new DataImportProvider())->createWithImport(
+            $this->importFile($request),
+            $this->importer($request),
+            $this->importJob($request),
+        );
+    }
+
+    /**
+     * @throws ValidationException
+     * @throws DatabaseException
+     * @throws Exception
+     */
+    protected function import(Request $request)
+    {
+        $this->importValidate($request);
+        return $this->importResponse($request, $this->importExecute($request));
+    }
+
+    protected function importResponse(Request $request, DataImport $model)
+    {
+        return $this->responseModel($request, $model);
     }
     #endregion
 
@@ -195,9 +376,15 @@ trait HasModelApi
 
     /**
      * @throws ValidationException
+     * @throws DatabaseException
+     * @throws Exception
      */
     public function store(Request $request)
     {
+        if ($request->has('_import')) {
+            return $this->import($request);
+        }
+
         $this->storeValidate($request);
 
         $this->transactionStart();
@@ -208,6 +395,98 @@ trait HasModelApi
     {
         $this->transactionComplete();
         return $this->responseModel($request, $model, $this->modelResourceClass);
+    }
+    #endregion
+
+    #region Show
+    protected function showExecute(Request $request, $id)
+    {
+        return $this->modelProvider()->model($id);
+    }
+
+    public function show(Request $request, $id)
+    {
+        return $this->showResponse($request, $this->showExecute($request, $id));
+    }
+
+    protected function showResponse(Request $request, $model)
+    {
+        return $this->responseModel($request, $model, $this->modelResourceClass);
+    }
+    #endregion
+
+    #region Update
+    protected function updateRules(Request $request): array
+    {
+        return [];
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    protected function updateValidate(Request $request)
+    {
+        $this->validate($request, $this->updateRules($request));
+    }
+
+    protected function updateExecute(Request $request)
+    {
+        return null;
+    }
+
+    /**
+     * @throws ValidationException
+     * @throws DatabaseException
+     * @throws Exception
+     */
+    public function update(Request $request, $id)
+    {
+        if ($request->has('_delete')) {
+            return $this->destroy($request, $id);
+        }
+
+        $this->modelProvider()->model($id);
+
+        $this->updateValidate($request);
+
+        $this->transactionStart();
+        return $this->updateResponse($request, $this->updateExecute($request));
+    }
+
+    protected function updateResponse(Request $request, $model)
+    {
+        $this->transactionComplete();
+        return $this->responseModel($request, $model, $this->modelResourceClass);
+    }
+    #endregion
+
+    #region Show
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
+    protected function destroyExecute(Request $request): bool
+    {
+        return $this->modelProvider()->delete();
+    }
+
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
+    public function destroy(Request $request, $id)
+    {
+        $this->modelProvider()->model($id);
+        $this->transactionStart();
+        return $this->destroyResponse($request, $this->destroyExecute($request));
+    }
+
+    protected function destroyResponse(Request $request, bool $destroyed)
+    {
+        $this->transactionComplete();
+        return $destroyed
+            ? $this->responseSuccess($request)
+            : $this->responseFail($request);
     }
     #endregion
 }
