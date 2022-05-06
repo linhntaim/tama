@@ -76,18 +76,18 @@ class Scheduler
                 }
                 return implode(' ', $commandArgs);
             };
-            if (is_subclass_of($scheduleCaller, Schedule::class)) {
+            if (is_a($scheduleCaller, Schedule::class, true)) {
                 $this
                     ->setName('call')
                     ->addParams(new $scheduleCaller(...$scheduleCallerParams))
                     ->setDescription($scheduleCaller);
             }
-            elseif (is_subclass_of($scheduleCaller, Job::class)) {
+            elseif (is_a($scheduleCaller, Job::class, true)) {
                 $this
                     ->setName('job')
                     ->addParams(new $scheduleCaller(...$scheduleCallerParams), ...$methodParams);
             }
-            elseif (is_subclass_of($scheduleCaller, SymfonyCommand::class)) {
+            elseif (is_a($scheduleCaller, SymfonyCommand::class, true)) {
                 $commandParamsDescription = $composeCommandParamsDescription(
                     $commandParams = $composeCommandParams($scheduleCallerParams)
                 );

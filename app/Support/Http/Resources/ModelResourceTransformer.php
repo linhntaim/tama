@@ -10,10 +10,10 @@ use Illuminate\Support\Collection;
 
 trait ModelResourceTransformer
 {
-    protected function modelResourceFrom($resource, $modelResourceClass = ModelResource::class): ?IModelResource
+    protected function modelResourceFrom($resource, string $modelResourceClass = ModelResource::class): ?IModelResource
     {
         if ($resource instanceof Model) {
-            if (!is_subclass_of($modelResourceClass, ModelResource::class)) {
+            if (!is_a($modelResourceClass, ModelResource::class, true)) {
                 $modelResourceClass = ModelResource::class;
             }
             return new $modelResourceClass($resource);
@@ -22,10 +22,10 @@ trait ModelResourceTransformer
         if ($resource instanceof Collection
             || $resource instanceof AbstractPaginator
             || $resource instanceof AbstractCursorPaginator) {
-            if (is_subclass_of($modelResourceClass, ModelResource::class)) {
+            if (is_a($modelResourceClass, ModelResource::class, true)) {
                 return $modelResourceClass::collection($resource);
             }
-            if (!is_subclass_of($modelResourceClass, ModelResourceCollection::class)) {
+            if (!is_a($modelResourceClass, ModelResourceCollection::class, true)) {
                 $modelResourceClass = ModelResourceCollection::class;
             }
             return new $modelResourceClass($resource);
@@ -33,14 +33,14 @@ trait ModelResourceTransformer
 
         if (is_null($resource)
             && is_string($modelResourceClass)
-            && is_subclass_of($modelResourceClass, IModelResource::class)) {
+            && is_subclass_of($modelResourceClass, IModelResource::class, true)) {
             return new $modelResourceClass(null);
         }
 
         return null;
     }
 
-    protected function modelResourceTransform($resource, $modelResourceClass, Request $request, $wrap = null): ?array
+    protected function modelResourceTransform($resource, string $modelResourceClass = ModelResource::class, ?Request $request = null, ?string $wrap = null): ?array
     {
         return modify(
             $this->modelResourceFrom($resource, $modelResourceClass),

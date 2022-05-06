@@ -2,16 +2,80 @@
 
 use App\Support\Client\DateTimer;
 use App\Support\Client\NumberFormatter;
+use App\Support\Exceptions\FileException;
 use App\Support\Facades\Client;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Symfony\Component\Mime\MimeTypes;
 
 const JSON_READABLE = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_LINE_TERMINATORS;
 const JSON_PRETTY = JSON_READABLE | JSON_PRETTY_PRINT;
+
+if (!function_exists('call_if')) {
+    function call_if(bool $condition, Closure $callback, mixed ...$args): bool
+    {
+        if ($condition) {
+            value($callback, ...$args);
+        }
+        return $condition;
+    }
+}
+
+if (!function_exists('call_unless')) {
+    function call_unless(bool $condition, Closure $callback, mixed ...$args): bool
+    {
+        call_if(!$condition, $callback, ...$args);
+        return $condition;
+    }
+}
 
 if (!function_exists('class_use')) {
     function class_use(object|string $object_or_class, string $trait): bool
     {
         return in_array($trait, class_uses_recursive($object_or_class));
+    }
+}
+
+if (!function_exists('compose_filename')) {
+    function compose_filename(?string $name = null, ?string $extension = null): string
+    {
+        return (null_or_empty_string($name) ? Str::random(40) : $name)
+            . (null_or_empty_string($extension) ? '' : '.' . $extension);
+    }
+}
+
+if (!function_exists('concat_paths')) {
+    function concat_paths($relative = true, string ...$paths): string
+    {
+        return ($relative && !windows_os() ? DIRECTORY_SEPARATOR : '')
+            . concat_with_slash(DIRECTORY_SEPARATOR, ...$paths);
+    }
+}
+
+if (!function_exists('concat_urls')) {
+    function concat_urls(string ...$urls): string
+    {
+        return concat_with_slash('/', ...$urls);
+    }
+}
+
+if (!function_exists('concat_with_slash')) {
+    function concat_with_slash($slash = '/', string ...$parts): string
+    {
+        return implode(
+            $slash,
+            array_map(fn($part) => trim_more(str_replace(['\\', '/'], $slash, $part), $slash), $parts)
+        );
+    }
+}
+
+if (!function_exists('concat_with_comma')) {
+    function concat_with_comma(string ...$parts): string
+    {
+        return implode(
+            ',',
+            $parts
+        );
     }
 }
 
@@ -36,6 +100,9 @@ if (!function_exists('config_starter')) {
 }
 
 if (!function_exists('copy_recursive')) {
+    /**
+     * @throws FileException
+     */
     function copy_recursive(string $source, string $destination, $context = null): bool
     {
         if (is_file($source)) {
@@ -114,6 +181,13 @@ if (!function_exists('empty_string')) {
     }
 }
 
+if (!function_exists('extension')) {
+    function extension(string $path): bool
+    {
+        return pathinfo($path, PATHINFO_EXTENSION);
+    }
+}
+
 if (!function_exists('filled_array')) {
     function filled_array(array $array, array $default = null, $nullable = false, Closure $keyTransform = null): array
     {
@@ -125,23 +199,44 @@ if (!function_exists('filled_array')) {
     }
 }
 
-if (!function_exists('join_paths')) {
-    function join_paths(string ...$paths): string
+if (!function_exists('from_ini_size')) {
+    function from_ini_size(string $size): int
     {
-        return implode(
-            DIRECTORY_SEPARATOR,
-            array_map(fn($path) => trim_more(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR), $paths)
-        );
+        return match (substr($size, -1)) {
+            'M', 'm' => (int)$size * 1048576,
+            'K', 'k' => (int)$size * 1024,
+            'G', 'g' => (int)$size * 1073741824,
+            default => $size,
+        };
     }
 }
 
-if (!function_exists('join_urls')) {
-    function join_urls(string ...$urls): string
+if (!function_exists('guess_extension')) {
+    function guess_extension(string $mimeType): string
     {
-        return implode(
-            '/',
-            array_map(fn($url) => trim_more(str_replace(['\\'], '/', $url), '/'), $urls)
-        );
+        return MimeTypes::getDefault()->getExtensions($mimeType)[0] ?? '';
+    }
+}
+
+if (!function_exists('guess_mime_type')) {
+    function guess_mime_type(string $extension): string
+    {
+        return MimeTypes::getDefault()->getMimeTypes($extension)[0] ?? '';
+    }
+}
+
+if (!function_exists('is_base64')) {
+    function is_base64($string): bool
+    {
+        return is_string($string)
+            && base64_encode(base64_decode($string, true)) === $string;
+    }
+}
+
+if (!function_exists('is_url')) {
+    function is_url($string): bool
+    {
+        return !Validator::make(['url' => $string], ['url' => 'string|url'])->fails();
     }
 }
 
@@ -174,14 +269,36 @@ if (!function_exists('ltrim_more')) {
 }
 
 if (!function_exists('mkdir_recursive')) {
+    /**
+     * @throws FileException
+     */
     function mkdir_recursive(string $directory, int $permissions = 0777, $context = null): bool
     {
-        return mkdir($directory, $permissions, true, $context);
+        if (!is_dir($directory)) {
+            if (false === @mkdir($directory, $permissions, true, $context) && !is_dir($directory)) {
+                throw new FileException(sprintf('Unable to create the "%s" directory.', $directory));
+            }
+        }
+        return true;
+    }
+}
+
+if (!function_exists('mkdir_for_writing')) {
+    /**
+     * @throws FileException
+     */
+    function mkdir_for_writing(string $directory, $context = null): bool
+    {
+        mkdir_recursive($directory, 0777, $context);
+        if (!is_writable($directory)) {
+            throw new FileException(sprintf('Unable to write in the "%s" directory.', $directory));
+        }
+        return true;
     }
 }
 
 if (!function_exists('modify')) {
-    function modify($value, ?Closure $callback = null)
+    function modify(mixed $value, ?Closure $callback = null): mixed
     {
         return is_null($callback) ? $value : $callback($value);
     }
@@ -191,6 +308,13 @@ if (!function_exists('name_starter')) {
     function name_starter(string $name, string $separator = '_'): string
     {
         return sprintf('%s%s%s', config_starter('app.id'), $separator, $name);
+    }
+}
+
+if (!function_exists('null_or_empty_string')) {
+    function null_or_empty_string(?string $string, bool $trim = true): bool
+    {
+        return is_null($string) || '' === ($trim ? trim($string) : $string);
     }
 }
 
@@ -205,6 +329,31 @@ if (!function_exists('number_formatter')) {
     function number_formatter(): NumberFormatter
     {
         return Client::numberFormatter();
+    }
+}
+
+if (!function_exists('readable_size')) {
+    function readable_size(float|int &$size, string &$unit = 'byte')
+    {
+        $units = ['byte', 'KB', 'MB', 'GB', 'TB', 'PB'];
+        $maxUnitIndex = count($units) - 1;
+        $minUnitIndex = 0;
+        if (($index = array_search($unit, $units)) === false) {
+            $index = $minUnitIndex;
+        }
+        if ($size >= 1024) {
+            while ($size >= 1024 && $index < $maxUnitIndex) {
+                ++$index;
+                $size /= 1024;
+            }
+        }
+        elseif ($size < 1) {
+            while ($size < 1 && $index > $minUnitIndex) {
+                --$index;
+                $size *= 1024;
+            }
+        }
+        $unit = $units[$index];
     }
 }
 
@@ -232,7 +381,7 @@ if (!function_exists('stringable')) {
 }
 
 if (!function_exists('take')) {
-    function take($value, ?Closure $callback = null)
+    function take(mixed $value, ?Closure $callback = null): mixed
     {
         if (is_null($callback)) {
             return $value;
@@ -252,11 +401,64 @@ if (!function_exists('trim_more')) {
 }
 
 if (!function_exists('with_debug')) {
-    function with_debug(Closure $callback, mixed ...$args): string
+    function with_debug(Closure $callback, mixed ...$args): mixed
     {
+        $origin = config('app.debug');
         config(['app.debug' => true]);
         $called = value($callback, ...$args);
-        config(['app.debug' => false]);
+        config(['app.debug' => $origin]);
         return $called;
+    }
+}
+
+if (!function_exists('with_unlimited_execution_time')) {
+    function with_unlimited_execution_time(Closure $callback, mixed ...$args): mixed
+    {
+        $origin = (int)ini_get('max_execution_time');
+        set_time_limit(0);
+        $called = value($callback, ...$args);
+        set_time_limit($origin);
+        return $called;
+    }
+}
+
+if (!function_exists('with_unlimited_execution_time_if')) {
+    function with_unlimited_execution_time_if(bool $condition, Closure $callback, mixed ...$args): mixed
+    {
+        return $condition ? with_unlimited_execution_time($callback, ...$args) : value($callback, ...$args);
+    }
+}
+
+if (!function_exists('with_unlimited_execution_time_unless')) {
+    function with_unlimited_execution_time_unless(bool $condition, Closure $callback, mixed ...$args): mixed
+    {
+        return with_unlimited_execution_time_if(!$condition, $callback, ...$args);
+    }
+}
+
+if (!function_exists('with_unlimited_memory_usage')) {
+    function with_unlimited_memory_usage(Closure $callback, mixed ...$args): mixed
+    {
+        $origin = ini_get('memory_limit');
+        ini_set('memory_limit', '-1');
+        $called = value($callback, ...$args);
+        if (memory_get_usage() < from_ini_size($origin)) {
+            ini_set('memory_limit', $origin);
+        }
+        return $called;
+    }
+}
+
+if (!function_exists('with_unlimited_memory_usage_if')) {
+    function with_unlimited_memory_usage_if(bool $condition, Closure $callback, mixed ...$args): mixed
+    {
+        return $condition ? with_unlimited_memory_usage($callback, ...$args) : value($callback, ...$args);
+    }
+}
+
+if (!function_exists('with_unlimited_memory_usage_unless')) {
+    function with_unlimited_memory_usage_unless(bool $condition, Closure $callback, mixed ...$args): mixed
+    {
+        return with_unlimited_memory_usage_if(!$condition, $callback, ...$args);
     }
 }

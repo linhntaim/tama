@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\Models\HasProtected;
+use App\Support\Models\IProtected;
 use App\Support\Models\User as Authenticatable;
 use App\Support\Notifications\INotifiable;
 use App\Support\Notifications\INotifier;
@@ -13,12 +15,13 @@ use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
+ * @property int $id
  * @property string $name
  * @property string $email
  */
-class User extends Authenticatable implements INotifiable, INotifier
+class User extends Authenticatable implements INotifiable, INotifier, IProtected
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, HasProtected;
 
     public const SYSTEM_ID = 1;
     public const OWNER_ID = 2;
@@ -100,5 +103,13 @@ class User extends Authenticatable implements INotifiable, INotifier
     public function getNotifierDisplayName(): string
     {
         return $this->name;
+    }
+
+    public function getProtectedValues(): array
+    {
+        return [
+            self::SYSTEM_ID,
+            self::OWNER_ID,
+        ];
     }
 }

@@ -17,7 +17,7 @@ class SetupCommand extends ForceCommand
         foreach ([
                      'webServer',
                      'keyGenerate',
-                     'storageLink',
+                     'storage',
                      'migrate',
                  ] as $i => $method) {
             $i > 0 && $this->newLine();
@@ -42,9 +42,9 @@ class SetupCommand extends ForceCommand
             ]) == self::SUCCESS;
     }
 
-    protected function storageLink(): bool
+    protected function storage(): bool
     {
-        return $this->call('setup:storage-link', [
+        return $this->call('setup:storage', [
                 '--force' => $this->forced(),
             ]) == self::SUCCESS;
     }

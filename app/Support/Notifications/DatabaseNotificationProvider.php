@@ -3,6 +3,7 @@
 namespace App\Support\Notifications;
 
 use App\Support\Exceptions\DatabaseException;
+use App\Support\Exceptions\Exception;
 use App\Support\Models\ModelProvider;
 use Illuminate\Support\Str;
 
@@ -14,7 +15,7 @@ class DatabaseNotificationProvider extends ModelProvider
     }
 
     /**
-     * @throws DatabaseException
+     * @throws DatabaseException|Exception
      */
     public function generateUniqueId(): string
     {
