@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Mail;
+namespace App\Mail\Trial;
 
-use App\Support\Mail\QueueableMailable;
+use App\Support\Mail\Mailable;
 
-class TrialViewQueueableMailable extends QueueableMailable
+class ViewMailable extends Mailable
 {
     public function build()
     {

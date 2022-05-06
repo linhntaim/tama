@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands\Trial;
 
-use App\Exports\TrialUserCsvExport;
+use App\Exports\Trial\UserCsvExport as TrialUserCsvExport;
 use App\Support\Console\Commands\ExportCommand;
 
 class UsersExportCommand extends ExportCommand

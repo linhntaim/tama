@@ -1,14 +1,16 @@
 <?php
 
-namespace App\Mail;
+namespace App\Mail\Trial;
 
 use App\Support\Mail\QueueableMailable;
 
-class TrialQueueableMailable extends QueueableMailable
+class LocaleViewQueueableMailable extends QueueableMailable
 {
+    protected bool $viewOnLocale = true;
+
     public function build()
     {
-        $this->text('trial_plain', [
+        $this->view('trial', [
             'date' => date_timer()->compound('longDate', ' ', 'longTime'),
         ]);
     }

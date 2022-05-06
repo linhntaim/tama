@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Console\Schedules;
+namespace App\Console\Schedules\Trial;
 
-use App\Support\Console\Schedules\Schedule;
+use App\Support\Console\Schedules\Schedule as BaseSchedule;
 use App\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 
-class TrialSchedule extends Schedule
+class Schedule extends BaseSchedule
 {
     protected function handling()
     {

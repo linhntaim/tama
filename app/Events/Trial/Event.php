@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Events;
+namespace App\Events\Trial;
 
-use App\Support\Events\Event;
+use App\Support\Events\Event as BaseEvent;
 
-class TrialEvent extends Event
+class Event extends BaseEvent
 {
     protected string $capturedDate;
 

@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Trial;
 
 use App\Support\Facades\App;
-use App\Support\Jobs\ContinuousBatchJob;
+use App\Support\Jobs\ContinuousBatchJob as BaseContinuousBatchJob;
 use Illuminate\Support\Facades\Log;
 
-class TrialContinuousBatchJob extends ContinuousBatchJob
+class ContinuousBatchJob extends BaseContinuousBatchJob
 {
     protected function batchByIndex(int $batchIndex): iterable
     {

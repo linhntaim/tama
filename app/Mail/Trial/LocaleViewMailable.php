@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Mail;
+namespace App\Mail\Trial;
 
-use App\Support\Mail\QueueableMailable;
+use App\Support\Mail\Mailable;
 
-class TrialLocaleViewQueueableMailable extends QueueableMailable
+class LocaleViewMailable extends Mailable
 {
     protected bool $viewOnLocale = true;
 

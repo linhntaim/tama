@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Exports;
+namespace App\Exports\Trial;
 
 use App\Http\Resources\TrialUserExportResource;
 use App\Models\UserProvider;
 use App\Support\Exports\ModelCsvExport;
 
-class TrialUserCsvExport extends ModelCsvExport
+class UserCsvExport extends ModelCsvExport
 {
     public const NAME = 'trial_users';
 

@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Listeners;
+namespace App\Listeners\Trial;
 
-use App\Events\TrialEvent;
+use App\Events\Trial\Event as TrialEvent;
 use App\Support\Facades\App;
-use App\Support\Listeners\QueueableListener;
+use App\Support\Listeners\QueueableListener as BaseQueueableListener;
 use Illuminate\Support\Facades\Log;
 
-class TrialQueueableListener extends QueueableListener
+class QueueableListener extends BaseQueueableListener
 {
     /**
      * @param TrialEvent $event

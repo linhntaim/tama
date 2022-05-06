@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Mail;
+namespace App\Mail\Trial;
 
-use App\Support\Mail\Mailable;
+use App\Support\Mail\Mailable as BaseMailable;
 
-class TrialMailable extends Mailable
+class Mailable extends BaseMailable
 {
     public function build()
     {

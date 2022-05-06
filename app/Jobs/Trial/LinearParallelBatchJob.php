@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Trial;
 
 use App\Support\Facades\App;
 use App\Support\Jobs\ParallelBatchJob;
 use Illuminate\Support\Facades\Log;
 
-class TrialLinearParallelBatchJob extends ParallelBatchJob
+class LinearParallelBatchJob extends ParallelBatchJob
 {
     protected function batchTotal(): int
     {

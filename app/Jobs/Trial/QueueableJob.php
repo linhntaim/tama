@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Trial;
 
 use App\Support\Facades\App;
-use App\Support\Jobs\Job;
+use App\Support\Jobs\QueueableJob as BaseQueueableJob;
 use Illuminate\Support\Facades\Log;
 
-class TrialJob extends Job
+class QueueableJob extends BaseQueueableJob
 {
     protected function handling()
     {

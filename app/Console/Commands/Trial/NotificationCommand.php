@@ -3,9 +3,9 @@
 namespace App\Console\Commands\Trial;
 
 use App\Models\UserProvider;
-use App\Notifications\TrialBroadcastNotification;
-use App\Notifications\TrialDatabaseNotification;
-use App\Notifications\TrialMailNotification;
+use App\Notifications\Trial\BroadcastNotification as TrialBroadcastNotification;
+use App\Notifications\Trial\DatabaseNotification as TrialDatabaseNotification;
+use App\Notifications\Trial\MailNotification as TrialMailNotification;
 use App\Support\Console\Commands\Command;
 use App\Support\Exceptions\DatabaseException;
 use App\Support\Exceptions\Exception;
