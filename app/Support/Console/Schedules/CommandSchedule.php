@@ -2,7 +2,7 @@
 
 namespace App\Support\Console\Schedules;
 
-use App\Support\Console\Artisan;
+use App\Support\Facades\Artisan;
 
 abstract class CommandSchedule extends Schedule
 {

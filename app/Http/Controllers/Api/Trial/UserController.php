@@ -16,11 +16,17 @@ class UserController extends ApiController
         return $this->responseModel(
             $request,
             $request->has('page')
-                ? new LengthAwarePaginator(User::factory()->count(10)->make(), 1000, 10, 1)
+                ? new LengthAwarePaginator(
+                $request->has('empty') ? [] : User::factory()->count(10)->make(),
+                1000,
+                10,
+                1
+            )
                 : ($request->has('id')
-                ? User::factory()->make()
-                : User::factory()->count(10)->make()),
-            TrialUserResource::class
+                ? ($request->has('empty') ? null : User::factory()->make())
+                : ($request->has('empty') ? collect([]) : User::factory()->count(10)->make())),
+            TrialUserResource::class,
+            ['now' => date_timer()->compound('longDate', ' ', 'longTime')]
         );
     }
 }

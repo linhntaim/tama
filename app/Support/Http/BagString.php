@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Base
- */
-
 namespace App\Support\Http;
 
 class BagString

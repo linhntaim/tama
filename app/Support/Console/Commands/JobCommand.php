@@ -22,7 +22,7 @@ abstract class JobCommand extends Command
 
     protected function getJob(): ?string
     {
-        if (is_subclass_of($class = $this->getJobClass(), Job::class)) {
+        if (is_a($class = $this->getJobClass(), Job::class, true)) {
             return $class;
         }
         return null;

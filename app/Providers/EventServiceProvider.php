@@ -2,9 +2,9 @@
 
 namespace App\Providers;
 
-use App\Events\TrialEvent;
-use App\Listeners\TrialListener;
-use App\Listeners\TrialQueueableListener;
+use App\Events\Trial\Event as TrialEvent;
+use App\Listeners\Trial\Listener as TrialListener;
+use App\Listeners\Trial\QueueableListener as TrialQueueableListener;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;

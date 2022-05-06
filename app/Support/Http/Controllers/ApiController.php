@@ -2,7 +2,6 @@
 
 namespace App\Support\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Support\Http\Request;
 use App\Support\Http\Resources\ModelResource;
 use App\Support\Http\Resources\ResponseResource;
@@ -13,7 +12,7 @@ use Illuminate\Pagination\AbstractCursorPaginator;
 use Illuminate\Pagination\AbstractPaginator;
 use Illuminate\Support\Collection;
 
-class ApiController extends Controller
+abstract class ApiController extends Controller
 {
     protected function response(Request $request, mixed $resource = null, mixed ...$args): JsonResponse
     {

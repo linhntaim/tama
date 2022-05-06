@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Base
- */
-
 namespace App\Console\Commands\Make\Command;
 
 use App\Support\Console\Commands\GeneratorCommand;

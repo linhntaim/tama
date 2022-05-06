@@ -1,18 +1,13 @@
 <?php
 
-/**
- * Base
- */
-
 return [
     'app' => [
         'id' => env('APP_ID'),
         'debug_from_request' => (bool)env('APP_DEBUG_FROM_REQUEST', false),
     ],
-    'html_index' => [
-        // in public folder
+    'html_index' => [ // in public folder
         'paths' => [
-            //'admin',
+            // 'admin',
         ],
         'files' => [
             'index.html',
@@ -30,12 +25,47 @@ return [
             'definitions' => [
                 [
                     'schedules' => [
-                        //App\Console\Schedules\TrialSchedule::class,
+                        // App\Console\Schedules\Trial\Schedule::class,
                     ],
                     'frequencies' => [
                         'everyMinute',
                     ],
                 ],
+            ],
+        ],
+    ],
+    'mail' => [
+        'always_to' => [
+            'address' => env('MAIL_ALWAYS_TO_ADDRESS'),
+            'name' => env('MAIL_ALWAYS_TO_NAME'),
+        ],
+    ],
+    'database' => [
+        'seeders' => [
+            'users' => [
+                'system' => [
+                    'email' => env('USER_SYSTEM_EMAIL'),
+                    'name' => env('USER_SYSTEM_NAME'),
+                    'password' => env('USER_SYSTEM_PASSWORD'),
+                ],
+                'owner' => [
+                    'email' => env('USER_OWNER_EMAIL'),
+                    'name' => env('USER_OWNER_NAME'),
+                    'password' => env('USER_OWNER_PASSWORD'),
+                ],
+            ],
+        ],
+    ],
+    'filesystems' => [
+        'uses' => [
+            's3' => (bool)env('FILESYSTEM_USES_AWS_S3', false),
+            'azure' => (bool)env('FILESYSTEM_USES_AZURE_STORAGE', false),
+        ],
+        'storages' => [
+            'local' => env('FILESYSTEM_LOCAL_STORAGE', 'private'),
+            'publish' => [
+                'private' => env('FILESYSTEM_PRIVATE_PUBLISH_STORAGE', 'private'),
+                'public' => env('FILESYSTEM_PUBLIC_PUBLISH_STORAGE', 'public'),
             ],
         ],
     ],

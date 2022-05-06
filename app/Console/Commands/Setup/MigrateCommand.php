@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Base
- */
-
 namespace App\Console\Commands\Setup;
 
 use App\Support\Console\Commands\ForceCommand;
@@ -102,16 +98,13 @@ class MigrateCommand extends ForceCommand
         $this->uninstallDatabase();
     }
 
-    /**
-     * @throws FileNotFoundException
-     */
     protected function handling(): int
     {
         foreach ([
-                     'migrateDatabase',
-                     'migrateTables',
-                     'migrateSeed',
-                 ] as $method) {
+            'migrateDatabase',
+            'migrateTables',
+            'migrateSeed',
+        ] as $method) {
             $this->warn(sprintf('Migrate %s ...', lcfirst(substr($method, 7))));
             if (!$this->{$method}()) {
                 $this->error('Migration failed.');
@@ -236,8 +229,8 @@ class MigrateCommand extends ForceCommand
         if (($searched = array_search('failed_jobs', $migrationTables)) !== false
             && ($table = config('queue.failed.table')) != 'failed_jobs') {
             $this->comment('Failed jobs table changes.');
-            $toMigrationFile = database_path(join_paths('migrations', str_replace('failed_jobs', $table, $searched)));
-            $fromMigrationFile = database_path(join_paths('migrations', $searched));
+            $toMigrationFile = database_path(concat_paths(true, 'migrations', str_replace('failed_jobs', $table, $searched)));
+            $fromMigrationFile = database_path(concat_paths(true, 'migrations', $searched));
             $this->files->put(
                 $toMigrationFile,
                 str_replace('failed_jobs', $table, $this->files->get($fromMigrationFile))
@@ -246,11 +239,18 @@ class MigrateCommand extends ForceCommand
             $this->composer->dumpAutoloads();
             $this->info('Migrate changed successfully.');
         }
+        if (!in_array('notifications', $migrationTables)) {
+            if ($this->confirm('Migrate table of notifications?')) {
+                if ($this->call('notifications:table') != self::SUCCESS) {
+                    return false;
+                }
+            }
+        }
         return true;
     }
 
     protected function migrateSeed(): bool
     {
-        return true;
+        return $this->call('db:seed') == self::SUCCESS;
     }
 }

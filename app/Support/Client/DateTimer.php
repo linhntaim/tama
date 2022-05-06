@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Base
- */
-
 namespace App\Support\Client;
 
 use Carbon\Carbon;
@@ -31,7 +27,7 @@ class DateTimer extends SettingsApplier
     ];
 
     #region Static
-    protected static Carbon $now;
+    protected static ?Carbon $now = null;
 
     public static function now(bool $reset = false): Carbon
     {
