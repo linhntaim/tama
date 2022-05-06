@@ -47,12 +47,20 @@ abstract class ExportCommand extends Command
     {
         $this->warn('Export started.');
         $export = $this->export();
-        $file = (new FileProvider())->createWithFiler($export());
-        while (!$export->chunkEnded()) {
-            $file = (new FileProvider())
-                ->withModel($file)
-                ->updateWithFiler($export($file));
+        do {
+            $doesntHaveFile = !isset($file);
+            $filer = $doesntHaveFile ? $export() : $export($file);
+            $completed = $export->chunkEnded();
+            $file = $doesntHaveFile
+                ? (new FileProvider())
+                    ->enablePublish($completed)
+                    ->createWithFiler($filer)
+                : (new FileProvider())
+                    ->withModel($file)
+                    ->enablePublish($completed)
+                    ->updateWithFiler($filer);
         }
+        while (!$completed);
         $this->line(sprintf('<info>Exported:</info> %d.', $export->count()));
         $this->info('File:');
         print_r($this->modelResourceTransform($file));

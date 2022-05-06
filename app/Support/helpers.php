@@ -44,6 +44,41 @@ if (!function_exists('compose_filename')) {
     }
 }
 
+if (!function_exists('concat_paths')) {
+    function concat_paths($relative = true, string ...$paths): string
+    {
+        return ($relative && !windows_os() ? DIRECTORY_SEPARATOR : '')
+            . concat_with_slash(DIRECTORY_SEPARATOR, ...$paths);
+    }
+}
+
+if (!function_exists('concat_urls')) {
+    function concat_urls(string ...$urls): string
+    {
+        return concat_with_slash('/', ...$urls);
+    }
+}
+
+if (!function_exists('concat_with_slash')) {
+    function concat_with_slash($slash = '/', string ...$parts): string
+    {
+        return implode(
+            $slash,
+            array_map(fn($part) => trim_more(str_replace(['\\', '/'], $slash, $part), $slash), $parts)
+        );
+    }
+}
+
+if (!function_exists('concat_with_comma')) {
+    function concat_with_comma(string ...$parts): string
+    {
+        return implode(
+            ',',
+            $parts
+        );
+    }
+}
+
 if (!function_exists('config_starter')) {
     function config_starter(array|string|null $key = null, $default = null): mixed
     {
@@ -205,21 +240,6 @@ if (!function_exists('is_url')) {
     }
 }
 
-if (!function_exists('join_paths')) {
-    function join_paths($relative = true, string ...$paths): string
-    {
-        return ($relative && !windows_os() ? DIRECTORY_SEPARATOR : '')
-            . slash_concat(DIRECTORY_SEPARATOR, ...$paths);
-    }
-}
-
-if (!function_exists('join_urls')) {
-    function join_urls(string ...$urls): string
-    {
-        return slash_concat('/', ...$urls);
-    }
-}
-
 if (!function_exists('json_encode_pretty')) {
     function json_encode_pretty(mixed $value, int $depth = 512): string|false
     {
@@ -341,16 +361,6 @@ if (!function_exists('rtrim_more')) {
     function rtrim_more(string $string, string $characters = ''): string
     {
         return rtrim($string, " \t\n\r\0\x0B" . $characters);
-    }
-}
-
-if (!function_exists('slash_concat')) {
-    function slash_concat($slash = '/', string ...$parts): string
-    {
-        return implode(
-            $slash,
-            array_map(fn($part) => trim_more(str_replace(['\\', '/'], $slash, $part), $slash), $parts)
-        );
     }
 }
 

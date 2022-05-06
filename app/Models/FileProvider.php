@@ -13,12 +13,63 @@ use App\Support\Models\ModelProvider;
  * @method File model(Model|callable|int|string $model = null)
  * @method File createWithAttributes(array $attributes = [])
  * @method File updateWithAttributes(array $attributes = [])
+ *
+ * @method bool publish (bool $newValue)
+ * @method bool public (bool $newValue)
+ * @method bool inline(bool $newValue)
  */
 class FileProvider extends ModelProvider
 {
+    protected bool $publish = false;
+
+    protected bool $public = false;
+
+    protected bool $inline = false;
+
     public function modelClass(): string
     {
         return File::class;
+    }
+
+    public function enablePublish($enabled = true): static
+    {
+        $this->publish = $enabled;
+        return $this;
+    }
+
+    public function usePublic($public = true): static
+    {
+        $this->public = $public;
+        return $this;
+    }
+
+    public function useInline($inline = true): static
+    {
+        $this->inline = $inline;
+        return $this;
+    }
+
+    protected function publishFiler(Filer $filer): Filer
+    {
+        if ($this->publish(false)) {
+            if (!$this->inline(false)) {
+                if (!$this->public(false)) {
+                    $filer->publishPrivate();
+                }
+                else {
+                    $filer->publishPublic();
+                }
+            }
+            else { // inline
+                if (!$this->public(false)) {
+                    $filer->publishInlinePrivately();
+                }
+                else {
+                    $filer->publishInlinePublicly();
+                }
+            }
+        }
+        return $filer;
     }
 
     /**
@@ -27,6 +78,7 @@ class FileProvider extends ModelProvider
      */
     public function createWithFiler(Filer $filer, ?string $title = null): File
     {
+        $filer = $this->publishFiler($filer);
         return $this->createWithAttributes([
             'name' => $name = $filer->getName(),
             'title' => $title ?? pathinfo($name, PATHINFO_FILENAME),
@@ -45,6 +97,7 @@ class FileProvider extends ModelProvider
      */
     public function updateWithFiler(Filer $filer, ?string $title = null): File
     {
+        $filer = $this->publishFiler($filer);
         return $this->updateWithAttributes([
                 'name' => $filer->getName(),
                 'mime' => $filer->getMimeType(),

@@ -2,7 +2,6 @@
 
 namespace App\Support\Imports;
 
-use App\Models\File;
 use App\Support\Exceptions\FileException;
 use App\Support\Filesystem\Filers\CsvFiler;
 use Illuminate\Validation\ValidationException;
@@ -13,9 +12,9 @@ abstract class CsvImport extends Import
 
     protected bool|array $withHeaders = false;
 
-    protected function getFiler(File $file): CsvFiler
+    protected function filerClass(): string
     {
-        return CsvFiler::from($file);
+        return CsvFiler::class;
     }
 
     /**
