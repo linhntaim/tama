@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\PrerequisiteController;
 use App\Http\Controllers\Api\Trial\EventController as TrialEventController;
 use App\Http\Controllers\Api\Trial\FileController as TrialFileController;
 use App\Http\Controllers\Api\Trial\JobController as TrialJobController;
-use App\Http\Controllers\Api\Trial\UserController;
+use App\Http\Controllers\Api\Trial\UserController as TrialUserController;
 use App\Http\Controllers\Api\WelcomeController;
 use Illuminate\Support\Facades\Route;
 
@@ -30,7 +30,6 @@ Route::post('decrypt', [EncryptController::class, 'decrypt']);
 Route::group([
     'prefix' => 'trial',
 ], function () {
-    Route::get('user', [UserController::class, 'index']);
     Route::post('job', [TrialJobController::class, 'store']);
     Route::post('event', [TrialEventController::class, 'store']);
     Route::group([
@@ -38,6 +37,13 @@ Route::group([
     ], function () {
         Route::post('/', [TrialFileController::class, 'store']);
         Route::get('{id}', [TrialFileController::class, 'show']);
+    });
+    Route::group([
+        'prefix' => 'user',
+    ], function () {
+        Route::get('/', [TrialUserController::class, 'index']);
+        Route::post('/', [TrialUserController::class, 'store']);
+        Route::get('{id}', [TrialUserController::class, 'show']);
     });
 });
 

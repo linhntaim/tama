@@ -5,16 +5,15 @@ namespace App\Models;
 use App\Support\Exceptions\DatabaseException;
 use App\Support\Exceptions\Exception;
 use App\Support\Models\ModelProvider;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * @property User|null $model
+ * @method  User|null firstByKey(int|string $key)
  */
 class UserProvider extends ModelProvider
 {
-    public function modelClass(): string
-    {
-        return User::class;
-    }
+    public string $modelClass = User::class;
 
     /**
      * @throws DatabaseException
@@ -22,7 +21,7 @@ class UserProvider extends ModelProvider
      */
     public function system(): ?User
     {
-        return $this->firstByKey(User::SYSTEM_ID);
+        return $this->skipProtected()->firstByKey(User::SYSTEM_ID);
     }
 
     /**
@@ -31,6 +30,26 @@ class UserProvider extends ModelProvider
      */
     public function owner(): ?User
     {
-        return $this->firstByKey(User::OWNER_ID);
+        return $this->skipProtected()->firstByKey(User::OWNER_ID);
+    }
+
+    protected function whereByEmail(Builder $query, $value): Builder
+    {
+        return $this->whereLike($query, 'email', $value);
+    }
+
+    protected function whereByName(Builder $query, $value): Builder
+    {
+        return $this->whereLike($query, 'name', $value);
+    }
+
+    protected function whereByCreatedFrom(Builder $query, $value): Builder
+    {
+        return $query->where('created_at', '>=', $value);
+    }
+
+    protected function whereByCreatedTo(Builder $query, $value): Builder
+    {
+        return $query->where('created_at', '<=', $value);
     }
 }

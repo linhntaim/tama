@@ -30,15 +30,16 @@ use Throwable;
  */
 abstract class ModelProvider
 {
-    public const PER_PAGE = 10;
     public const SORT_ASC = 'asc';
     public const SORT_DESC = 'desc';
 
-    protected string $modelClass;
+    public string $modelClass;
 
     protected ?Model $model = null;
 
-    protected ?bool $modelUseSoftDeletes = null;
+    protected ?bool $useSoftDeletes = null;
+
+    protected int $perPage;
 
     protected bool $force = false;
 
@@ -73,16 +74,12 @@ abstract class ModelProvider
      */
     public function __construct(Model|callable|int|string $model = null)
     {
-        $modelClass = $this->modelClass();
-        if (!is_a($modelClass, Model::class, true)) {
-            throw new RuntimeException("Class [$modelClass] is not a model class.");
+        if (!is_a($this->modelClass, Model::class, true)) {
+            throw new RuntimeException("Class [{$this->modelClass}] is not a model class.");
         }
-        $this->modelClass = $modelClass;
 
         $this->model($model);
     }
-
-    public abstract function modelClass(): string;
 
     public function forced(): static
     {
@@ -124,9 +121,9 @@ abstract class ModelProvider
         return $this;
     }
 
-    public function sort(string|Closure|Expression $by, string $direction = self::SORT_ASC): static
+    public function sort(string|Closure|Expression $by, bool $ascending = true): static
     {
-        $this->wheres[] = new SortCondition($by, $direction);
+        $this->wheres[] = new SortCondition($by, $ascending);
         return $this;
     }
 
@@ -138,9 +135,9 @@ abstract class ModelProvider
         return $this;
     }
 
-    public function more(string $by, string $direction = self::SORT_ASC, $pivot = null): static
+    public function more(string $by, bool $ascending = true, $pivot = null): static
     {
-        $this->sort($by, $direction);
+        $this->sort($by, $ascending);
         if (!is_null($pivot)) {
             $this->wheres[] = new WhereCondition($by, $pivot);
         }
@@ -158,10 +155,15 @@ abstract class ModelProvider
         throw new RuntimeException('Method does not exist.');
     }
 
-    public function modelUseSoftDeletes(): bool
+    public function useSoftDeletes(): bool
     {
-        return $this->modelUseSoftDeletes
-            ?? ($this->modelUseSoftDeletes = class_use($this->modelClass, SoftDeletes::class));
+        return $this->useSoftDeletes
+            ?? ($this->useSoftDeletes = class_use($this->modelClass, SoftDeletes::class));
+    }
+
+    public function perPage(): bool
+    {
+        return $this->perPage ?? ($this->perPage = $this->newModel()->getPerPage());
     }
 
     /**
@@ -308,7 +310,7 @@ abstract class ModelProvider
     protected function executeDelete(Builder|Model $query): bool
     {
         $this->catch(function () use ($query) {
-            return $this->force(false) && $this->modelUseSoftDeletes()
+            return $this->force(false) && $this->useSoftDeletes()
                 ? $query->forceDelete()
                 : $query->delete();
         });
@@ -354,10 +356,10 @@ abstract class ModelProvider
      * @throws DatabaseException
      * @throws Exception
      */
-    protected function executePagination(Builder $query, int $perPage = self::PER_PAGE): LengthAwarePaginator
+    protected function executePagination(Builder $query, ?int $perPage = null): LengthAwarePaginator
     {
         return $this->catch(function () use ($query, $perPage) {
-            return $query->paginate($perPage);
+            return $query->paginate($perPage ?: $this->perPage());
         });
     }
 
@@ -441,6 +443,11 @@ abstract class ModelProvider
             }
         }
         return $query;
+    }
+
+    protected function whereLike(Builder $query, $column, $value): Builder
+    {
+        return $query->where($column, 'like', '%' . $value . '%');
     }
 
     /**
@@ -571,8 +578,9 @@ abstract class ModelProvider
      * @throws DatabaseException
      * @throws Exception
      */
-    public function next(array $conditions = [], int $perPage = self::PER_PAGE, &$hasMore = false): EloquentCollection
+    public function next(array $conditions = [], ?int $perPage = null, &$hasMore = false): EloquentCollection
     {
+        $perPage = $perPage ?: $this->perPage();
         $collection = $this->firstPagination($conditions, $perPage + 1);
         if ($collection->count() > $perPage) {
             $collection->pop();
@@ -588,7 +596,7 @@ abstract class ModelProvider
      * @throws DatabaseException
      * @throws Exception
      */
-    public function pagination(array $conditions = [], int $perPage = self::PER_PAGE): LengthAwarePaginator
+    public function pagination(array $conditions = [], ?int $perPage = null): LengthAwarePaginator
     {
         return $this->executePagination($this->queryWhere($conditions), $perPage);
     }
@@ -597,9 +605,9 @@ abstract class ModelProvider
      * @throws DatabaseException
      * @throws Exception
      */
-    public function firstPagination(array $conditions = [], int $perPage = self::PER_PAGE): EloquentCollection
+    public function firstPagination(array $conditions = [], ?int $perPage = null): EloquentCollection
     {
-        $conditions[] = new LimitCondition($perPage);
+        $conditions[] = new LimitCondition($perPage ?: $this->perPage());
         return $this->executeAll($this->queryWhere($conditions));
     }
 
