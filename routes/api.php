@@ -1,9 +1,10 @@
 <?php
 
 use App\Http\Controllers\Api\EncryptController;
-use App\Http\Controllers\Api\PrerequisiteController;
 use App\Http\Controllers\Api\FileController;
+use App\Http\Controllers\Api\PrerequisiteController;
 use App\Http\Controllers\Api\Trial\EventController as TrialEventController;
+use App\Http\Controllers\Api\Trial\FileController as TrialFileController;
 use App\Http\Controllers\Api\Trial\JobController as TrialJobController;
 use App\Http\Controllers\Api\Trial\UserController;
 use App\Http\Controllers\Api\WelcomeController;
@@ -21,7 +22,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('prerequisite', [PrerequisiteController::class, 'index']);
-Route::get('file/{id}', [FileController::class, 'show']);
+Route::get('file/{id}', [FileController::class, 'show'])->name('file.show');
 Route::post('encrypt', [EncryptController::class, 'encrypt']);
 Route::post('decrypt', [EncryptController::class, 'decrypt']);
 
@@ -32,6 +33,12 @@ Route::group([
     Route::get('user', [UserController::class, 'index']);
     Route::post('job', [TrialJobController::class, 'store']);
     Route::post('event', [TrialEventController::class, 'store']);
+    Route::group([
+        'prefix' => 'file',
+    ], function () {
+        Route::post('/', [TrialFileController::class, 'store']);
+        Route::get('{id}', [TrialFileController::class, 'show']);
+    });
 });
 
 Route::any('{path?}', [WelcomeController::class, 'index'])

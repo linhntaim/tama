@@ -10,6 +10,7 @@ use App\Support\Filesystem\Storages\ExternalStorage;
 use App\Support\Filesystem\Storages\IDirectEditableStorage;
 use App\Support\Filesystem\Storages\IHasExternalStorage;
 use App\Support\Filesystem\Storages\IHasInternalStorage;
+use App\Support\Filesystem\Storages\IHasUrlStorage;
 use App\Support\Filesystem\Storages\InlineStorage;
 use App\Support\Filesystem\Storages\InternalStorage;
 use App\Support\Filesystem\Storages\PrivateStorage;
@@ -97,6 +98,9 @@ class Filer
         return null;
     }
 
+    /**
+     * @throws FileException
+     */
     public static function create(?string $in = null, ?string $name = null, ?string $extension = null): static
     {
         return take(new static(), function (Filer $filer) use ($in, $name, $extension) {
@@ -145,7 +149,7 @@ class Filer
 
     public function getUrl(): ?string
     {
-        return $this->storage instanceof IHasExternalStorage ? $this->storage->getUrl() : null;
+        return $this->storage instanceof IHasUrlStorage ? $this->storage->getUrl() : null;
     }
 
     public function getStorage(): string
@@ -178,14 +182,14 @@ class Filer
         return $this;
     }
 
-    public function storeInline(string $visibility = Filesystem::VISIBILITY_PRIVATE, bool $duplicate = false): static
-    {
-        return $this->moveToStorage((new InlineStorage())->setVisibility($visibility), null, $duplicate);
-    }
-
     public function storeLocally(?string $in = null, bool $duplicate = false): static
     {
         return $this->moveToStorage(StorageFactory::localStorage(), $in, $duplicate);
+    }
+
+    public function copyToLocal(?string $in = null): static
+    {
+        return $this->moveToStorage(StorageFactory::localStorage(), $in, true);
     }
 
     public function publishPrivate(?string $in = null, bool $duplicate = false): static
@@ -196,6 +200,21 @@ class Filer
     public function publishPublic(?string $in = null, bool $duplicate = false): static
     {
         return $this->moveToStorage(StorageFactory::publicPublishStorage(), $in, $duplicate);
+    }
+
+    public function publishInlinePublicly(bool $duplicate = false): static
+    {
+        return $this->moveToStorage(
+            (new InlineStorage())
+                ->setVisibility(Filesystem::VISIBILITY_PUBLIC),
+            null,
+            $duplicate
+        );
+    }
+
+    public function publishInlinePrivately(bool $duplicate = false): static
+    {
+        return $this->moveToStorage(new InlineStorage(), null, $duplicate);
     }
 
     public function delete()

@@ -29,6 +29,11 @@ abstract class Export
         return static::NAME;
     }
 
+    public function getExtension(): ?string
+    {
+        return null;
+    }
+
     protected function filerClass(): string
     {
         return Filer::class;
@@ -37,7 +42,9 @@ abstract class Export
     protected function getFiler(?File $file = null): Filer
     {
         return modify($this->filerClass(), function ($filerClass) use ($file) {
-            return is_null($file) ? $filerClass::create() : $filerClass::from($file);
+            return is_null($file)
+                ? $filerClass::create(null, $this->getName(), $this->getExtension())
+                : $filerClass::from($file);
         });
     }
 
@@ -86,9 +93,6 @@ abstract class Export
     protected function exportAfter($filer)
     {
         $filer->close();
-        if ($this->chunkEnded()) {
-            $filer->publishPrivate();
-        }
     }
 
     /**

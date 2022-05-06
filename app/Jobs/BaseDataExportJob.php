@@ -41,13 +41,34 @@ trait BaseDataExportJob
      * @throws DatabaseException
      * @throws Exception
      */
-    protected function handling()
+    protected function export(): bool
     {
         $export = $this->getExport();
-        $this->file = !isset($this->file)
-            ? (new FileProvider())->createWithFiler($export(), $export->getName())
-            : (new FileProvider())->withModel($this->file)->updateWithFiler($export($this->file));
-        if ($export->chunkEnded()) {
+
+        $doesntHaveFile = !isset($this->file);
+        $filer = $doesntHaveFile
+            ? $export()
+            : $export($this->file);
+        $exportCompleted = $export->chunkEnded();
+        $this->file = $doesntHaveFile
+            ? (new FileProvider())
+                ->enablePublish($exportCompleted)
+                ->createWithFiler($filer, $export->getName())
+            : (new FileProvider())
+                ->withModel($this->file)
+                ->enablePublish($exportCompleted)
+                ->updateWithFiler($filer);
+
+        return $exportCompleted;
+    }
+
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
+    protected function handling()
+    {
+        if ($this->export()) {
             (new DataExportProvider())
                 ->withModel($this->dataExport)
                 ->updateExported($this->file);

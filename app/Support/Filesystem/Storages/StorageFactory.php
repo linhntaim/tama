@@ -6,7 +6,7 @@ use RuntimeException;
 
 class StorageFactory
 {
-    public static function privatePublishStorage(): Storage|IPublishableStorage
+    public static function privatePublishStorage(): Storage|IPrivatePublishableStorage
     {
         return take(static::create(config_starter('filesystems.storages.publish.private')), function (?Storage $storage) {
             if (is_null($storage)) {

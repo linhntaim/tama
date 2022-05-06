@@ -50,7 +50,7 @@ trait BaseDataImportJob
         if (!isset($this->file)) {
             $this->file = $this->dataImport->file;
             if (!($filer = Filer::from($this->file))->internal()) {
-                $this->file = (new FileProvider())->createWithFiler($filer->storeLocally(null, true));
+                $this->file = (new FileProvider())->createWithFiler($filer->copyToLocal());
                 $this->fileCloned = true;
             }
         }

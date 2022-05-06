@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse as SymfonyStreamedResponse
 
 /**
  * @property int $id
+ * @property string $title
  * @property string $name
  * @property string $mime
  * @property string $extension
@@ -18,7 +19,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse as SymfonyStreamedResponse
  * @property string $storage
  * @property array $options
  * @property string $file
+ *
  * @property string $visibility
+ * @property bool $public
+ * @property string|null $url
  * @property Filer $filer
  */
 class File extends Model
@@ -36,12 +40,28 @@ class File extends Model
         'file',
     ];
 
+    protected $visible = [
+        'id',
+        'title',
+        'name',
+        'mime',
+        'extension',
+        'size',
+        'storage',
+        'options',
+        'url',
+    ];
+
+    protected $appends = [
+        'url',
+    ];
+
     protected $casts = [
         'size' => 'integer',
         'options' => 'array',
     ];
 
-    protected $filerClass = Filer::class;
+    protected string $filerClass = Filer::class;
 
     public function setFilerClass(string $filerClass): static
     {
@@ -53,6 +73,20 @@ class File extends Model
     {
         return Attribute::make(
             get: fn() => $this->options['visibility'] ?? Filesystem::VISIBILITY_PRIVATE
+        );
+    }
+
+    public function public(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => $this->visibility == Filesystem::VISIBILITY_PUBLIC
+        );
+    }
+
+    public function url(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => $this->public ? ($this->filer->getUrl() ?: route('file.show', ['id' => $this->id, '_download' => 1])) : null
         );
     }
 

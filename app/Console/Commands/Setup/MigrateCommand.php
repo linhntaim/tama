@@ -229,8 +229,8 @@ class MigrateCommand extends ForceCommand
         if (($searched = array_search('failed_jobs', $migrationTables)) !== false
             && ($table = config('queue.failed.table')) != 'failed_jobs') {
             $this->comment('Failed jobs table changes.');
-            $toMigrationFile = database_path(join_paths(true, 'migrations', str_replace('failed_jobs', $table, $searched)));
-            $fromMigrationFile = database_path(join_paths(true, 'migrations', $searched));
+            $toMigrationFile = database_path(concat_paths(true, 'migrations', str_replace('failed_jobs', $table, $searched)));
+            $fromMigrationFile = database_path(concat_paths(true, 'migrations', $searched));
             $this->files->put(
                 $toMigrationFile,
                 str_replace('failed_jobs', $table, $this->files->get($fromMigrationFile))

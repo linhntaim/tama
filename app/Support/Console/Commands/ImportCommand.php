@@ -47,22 +47,21 @@ abstract class ImportCommand extends Command
      * @throws DatabaseException
      * @throws Exception
      */
-    protected function createFile(): File
-    {
-        return (new FileProvider())->createWithFiler(Filer::from($this->path()));
-    }
-
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function handling(): int
     {
         $this->warn('Import started.');
-        $file = $this->createFile();
+        $file = (new FileProvider())->createWithFiler(Filer::from($this->path()));
+        $fileCloned = false;
+        if (!($filer = Filer::from($file))->internal()) {
+            $file = (new FileProvider())->createWithFiler($filer->copyToLocal());
+            $fileCloned = true;
+        }
         $import = $this->import();
         while (!$import->chunkEnded()) {
             $import($file);
+        }
+        if ($fileCloned) {
+            (new FileProvider())->withModel($file)->delete();
         }
         $this->line(sprintf('<info>Imported:</info> %d.', $import->count()));
         return $this->exitSuccess();

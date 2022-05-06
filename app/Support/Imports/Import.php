@@ -33,9 +33,14 @@ abstract class Import
         return static::NAME;
     }
 
+    protected function filerClass(): string
+    {
+        return Filer::class;
+    }
+
     protected function getFiler(File $file): Filer
     {
-        return Filer::from($file);
+        return (clone $file)->setFilerClass($this->filerClass())->filer;
     }
 
     public function enableChunk(int $chunkSize = 1000): static
