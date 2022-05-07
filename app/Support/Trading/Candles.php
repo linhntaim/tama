@@ -6,12 +6,12 @@ use Carbon\Carbon;
 use Carbon\CarbonTimeZone;
 use InvalidArgumentException;
 
-class TradingData
+class Candles
 {
     /**
-     * @var array|CandleData[]
+     * @var array|Candle[]
      */
-    protected array $data;
+    protected array $candles;
 
     /**
      * @var array|string[]
@@ -19,7 +19,7 @@ class TradingData
     protected array $times;
 
     /**
-     * @param array|CandleData[] $data
+     * @param array|Candle[] $data
      * @param string $interval
      * @param string|int|null $lastAt
      */
@@ -68,7 +68,7 @@ class TradingData
             default:
                 throw new InvalidArgumentException('Interval was not supported.');
         }
-        $this->data = $data;
+        $this->candles = $data;
         for ($i = 0, $count = count($data); $i < $count; ++$i) {
             $this->times[] = (clone $lastAt)
                 ->{$method}($intervalValue * ($count - $i - 1))
@@ -76,10 +76,10 @@ class TradingData
         }
     }
 
-    public function getCloseData(): array
+    public function getCloses(): array
     {
-        return collect($this->data)
-            ->map(function (CandleData $data) {
+        return collect($this->candles)
+            ->map(function (Candle $data) {
                 return $data->getClose();
             })
             ->all();

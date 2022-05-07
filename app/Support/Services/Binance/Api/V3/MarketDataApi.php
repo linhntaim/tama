@@ -2,8 +2,8 @@
 
 namespace App\Support\Services\Binance\Api\V3;
 
-use App\Support\Trading\CandleData;
-use App\Support\Trading\TradingData;
+use App\Support\Trading\Candle;
+use App\Support\Trading\Candles;
 
 class MarketDataApi extends Api
 {
@@ -65,7 +65,7 @@ class MarketDataApi extends Api
         ?int   $startTime = null,
         ?int   $endTime = null,
         ?int   $limit = null,
-    ): bool|TradingData
+    ): bool|Candles
     {
         return modify(
             $this
@@ -75,8 +75,8 @@ class MarketDataApi extends Api
                 ->response(),
             function ($response) use ($interval, $endTime) {
                 if (is_array($response)) {
-                    return new TradingData(
-                        array_map(fn($candle) => new CandleData(
+                    return new Candles(
+                        array_map(fn($candle) => new Candle(
                             array_associated_map($candle, [
                                 'open_time',
                                 'open' => function ($value) {

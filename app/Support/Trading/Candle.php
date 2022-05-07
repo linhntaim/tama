@@ -2,7 +2,7 @@
 
 namespace App\Support\Trading;
 
-class CandleData
+class Candle
 {
     protected array $data;
 
