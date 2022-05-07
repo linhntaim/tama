@@ -20,6 +20,6 @@ trait HasUrlDiskStorage
 
     public function getUrl(): string
     {
-        return $this->disk->url($this->file);
+        return $this->disk->url(concat_urls($this->file));
     }
 }

@@ -55,7 +55,8 @@ class NotificationSender extends BaseNotificationSender
     }
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     protected function generateNotificationId(): string
     {

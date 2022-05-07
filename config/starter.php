@@ -5,10 +5,9 @@ return [
         'id' => env('APP_ID'),
         'debug_from_request' => (bool)env('APP_DEBUG_FROM_REQUEST', false),
     ],
-    'html_index' => [
-        // in public folder
+    'html_index' => [ // in public folder
         'paths' => [
-            //'admin',
+            // 'admin',
         ],
         'files' => [
             'index.html',
@@ -26,7 +25,7 @@ return [
             'definitions' => [
                 [
                     'schedules' => [
-                        //App\Console\Schedules\TrialSchedule::class,
+                        // App\Console\Schedules\Trial\Schedule::class,
                     ],
                     'frequencies' => [
                         'everyMinute',

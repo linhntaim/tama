@@ -2,6 +2,7 @@
 
 namespace App\Support\Exceptions;
 
+use App\Support\Database\DatabaseTransaction;
 use App\Support\Facades\App;
 use App\Support\Facades\Artisan;
 use App\Support\Http\Request;
@@ -16,7 +17,7 @@ use Throwable;
 
 class Handler extends ExceptionHandler
 {
-    use Responses;
+    use Responses, DatabaseTransaction;
 
     /**
      * @throws BindingResolutionException
@@ -50,6 +51,12 @@ class Handler extends ExceptionHandler
         return array_filter([
             'request' => $this->requestContent(),
         ]);
+    }
+
+    public function render($request, Throwable $e): SymfonyResponse
+    {
+        $this->transactionAbort(true);
+        return parent::render($request, $e);
     }
 
     protected function shouldReturnJson($request, Throwable $e): bool
@@ -86,6 +93,7 @@ class Handler extends ExceptionHandler
 
     public function renderForConsole($output, Throwable $e)
     {
+        $this->transactionAbort(true);
         Artisan::renderThrowable($e, $output);
     }
 }

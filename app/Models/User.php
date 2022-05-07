@@ -40,6 +40,7 @@ class User extends Authenticatable implements INotifiable, INotifier, IProtected
         'name',
         'email',
         'password',
+        'email_verified_at',
     ];
 
     protected $visible = [
@@ -47,10 +48,12 @@ class User extends Authenticatable implements INotifiable, INotifier, IProtected
         'name',
         'email',
         'sd_st_email_verified_at',
+        'sd_st_created_at',
     ];
 
     protected $appends = [
         'sd_st_email_verified_at',
+        'sd_st_created_at',
     ];
 
     /**
@@ -84,7 +87,7 @@ class User extends Authenticatable implements INotifiable, INotifier, IProtected
     protected function sdStEmailVerifiedAt(): Attribute
     {
         return Attribute::make(
-            get: fn() => is_null($this->attributes['email_verified_at'])
+            get: fn() => is_null($this->attributes['email_verified_at'] ?? null)
                 ? null
                 : date_timer()->compound(
                     'shortDate',
@@ -92,6 +95,18 @@ class User extends Authenticatable implements INotifiable, INotifier, IProtected
                     'shortTime',
                     $this->attributes['email_verified_at']
                 ),
+        );
+    }
+
+    protected function sdStCreatedAt(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => date_timer()->compound(
+                'shortDate',
+                ' ',
+                'shortTime',
+                $this->attributes['created_at']
+            )
         );
     }
 

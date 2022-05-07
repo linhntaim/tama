@@ -8,7 +8,7 @@ use BadMethodCallException;
 use Illuminate\Http\UploadedFile;
 use SplFileInfo;
 
-class InlineStorage extends Storage implements IPublicPublishableStorage
+class InlineStorage extends Storage implements IPublicPublishableStorage, IPrivatePublishableStorage
 {
     public const NAME = 'inline';
 
@@ -51,11 +51,6 @@ class InlineStorage extends Storage implements IPublicPublishableStorage
                 ->setExtension('')
                 ->setSize(0);
         }
-        return $this;
-    }
-
-    public function setVisibility(string $visibility): static
-    {
         return $this;
     }
 

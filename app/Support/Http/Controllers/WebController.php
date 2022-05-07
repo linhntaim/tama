@@ -5,7 +5,7 @@ namespace App\Support\Http\Controllers;
 use App\Support\Http\Request;
 use Illuminate\Contracts\View\View;
 
-class WebController extends Controller
+abstract class WebController extends Controller
 {
     protected function response(
         Request $request,

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\Trial;
 
-use App\Events\TrialEvent;
+use App\Events\Trial\Event as TrialEvent;
 use App\Support\Http\Controllers\ApiController;
 use App\Support\Http\Request;
 use Illuminate\Http\JsonResponse;
