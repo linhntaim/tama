@@ -2,15 +2,10 @@
 
 namespace App\Http\Resources;
 
-use App\Support\Http\Resources\ModelResource;
-use App\Models\User;
 use Illuminate\Contracts\Support\Arrayable;
 use JsonSerializable;
 
-/**
- * @mixin User
- */
-class TrialUserExportResource extends ModelResource
+class UserExportResource extends UserResource
 {
     public function toArray($request): array|JsonSerializable|Arrayable
     {

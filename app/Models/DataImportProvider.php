@@ -18,10 +18,7 @@ use Throwable;
  */
 class DataImportProvider extends ModelProvider
 {
-    public function modelClass(): string
-    {
-        return DataImport::class;
-    }
+    public string $modelClass = DataImport::class;
 
     /**
      * @throws DatabaseException

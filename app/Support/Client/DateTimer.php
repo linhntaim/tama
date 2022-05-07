@@ -15,6 +15,8 @@ class DateTimer extends SettingsApplier
     public const DAY_TYPE_START_NEXT = 1;
     public const DAY_TYPE_START = -1;
     public const DAY_TYPE_END = -2;
+    public const DAY_TYPE_MINUTE_START = -3;
+    public const DAY_TYPE_MINUTE_END = -4;
     public const LONG_DATE_FUNCTION = 'longDate';
     public const SHORT_DATE_FUNCTION = 'shortDate';
     public const LONG_TIME_FUNCTION = 'longTime';
@@ -303,6 +305,8 @@ class DateTimer extends SettingsApplier
             self::DAY_TYPE_END => $time->setTime(23, 59, 59),
             self::DAY_TYPE_START => $time->setTime(0, 0),
             self::DAY_TYPE_START_NEXT => $time->setTime(0, 0)->addDay(),
+            self::DAY_TYPE_MINUTE_END => $time->setSecond(59),
+            self::DAY_TYPE_MINUTE_START => $time->setSecond(0),
             default => $time,
         };
     }

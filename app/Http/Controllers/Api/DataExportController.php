@@ -2,20 +2,19 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\File;
-use App\Models\FileProvider;
+use App\Models\DataExport;
+use App\Models\DataExportProvider;
 use App\Support\Exceptions\DatabaseException;
 use App\Support\Exceptions\Exception;
 use App\Support\Http\Controllers\ModelApiController;
 use App\Support\Http\Request;
-use Illuminate\Contracts\Filesystem\Filesystem;
 
 /**
- * @method FileProvider modelProvider()
+ * @method DataExportProvider modelProvider()
  */
-class FileController extends ModelApiController
+class DataExportController extends ModelApiController
 {
-    protected string $modelProviderClass = FileProvider::class;
+    protected string $modelProviderClass = DataExportProvider::class;
 
     /**
      * @throws DatabaseException
@@ -29,7 +28,7 @@ class FileController extends ModelApiController
         if ($request->has('_download')) {
             return $this->showDownload($request, $id);
         }
-        return $this->responseFail($request);
+        return parent::show($request, $id);
     }
 
     /**
@@ -38,11 +37,9 @@ class FileController extends ModelApiController
      */
     protected function showFile(Request $request, $id)
     {
-        return with($this->modelProvider()->model($id), function (File $file) {
-            if ($file->visibility == Filesystem::VISIBILITY_PRIVATE) {
-                abort(403, 'Access denied.');
-            }
-            return $file->responseFile();
+        return with($this->modelProvider()->model($id), function (DataExport $dataExport) {
+            // TODO: Permission by {$dataExport->name}
+            return $dataExport->file->responseFile();
         });
     }
 
@@ -52,11 +49,9 @@ class FileController extends ModelApiController
      */
     protected function showDownload(Request $request, $id)
     {
-        return with($this->modelProvider()->model($id), function (File $file) {
-            if ($file->visibility == Filesystem::VISIBILITY_PRIVATE) {
-                abort(403, 'Access denied.');
-            }
-            return $file->responseDownload();
+        return with($this->modelProvider()->model($id), function (DataExport $dataExport) {
+            // TODO: Permission by {$dataExport->name}
+            return $dataExport->file->responseDownload();
         });
     }
 }

@@ -13,13 +13,14 @@ use App\Support\Exceptions\Exception;
 class NotificationCommand extends Command
 {
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     protected function handling(): int
     {
         $userProvider = new UserProvider();
-        $owner = $userProvider->skipProtected()->owner();
-        $system = $userProvider->skipProtected()->system();
+        $owner = $userProvider->owner();
+        $system = $userProvider->system();
         TrialDatabaseNotification::send($owner, $system);
         TrialBroadcastNotification::send($owner, $system);
         TrialMailNotification::send($owner, $system);

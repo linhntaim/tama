@@ -10,7 +10,7 @@ use App\Support\Models\ModelProvider;
 
 /**
  * @property File|null $model
- * @method File model(Model|callable|int|string $model = null)
+ * @method File|null model(Model|callable|int|string $model = null, bool $byUnique = true)
  * @method File createWithAttributes(array $attributes = [])
  * @method File updateWithAttributes(array $attributes = [])
  *
@@ -20,16 +20,13 @@ use App\Support\Models\ModelProvider;
  */
 class FileProvider extends ModelProvider
 {
+    public string $modelClass = File::class;
+
     protected bool $publish = false;
 
     protected bool $public = false;
 
     protected bool $inline = false;
-
-    public function modelClass(): string
-    {
-        return File::class;
-    }
 
     public function enablePublish($enabled = true): static
     {
