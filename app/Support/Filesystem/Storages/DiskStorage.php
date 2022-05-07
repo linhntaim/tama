@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Storage as FilesystemStorage;
 use InvalidArgumentException;
 use RuntimeException;
 use SplFileInfo;
+use Symfony\Component\HttpFoundation\BinaryFileResponse as SymfonyBinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse as SymfonyStreamedResponse;
 
 abstract class DiskStorage extends Storage
 {
@@ -73,7 +75,7 @@ abstract class DiskStorage extends Storage
         $this->disk->put(
             $file,
             $resource,
-            ['visibility' => $this->visibility]
+            ['visibility' => $this->getVisibility()]
         );
         return parent::setFile($file);
     }
@@ -88,6 +90,11 @@ abstract class DiskStorage extends Storage
                 ->setSize($this->disk->size($file));
         }
         return $this;
+    }
+
+    public function getSize(): int
+    {
+        return $this->disk->size($this->file);
     }
 
     public function getContent(): string
@@ -125,5 +132,15 @@ abstract class DiskStorage extends Storage
     protected function defaultPath(): string
     {
         return implode($this->dirSeparator, [date('Y'), date('m'), date('d'), date('H')]);
+    }
+
+    public function responseFile(array $headers = []): SymfonyBinaryFileResponse|SymfonyStreamedResponse
+    {
+        return $this->disk->response($this->file, $this->name, $headers);
+    }
+
+    public function responseDownload(array $headers = []): SymfonyBinaryFileResponse|SymfonyStreamedResponse
+    {
+        return $this->disk->download($this->file, $this->name, $headers);
     }
 }

@@ -28,6 +28,7 @@ class AppServiceProvider extends ServiceProvider implements DeferrableProvider
      */
     public function register()
     {
+        $this->registerAppId();
         $this->registerRequest();
         $this->registerExceptionHandler();
         $this->registerLog();
@@ -35,6 +36,11 @@ class AppServiceProvider extends ServiceProvider implements DeferrableProvider
         $this->registerNotification();
         $this->registerShell();
         $this->registerClient();
+    }
+
+    protected function registerAppId()
+    {
+        $this->app['id'] = Str::uuid()->toString();
     }
 
     protected function registerRequest()
@@ -99,14 +105,8 @@ class AppServiceProvider extends ServiceProvider implements DeferrableProvider
      */
     public function boot()
     {
-        $this->configureApp();
         $this->configureLog();
         $this->configureMail();
-    }
-
-    protected function configureApp()
-    {
-        $this->app['id'] = Str::uuid()->toString();
     }
 
     protected function configureLog()

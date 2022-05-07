@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands\Trial;
 
-use App\Jobs\TrialLinearParallelBatchJob;
-use App\Jobs\TrialShuffleParallelBatchJob;
+use App\Jobs\Trial\LinearParallelBatchJob as TrialLinearParallelBatchJob;
+use App\Jobs\Trial\ShuffleParallelBatchJob as TrialShuffleParallelBatchJob;
 use App\Support\Console\Commands\JobCommand as BaseJobCommand;
 
 class ParallelBatchJobCommand extends BaseJobCommand

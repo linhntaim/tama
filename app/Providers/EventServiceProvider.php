@@ -3,12 +3,15 @@
 namespace App\Providers;
 
 use App\Events\CoinIdentificationEvent;
-use App\Events\TrialEvent;
+use App\Events\Trial\Event as TrialEvent;
 use App\Listeners\CoinIdentificationListener;
-use App\Listeners\TrialListener;
-use App\Listeners\TrialQueueableListener;
+use App\Listeners\OnQueryExecuted;
+use App\Listeners\Trial\Listener as TrialListener;
+use App\Listeners\Trial\QueueableListener as TrialQueueableListener;
+use App\Support\Facades\App;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
@@ -30,6 +33,16 @@ class EventServiceProvider extends ServiceProvider
             CoinIdentificationListener::class,
         ],
     ];
+
+    public function register()
+    {
+        if (App::runningInDebug()) {
+            $this->listen[QueryExecuted::class] = [
+                OnQueryExecuted::class,
+            ];
+        }
+        parent::register();
+    }
 
     /**
      * Register any events for your application.
