@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands\Trial;
 
-use App\Jobs\TrialQueueableJob;
+use App\Jobs\Trial\QueueableJob as TrialQueueableJob;
 use App\Support\Console\Commands\JobCommand as BaseJobCommand;
 
 class QueueableJobCommand extends BaseJobCommand

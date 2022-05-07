@@ -12,16 +12,16 @@ class PrioritizeHtmlIndex
 
     protected function htmlIndexFile(Request $request): ?string
     {
-        $currentPath = join_paths(true, $request->getRequestUri());
+        $currentPath = concat_paths(true, $request->getRequestUri());
         $htmlIndexConfig = config_starter('html_index');
         $htmlIndexFiles = $htmlIndexConfig['files'];
         $htmlIndexPaths = $htmlIndexConfig['paths'];
         array_unshift($htmlIndexPaths, '');
         foreach ($htmlIndexPaths as $htmlIndexPath) {
-            if (($htmlIndexPath = join_paths(true, $htmlIndexPath)) == $currentPath
+            if (($htmlIndexPath = concat_paths(true, $htmlIndexPath)) == $currentPath
                 || str($currentPath)->startsWith($htmlIndexPath)) {
                 foreach ($htmlIndexFiles as $htmlIndexFile) {
-                    if (is_file($htmlIndexFile = public_path(join_paths(true, $htmlIndexPath, $htmlIndexFile)))) {
+                    if (is_file($htmlIndexFile = public_path(concat_paths(true, $htmlIndexPath, $htmlIndexFile)))) {
                         return $htmlIndexFile;
                     }
                 }
@@ -33,7 +33,7 @@ class PrioritizeHtmlIndex
     public function handle(Request $request, Closure $next)
     {
         if ($htmlIndexFile = $this->htmlIndexFile($request)) {
-            return $this->responseFileAsContent($request, $htmlIndexFile);
+            return $this->responseFile($request, $htmlIndexFile);
         }
         return $next($request);
     }

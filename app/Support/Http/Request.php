@@ -6,6 +6,31 @@ use Illuminate\Http\Request as BaseRequest;
 
 class Request extends BaseRequest
 {
+    public function perPage($default = 10): int
+    {
+        $perPage = (int)$this->input('per_page');
+        return $perPage < 1 ? $default : $perPage;
+    }
+
+    public function sortBy(string $default, array $allowed = []): ?string
+    {
+        if ($this->if('sort_by', $by, true)) {
+            return !count($allowed) || in_array($by, $allowed) ? $by : null;
+        }
+        return $default;
+    }
+
+    public function sortAscending(bool $default = true): bool
+    {
+        return $this->has('sort_desc') ? false : $default;
+    }
+
+    public function if(string $key, &$input, bool $strict = false): bool
+    {
+        $input = $this->input($key);
+        return $this->has($key) && (!$strict || !is_null($input));
+    }
+
     public function headerJson(string $key, ?array $default = null): ?array
     {
         if (is_null($header = $this->header($key))

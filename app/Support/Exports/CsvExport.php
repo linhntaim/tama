@@ -4,54 +4,37 @@ namespace App\Support\Exports;
 
 use App\Support\Exceptions\FileException;
 use App\Support\Filesystem\Filers\CsvFiler;
-use App\Support\Filesystem\Filers\Filer;
 
 abstract class CsvExport extends Export
 {
-    protected bool $continuousData = false;
+    protected ?array $headers = null;
 
-    protected function filer(): Filer
-    {
-        return CsvFiler::create();
-    }
-
-    /**
-     * @throws FileException
-     */
-    protected function exportBefore(Filer $filer)
-    {
-        $filer->openForWriting();
-    }
-
-    protected function exportAfter(Filer $filer)
-    {
-        $filer->close();
-        parent::exportAfter($filer);
-    }
-
-    protected function export(Filer $filer)
-    {
-        if ($headers = $this->headers()) {
-            $filer->write($headers);
-        }
-        if ($this->continuousData) {
-            while ($data = $this->data()) {
-                $filer->writeAll($data, false);
-            }
-            return;
-        }
-        if ($data = $this->data()) {
-            $filer->writeAll($data, false);
-        }
-    }
+    protected array $data;
 
     protected function headers(): ?array
     {
-        return null;
+        return $this->headers;
     }
 
-    protected function data(): ?array
+    protected function data()
     {
-        return null;
+        return array_shift($this->data);
+    }
+
+    protected function filerClass(): string
+    {
+        return CsvFiler::class;
+    }
+
+    /**
+     * @param CsvFiler $filer
+     * @throws FileException
+     */
+    protected function exportBefore($filer)
+    {
+        parent::exportBefore($filer);
+        if ($this->dataIndex == -1 && ($headers = $this->headers())) {
+            $filer->writeln($headers);
+        }
     }
 }

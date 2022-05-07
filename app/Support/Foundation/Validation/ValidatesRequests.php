@@ -3,16 +3,12 @@
 namespace App\Support\Foundation\Validation;
 
 use App\Support\Http\Request;
-use Illuminate\Contracts\Validation\Factory as ValidationFactory;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Validation\ValidationException;
 
 trait ValidatesRequests
 {
-    private function withAfterCallback(Validator $validator, callable|string $callback = null): Validator
-    {
-        return is_null($callback) ? $validator : $validator->after($callback);
-    }
+    use Validates;
 
     /**
      * Run the validation routine against the given validator.
@@ -25,13 +21,7 @@ trait ValidatesRequests
         callable|string $afterCallback = null
     ): array
     {
-        $request = $request ?: request();
-
-        if (is_array($validator)) {
-            $validator = $this->getValidationFactory()->make($request->all(), $validator);
-        }
-
-        return $this->withAfterCallback($validator, $afterCallback)->validate();
+        return $this->validateDataWith($validator, ($request ?: request())->all(), $afterCallback);
     }
 
     /**
@@ -47,12 +37,13 @@ trait ValidatesRequests
         callable|string $afterCallback = null
     ): array
     {
-        return $this->withAfterCallback(
-            $this->getValidationFactory()->make(
-                $request->all(), $rules, $messages, $customAttributes
-            ),
+        return $this->validateData(
+            $request->all(),
+            $rules,
+            $messages,
+            $customAttributes,
             $afterCallback
-        )->validate();
+        );
     }
 
     /**
@@ -69,23 +60,13 @@ trait ValidatesRequests
         callable|string $afterCallback = null
     ): array
     {
-        try {
-            return $this->validate($request, $rules, $messages, $customAttributes, $afterCallback);
-        }
-        catch (ValidationException $e) {
-            $e->errorBag = $errorBag;
-
-            throw $e;
-        }
-    }
-
-    /**
-     * Get a validation factory instance.
-     *
-     * @return ValidationFactory
-     */
-    protected function getValidationFactory(): ValidationFactory
-    {
-        return app(ValidationFactory::class);
+        return $this->validateDataWithBag(
+            $errorBag,
+            $request->all(),
+            $rules,
+            $messages,
+            $customAttributes,
+            $afterCallback
+        );
     }
 }

@@ -11,13 +11,13 @@ class SortCondition extends QueryCondition
 {
     protected string|Closure|Expression $by;
 
-    protected string $direction;
+    protected bool $ascending;
 
-    public function __construct(string|Closure|Expression $by, string $direction = ModelProvider::SORT_ASC)
+    public function __construct(string|Closure|Expression $by, bool $ascending = true)
     {
         $this
             ->setBy($by)
-            ->setDirection($direction);
+            ->setAscending($ascending);
     }
 
     public function setBy(string|Closure|Expression $by): static
@@ -26,14 +26,14 @@ class SortCondition extends QueryCondition
         return $this;
     }
 
-    public function setDirection(string $direction): static
+    public function setAscending(bool $ascending): static
     {
-        $this->direction = $direction;
+        $this->ascending = $ascending;
         return $this;
     }
 
     public function __invoke(Builder $query): Builder
     {
-        return $query->orderBy($this->by, $this->direction);
+        return $query->orderBy($this->by, $this->ascending ? 'asc' : 'desc');
     }
 }
