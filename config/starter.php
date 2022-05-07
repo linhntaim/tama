@@ -31,6 +31,14 @@ return [
                         'everyMinute',
                     ],
                 ],
+                [
+                    'schedules' => [
+                        App\Console\Commands\Coin\IdentificationCommand::class,
+                    ],
+                    'frequencies' => [
+                        'monthly',
+                    ],
+                ],
             ],
         ],
     ],

@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\DataExportController;
 use App\Http\Controllers\Api\EncryptController;
 use App\Http\Controllers\Api\FileController;
 use App\Http\Controllers\Api\PrerequisiteController;
+use App\Http\Controllers\Api\SwingTradeController;
 use App\Http\Controllers\Api\Trial\EventController as TrialEventController;
 use App\Http\Controllers\Api\Trial\FileController as TrialFileController;
 use App\Http\Controllers\Api\Trial\JobController as TrialJobController;
@@ -50,6 +51,8 @@ Route::group([
         Route::delete('{id}', [TrialUserController::class, 'destroy']);
     });
 });
+
+Route::get('swing-trade/{exchange}/{indicator}', [SwingTradeController::class, 'show']);
 
 Route::any('{path?}', [WelcomeController::class, 'index'])
     ->where('path', '.*');
