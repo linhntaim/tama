@@ -23,11 +23,11 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::post('encrypt', [EncryptController::class, 'encrypt']);
+Route::post('decrypt', [EncryptController::class, 'decrypt']);
 Route::get('prerequisite', [PrerequisiteController::class, 'index']);
 Route::get('file/{id}', [FileController::class, 'show'])->name('file.show');
 Route::get('data-export/{id}', [DataExportController::class, 'show'])->name('data-export.show');
-Route::post('encrypt', [EncryptController::class, 'encrypt']);
-Route::post('decrypt', [EncryptController::class, 'decrypt']);
 
 //
 Route::group([
@@ -53,6 +53,8 @@ Route::group([
 });
 
 Route::get('swing-trade/{exchange}/{indicator}', [SwingTradeController::class, 'show']);
+
+Route::get('ping', [WelcomeController::class, 'ping']);
 
 Route::any('{path?}', [WelcomeController::class, 'index'])
     ->where('path', '.*');
