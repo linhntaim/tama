@@ -15,7 +15,7 @@ class SwingTradeController extends ApiController
             case 'binance':
                 return $this->showBinance($request, $indicator);
             default:
-                abort(404);
+                $this->abort404();
         }
         return $this->responseFail($request);
     }
@@ -26,22 +26,25 @@ class SwingTradeController extends ApiController
             case 'rsi':
                 return $this->showBinanceRsi($request);
             default:
-                abort(404);
+                $this->abort404();
         }
         return $this->responseFail($request);
     }
 
     protected function showBinanceRsi(Request $request)
     {
+        $indicator = (new RsiSwingTradeIndicator(
+            (new MarketDataApi())->candlestickData(
+                $request->input('symbol', 'BTCUSDT'),
+                $request->input('interval', MarketDataApi::INTERVAL_1_HOUR)
+            )
+        ));
         return $this->responseResource(
             $request,
-            [
-                'swing_trade' => (new RsiSwingTradeIndicator(
-                    (new MarketDataApi())->candlestickData(
-                        $request->input('symbol', 'BTCUSDT'),
-                        $request->input('interval', MarketDataApi::INTERVAL_1_HOUR)
-                    )
-                ))->getPossibleBuy()
+            $request->has('last') ? [
+                'swing_trade' => $indicator->getPossibleBuy(),
+            ] : [
+                'swing_trades' => $indicator->getPossibleBuys(),
             ]
         );
     }

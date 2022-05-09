@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\DataExportController;
 use App\Http\Controllers\Api\EncryptController;
+use App\Http\Controllers\Api\ExchangeController;
 use App\Http\Controllers\Api\FileController;
 use App\Http\Controllers\Api\PrerequisiteController;
 use App\Http\Controllers\Api\SwingTradeController;
@@ -23,11 +24,11 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::post('encrypt', [EncryptController::class, 'encrypt']);
+Route::post('decrypt', [EncryptController::class, 'decrypt']);
 Route::get('prerequisite', [PrerequisiteController::class, 'index']);
 Route::get('file/{id}', [FileController::class, 'show'])->name('file.show');
 Route::get('data-export/{id}', [DataExportController::class, 'show'])->name('data-export.show');
-Route::post('encrypt', [EncryptController::class, 'encrypt']);
-Route::post('decrypt', [EncryptController::class, 'decrypt']);
 
 //
 Route::group([
@@ -52,7 +53,11 @@ Route::group([
     });
 });
 
+Route::get('exchange/{exchange}/symbol', [ExchangeController::class, 'symbolIndex']);
+Route::get('exchange/{exchange}/interval', [ExchangeController::class, 'intervalIndex']);
 Route::get('swing-trade/{exchange}/{indicator}', [SwingTradeController::class, 'show']);
+
+Route::get('ping', [WelcomeController::class, 'ping']);
 
 Route::any('{path?}', [WelcomeController::class, 'index'])
     ->where('path', '.*');
