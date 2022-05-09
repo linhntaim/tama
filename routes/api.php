@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\DataExportController;
 use App\Http\Controllers\Api\EncryptController;
+use App\Http\Controllers\Api\ExchangeController;
 use App\Http\Controllers\Api\FileController;
 use App\Http\Controllers\Api\PrerequisiteController;
 use App\Http\Controllers\Api\SwingTradeController;
@@ -52,6 +53,8 @@ Route::group([
     });
 });
 
+Route::get('exchange/{exchange}/symbol', [ExchangeController::class, 'symbolIndex']);
+Route::get('exchange/{exchange}/interval', [ExchangeController::class, 'intervalIndex']);
 Route::get('swing-trade/{exchange}/{indicator}', [SwingTradeController::class, 'show']);
 
 Route::get('ping', [WelcomeController::class, 'ping']);
