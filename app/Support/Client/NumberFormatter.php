@@ -83,9 +83,9 @@ class NumberFormatter extends SettingsApplier
         return (float)str_replace(',', '.', preg_replace('/[^\d,]+/', '', $formattedNumber));
     }
 
-    public function formatReadableSize(float|int $size, string $unit = 'byte', $separator = ' '): string
+    public function formatReadableFilesize(float|int $size, string $unit = 'byte', $separator = ' '): string
     {
-        readable_size($size, $unit);
+        [$size, $unit] = readable_filesize($size, $unit);
         return $this->format($size) . $separator . $unit;
     }
 
