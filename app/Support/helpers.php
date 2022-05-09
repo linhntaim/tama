@@ -218,15 +218,37 @@ if (!function_exists('filled_array')) {
     }
 }
 
-if (!function_exists('from_ini_size')) {
-    function from_ini_size(string $size): int
+if (!function_exists('from_ini_filesize')) {
+    function from_ini_filesize(string $size): int
     {
-        return match (substr($size, -1)) {
-            'M', 'm' => (int)$size * 1048576,
-            'K', 'k' => (int)$size * 1024,
-            'G', 'g' => (int)$size * 1073741824,
-            default => $size,
-        };
+        if ('' === $size) {
+            return 0;
+        }
+        $size = strtolower($size);
+        $int = ltrim($size, '+');
+        if (str_starts_with($int, '0x')) {
+            $int = intval($int, 16);
+        }
+        elseif (str_starts_with($int, '0')) {
+            $int = intval($int, 8);
+        }
+        else {
+            $int = (int)$int;
+        }
+        switch (substr($size, -1)) {
+            case 't':
+                $int *= 1024;
+            // no break
+            case 'g':
+                $int *= 1024;
+            // no break
+            case 'm':
+                $int *= 1024;
+            // no break
+            case 'k':
+                $int *= 1024;
+        }
+        return $int;
     }
 }
 
@@ -351,8 +373,8 @@ if (!function_exists('number_formatter')) {
     }
 }
 
-if (!function_exists('readable_size')) {
-    function readable_size(float|int &$size, string &$unit = 'byte')
+if (!function_exists('readable_filesize')) {
+    function readable_filesize(float|int $size, string $unit = 'byte'): array
     {
         $units = ['byte', 'KB', 'MB', 'GB', 'TB', 'PB'];
         $maxUnitIndex = count($units) - 1;
@@ -373,6 +395,7 @@ if (!function_exists('readable_size')) {
             }
         }
         $unit = $units[$index];
+        return [$size, $unit];
     }
 }
 
@@ -461,7 +484,7 @@ if (!function_exists('with_unlimited_memory_usage')) {
         $origin = ini_get('memory_limit');
         ini_set('memory_limit', '-1');
         $called = value($callback, ...$args);
-        if (memory_get_usage() < from_ini_size($origin)) {
+        if (memory_get_usage() < from_ini_filesize($origin)) {
             ini_set('memory_limit', $origin);
         }
         return $called;
