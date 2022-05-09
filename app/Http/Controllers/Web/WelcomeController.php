@@ -8,8 +8,11 @@ use Illuminate\Contracts\View\View;
 
 class WelcomeController extends WebController
 {
-    public function index(Request $request): View
+    public function index(Request $request, $path = null): View
     {
+        if (!is_null($path)) {
+            $this->abort404();
+        }
         return $this->response($request, 'welcome');
     }
 }
