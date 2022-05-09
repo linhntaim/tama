@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Base
- */
-
 namespace App\Support\Log;
 
 use App\Support\Console\RunningCommand;

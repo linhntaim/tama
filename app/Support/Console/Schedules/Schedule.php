@@ -2,15 +2,15 @@
 
 namespace App\Support\Console\Schedules;
 
-use App\Support\App;
 use App\Support\ClassTrait;
-use App\Support\Client\InternalSettingsTrait;
-use App\Support\Console\Artisan;
+use App\Support\Client\InternalSettings;
+use App\Support\Facades\App;
+use App\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 
 abstract class Schedule
 {
-    use ClassTrait, InternalSettingsTrait;
+    use ClassTrait, InternalSettings;
 
     public function __construct()
     {
@@ -31,15 +31,15 @@ abstract class Schedule
 
     protected abstract function handling();
 
-    public function __invoke(): static
+    final public function __invoke(): static
     {
-        Log::info(sprintf('Schedule [%s] started.', $this->className()));
-        $this->handleBefore();
-        $this->withInternalSettings(function () {
+        return $this->withInternalSettings(function () {
+            Log::info(sprintf('Schedule [%s] started.', $this->className()));
+            $this->handleBefore();
             $this->handling();
+            $this->handleAfter();
+            Log::info(sprintf('Schedule [%s] ended.', $this->className()));
+            return $this;
         });
-        $this->handleAfter();
-        Log::info(sprintf('Schedule [%s] ended.', $this->className()));
-        return $this;
     }
 }

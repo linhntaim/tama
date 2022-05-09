@@ -1,23 +1,25 @@
 <?php
 
-/**
- * Base
- */
-
 namespace App\Providers;
 
 use App\Exceptions\Handler;
+use App\Support\Cache\RateLimiter;
 use App\Support\Client\Manager as ClientManager;
 use App\Support\Console\Sheller;
 use App\Support\Http\Request;
 use App\Support\Log\LineFormatter;
 use App\Support\Log\LogManager;
+use App\Support\Notifications\ChannelManager;
+use Illuminate\Cache\RateLimiter as BaseRateLimiter;
 use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Contracts\Support\DeferrableProvider;
+use Illuminate\Notifications\ChannelManager as BaseChannelManager;
 use Illuminate\Support\Facades\Facade;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 
-class AppServiceProvider extends ServiceProvider
+class AppServiceProvider extends ServiceProvider implements DeferrableProvider
 {
     /**
      * Register any application services.
@@ -26,11 +28,19 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        $this->registerAppId();
         $this->registerRequest();
         $this->registerExceptionHandler();
         $this->registerLog();
+        $this->registerCache();
+        $this->registerNotification();
         $this->registerShell();
         $this->registerClient();
+    }
+
+    protected function registerAppId()
+    {
+        $this->app['id'] = Str::uuid()->toString();
     }
 
     protected function registerRequest()
@@ -59,6 +69,23 @@ class AppServiceProvider extends ServiceProvider
         Facade::clearResolvedInstance('log');
     }
 
+    protected function registerNotification()
+    {
+        $this->app->singleton(BaseChannelManager::class, function ($app) {
+            return new ChannelManager($app);
+        });
+        Facade::clearResolvedInstance(BaseChannelManager::class);
+    }
+
+    protected function registerCache()
+    {
+        $this->app->singleton(BaseRateLimiter::class, function ($app) {
+            return new RateLimiter($app->make('cache')->driver(
+                $app['config']->get('cache.limiter')
+            ));
+        });
+    }
+
     protected function registerShell()
     {
         $this->app->singleton('shell', Sheller::class);
@@ -78,13 +105,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->configureApp();
         $this->configureLog();
-    }
-
-    protected function configureApp()
-    {
-        $this->app['id'] = Str::uuid()->toString();
+        $this->configureMail();
     }
 
     protected function configureLog()
@@ -97,5 +119,20 @@ class AppServiceProvider extends ServiceProvider
                 $config->set("logging.channels.$channel.permission", 0777);
             }
         }
+    }
+
+    protected function configureMail()
+    {
+        $alwaysTo = config_starter('mail.always_to');
+        if ($alwaysTo['address']) {
+            Mail::alwaysTo($alwaysTo['address'], $alwaysTo['name']);
+        }
+    }
+
+    public function provides(): array
+    {
+        return [
+            BaseRateLimiter::class,
+        ];
     }
 }

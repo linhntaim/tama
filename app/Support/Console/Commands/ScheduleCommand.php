@@ -22,7 +22,7 @@ abstract class ScheduleCommand extends Command
 
     protected function getSchedule(): ?Schedule
     {
-        if (is_subclass_of($class = $this->getScheduleClass(), Schedule::class)) {
+        if (is_a($class = $this->getScheduleClass(), Schedule::class, true)) {
             return new $class(...$this->getScheduleParams());
         }
         return null;
