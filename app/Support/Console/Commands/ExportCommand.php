@@ -7,11 +7,11 @@ use App\Support\Exceptions\DatabaseException;
 use App\Support\Exceptions\Exception;
 use App\Support\Exports\Export;
 use App\Support\Exports\ModelCsvExport;
-use App\Support\Http\Resources\ModelResourceTransformer;
+use App\Support\Http\Resources\ResourceTransformer;
 
 abstract class ExportCommand extends Command
 {
-    use ModelResourceTransformer;
+    use ResourceTransformer;
 
     public $signature = '{--per-read=1000}';
 
@@ -63,7 +63,7 @@ abstract class ExportCommand extends Command
         while (!$completed);
         $this->line(sprintf('<info>Exported:</info> %d.', $export->count()));
         $this->info('File:');
-        print_r($this->modelResourceTransform($file));
+        print_r($this->resourceTransform($file));
         return $this->exitSuccess();
     }
 }

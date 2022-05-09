@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Account\AccountController;
 use App\Http\Controllers\Api\Auth\LoginController;
+use App\Http\Controllers\Api\Auth\LogoutController;
 use App\Http\Controllers\Api\DataExportController;
 use App\Http\Controllers\Api\EncryptController;
 use App\Http\Controllers\Api\FileController;
@@ -56,13 +57,23 @@ Route::group([
 Route::group([
     'prefix' => 'auth',
 ], function () {
-    Route::post('login', [LoginController::class, 'store']);
+    Route::post('login', [LoginController::class, 'login']);
 });
 
 Route::group([
     'middleware' => 'auth:sanctum',
 ], function () {
-    Route::get('account', [AccountController::class, 'show']);
+    Route::group([
+        'prefix' => 'auth',
+    ], function () {
+        Route::post('logout', [LogoutController::class, 'logout']);
+    });
+
+    Route::group([
+        'prefix' => 'account',
+    ], function () {
+        Route::get('current', [AccountController::class, 'current']);
+    });
 });
 
 Route::get('ping', [WelcomeController::class, 'ping']);

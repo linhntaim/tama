@@ -6,6 +6,12 @@ use Illuminate\Http\Request as BaseRequest;
 
 class Request extends BaseRequest
 {
+    public function expectsJson(): bool
+    {
+        return parent::expectsJson()
+            || $this->is(config_starter('routes.json'));
+    }
+
     public function perPage($default = 10): int
     {
         $perPage = (int)$this->input('per_page');

@@ -4,13 +4,13 @@ namespace App\Support\Exports;
 
 use App\Support\Exceptions\DatabaseException;
 use App\Support\Exceptions\Exception;
-use App\Support\Http\Resources\ModelResourceTransformer;
+use App\Support\Http\Resources\ResourceTransformer;
 use App\Support\Models\ModelProvider;
 use Illuminate\Database\Eloquent\Collection;
 
 abstract class ModelCsvExport extends CsvExport
 {
-    use ModelResourceTransformer;
+    use ResourceTransformer;
 
     protected string $sortBy;
 
@@ -78,7 +78,7 @@ abstract class ModelCsvExport extends CsvExport
     protected function prepareData()
     {
         if ($this->more) {
-            $this->data = $this->modelResourceTransform(
+            $this->data = $this->resourceTransform(
                 with(
                     $this->modelProvider()
                         ->sort($this->sortBy, $this->sortAscending)

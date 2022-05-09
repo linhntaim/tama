@@ -399,11 +399,19 @@ trait HasModelApi
     #endregion
 
     #region Show
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
     protected function showExecute(Request $request, $id)
     {
         return $this->modelProvider()->model($id);
     }
 
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
     public function show(Request $request, $id)
     {
         return $this->showResponse($request, $this->showExecute($request, $id));
