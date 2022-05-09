@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\Account\AccountController;
+use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\DataExportController;
 use App\Http\Controllers\Api\EncryptController;
 use App\Http\Controllers\Api\FileController;
@@ -49,6 +51,18 @@ Route::group([
         Route::post('{id}', [TrialUserController::class, 'update']);
         Route::delete('{id}', [TrialUserController::class, 'destroy']);
     });
+});
+
+Route::group([
+    'prefix' => 'auth',
+], function () {
+    Route::post('login', [LoginController::class, 'store']);
+});
+
+Route::group([
+    'middleware' => 'auth:sanctum',
+], function () {
+    Route::get('account', [AccountController::class, 'show']);
 });
 
 Route::get('ping', [WelcomeController::class, 'ping']);

@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 /**
  * @property User|null $model
  * @method  User|null model(Model|callable|int|string $model = null, bool $byUnique = true)
+ * @method  User|null executeFirst(Builder $query)
  * @method  User|null firstByKey(int|string $key)
  */
 class UserProvider extends ModelProvider
@@ -53,5 +54,14 @@ class UserProvider extends ModelProvider
     protected function whereByCreatedTo(Builder $query, $value): Builder
     {
         return $query->where('created_at', '<=', $value);
+    }
+
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
+    public function firstByEmail(string $email): User
+    {
+        return $this->executeFirst($this->whereQuery()->where('email', $email));
     }
 }
