@@ -8,16 +8,15 @@ use App\Support\Exceptions\Exception;
 use App\Support\Http\Controllers\ModelApiController;
 use App\Support\Http\Request;
 use App\Support\Http\Resources\ResourceTransformer;
-use App\Support\Http\Resources\SanctumAccessTokenResource;
+use App\Support\Models\User;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 /**
  * @method UserProvider modelProvider()
  */
-class LoginController extends ModelApiController
+abstract class LoginController extends ModelApiController
 {
     use ResourceTransformer;
 
@@ -56,26 +55,46 @@ class LoginController extends ModelApiController
     /**
      * @throws DatabaseException
      * @throws Exception
+     */
+    protected function loginFindUser(Request $request): User
+    {
+        return $this->modelProvider()
+            ->notStrict()
+            ->firstByEmail($request->input('email'));
+    }
+
+    protected function loginMatchPassword(Request $request, User $user): bool
+    {
+        return $user->matchPassword($request->input('password'));
+    }
+
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     * @throws AuthenticationException
+     */
+    protected function loginUser(Request $request): User
+    {
+        $user = $this->loginFindUser($request);
+        if (!$user || !$this->loginMatchPassword($request, $user)) {
+            throw new AuthenticationException();
+        }
+        return $user;
+    }
+
+    protected abstract function loginToken(Request $request, User $user): mixed;
+
+    /**
+     * @throws DatabaseException
+     * @throws Exception
      * @throws AuthenticationException
      */
     protected function loginExecute(Request $request): array
     {
-        $user = $this->modelProvider()
-            ->notStrict()
-            ->firstByEmail($request->input('email'));
-        if (!$user || !Hash::check($request->input('password'), $user->getAuthPassword())) {
-            throw new AuthenticationException();
-        }
-        return [$user, $user->createToken('login')];
+        return [$user = $this->loginUser($request), $this->loginToken($request, $user)];
     }
 
-    /**
-     * @param Request $request
-     * @param $user
-     * @param $token
-     * @return JsonResponse
-     */
-    protected function loginResponse(Request $request, $user, $token): JsonResponse
+    protected function loginResponse(Request $request, User $user, $token): JsonResponse
     {
         $this->transactionComplete();
 
@@ -83,12 +102,9 @@ class LoginController extends ModelApiController
             $request,
             $user,
             $this->modelResourceClass,
-            $this->tokenTransform($request, $token)
+            $this->loginTokenTransform($request, $token)
         );
     }
 
-    protected function tokenTransform(Request $request, $token): array
-    {
-        return $this->resourceTransform($token, SanctumAccessTokenResource::class, $request, 'token');
-    }
+    protected abstract function loginTokenTransform(Request $request, $token): array;
 }

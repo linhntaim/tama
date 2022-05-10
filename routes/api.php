@@ -1,8 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\Account\AccountController;
-use App\Http\Controllers\Api\Auth\LoginController;
-use App\Http\Controllers\Api\Auth\LogoutController;
+use App\Http\Controllers\Api\Auth\Sanctum\LoginController as SanctumLoginController;
+use App\Http\Controllers\Api\Auth\Sanctum\LogoutController as SanctumLogoutController;
 use App\Http\Controllers\Api\DataExportController;
 use App\Http\Controllers\Api\EncryptController;
 use App\Http\Controllers\Api\FileController;
@@ -57,7 +57,7 @@ Route::group([
 Route::group([
     'prefix' => 'auth',
 ], function () {
-    Route::post('login', [LoginController::class, 'login']);
+    Route::post('sanctum/login', [SanctumLoginController::class, 'login']);
 });
 
 Route::group([
@@ -66,7 +66,7 @@ Route::group([
     Route::group([
         'prefix' => 'auth',
     ], function () {
-        Route::post('logout', [LogoutController::class, 'logout']);
+        Route::post('sanctum/logout', [SanctumLogoutController::class, 'logout']);
     });
 
     Route::group([

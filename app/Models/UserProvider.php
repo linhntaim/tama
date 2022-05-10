@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
  * @method  User|null model(Model|callable|int|string $model = null, bool $byUnique = true)
  * @method  User|null executeFirst(Builder $query)
  * @method  User|null firstByKey(int|string $key)
+ * @method  User createWithAttributes(array $attributes = [])
  */
 class UserProvider extends ModelProvider
 {
