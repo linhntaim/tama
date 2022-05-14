@@ -9,6 +9,18 @@ use Illuminate\Http\JsonResponse;
 
 class ExchangeController extends ApiController
 {
+    public function index(Request $request): JsonResponse
+    {
+        return $this->response($request, [
+            'exchanges' => [
+                [
+                    'id' => 'binance',
+                    'name' => 'Binance',
+                ],
+            ],
+        ]);
+    }
+
     public function symbolIndex(Request $request, $exchange): JsonResponse
     {
         switch ($exchange) {
@@ -29,6 +41,7 @@ class ExchangeController extends ApiController
             ->all();
         return $this->response($request, [
             'symbols' => $symbols,
+            'default' => 'BTCUSDT',
         ]);
     }
 
@@ -63,6 +76,7 @@ class ExchangeController extends ApiController
                 MarketDataApi::INTERVAL_1_WEEK,
                 MarketDataApi::INTERVAL_1_MONTH,
             ],
+            'default' => MarketDataApi::INTERVAL_1_DAY,
         ]);
     }
 }
