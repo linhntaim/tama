@@ -21,26 +21,26 @@ class ExchangeController extends ApiController
         ]);
     }
 
-    public function symbolIndex(Request $request, $exchange): JsonResponse
+    public function tickerIndex(Request $request, $exchange): JsonResponse
     {
         switch ($exchange) {
             case 'binance':
-                return $this->symbolIndexBinance($request);
+                return $this->tickerIndexBinance($request);
             default:
                 $this->abort404();
         }
         return $this->responseFail($request);
     }
 
-    protected function symbolIndexBinance(Request $request): JsonResponse
+    protected function tickerIndexBinance(Request $request): JsonResponse
     {
-        $symbols = collect((new MarketDataApi())->exchangeInfo()['symbols'] ?? [])
+        $tickers = collect((new MarketDataApi())->exchangeInfo()['symbols'] ?? [])
             ->where('status', '=', 'TRADING')
             ->pluck('symbol')
             ->sort()
             ->all();
         return $this->response($request, [
-            'symbols' => $symbols,
+            'tickers' => $tickers,
             'default' => 'BTCUSDT',
         ]);
     }
@@ -78,5 +78,33 @@ class ExchangeController extends ApiController
             ],
             'default' => MarketDataApi::INTERVAL_1_DAY,
         ]);
+    }
+
+    public function symbolShow(Request $request, $exchange, $symbol): JsonResponse
+    {
+        switch ($exchange) {
+            case 'binance':
+                return $this->binanceSymbolShow($request, $symbol);
+            default:
+                $this->abort404();
+        }
+        return $this->responseFail($request);
+    }
+
+    public function binanceSymbolShow(Request $request, $symbol): JsonResponse
+    {
+        $usdPairs = ['USDT', 'BUSD'];
+        while ($usdSymbol = array_shift($usdPairs)) {
+            if (($data = (new MarketDataApi())->tickerPrice($symbol . $usdSymbol)) !== false) {
+                return $this->response($request, [
+                    'symbol' => [
+                        'ticker' => $data['symbol'],
+                        'price' => floatval($data['price']),
+                        'chart_url' => "https://www.binance.com/en/trade/{$symbol}_{$usdSymbol}",
+                    ],
+                ]);
+            }
+        }
+        return $this->responseFail($request);
     }
 }

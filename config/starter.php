@@ -6,13 +6,13 @@ return [
         'debug_from_request' => (bool)env('APP_DEBUG_FROM_REQUEST', false),
     ],
     'html_index' => [ // in public folder
-        'paths' => [
-            // 'admin',
-        ],
-        'files' => [
-            'index.html',
-            'index.htm',
-        ],
+                      'paths' => [
+                          // 'admin',
+                      ],
+                      'files' => [
+                          'index.html',
+                          'index.htm',
+                      ],
     ],
     'console' => [
         'commands' => [
@@ -75,6 +75,12 @@ return [
                 'private' => env('FILESYSTEM_PRIVATE_PUBLISH_STORAGE', 'private'),
                 'public' => env('FILESYSTEM_PUBLIC_PUBLISH_STORAGE', 'public'),
             ],
+        ],
+    ],
+    'api' => [
+        'throttle' => [
+            'decay_minutes' => (int)env('API_THROTTLE_DECAY_MINUTES', 1),
+            'max_attempts' => (int)env('API_THROTTLE_MAX_ATTEMPTS', 600),
         ],
     ],
     'client' => [

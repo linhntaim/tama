@@ -60,8 +60,9 @@ Route::group([
     Route::group([
         'prefix' => '{exchange}',
     ], function () {
-        Route::get('symbol', [ExchangeController::class, 'symbolIndex']);
+        Route::get('ticker', [ExchangeController::class, 'tickerIndex']);
         Route::get('interval', [ExchangeController::class, 'intervalIndex']);
+        Route::get('symbol/{symbol}', [ExchangeController::class, 'symbolShow']);
     });
 });
 Route::get('swing-trade/{exchange}/{indicator}', [SwingTradeController::class, 'show']);

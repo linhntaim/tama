@@ -118,4 +118,26 @@ class MarketDataApi extends Api
             }
         );
     }
+
+    public function tickerPrice(
+        string|array|null $symbol = null,
+    ): bool|array
+    {
+        if (is_string($symbol)) {
+            $params = [
+                'symbol' => $symbol,
+            ];
+        }
+        elseif (is_array($symbol)) {
+            $params = [
+                'symbols' => json_encode_readable($symbol),
+            ];
+        }
+        else {
+            $params = null;
+        }
+        return $this
+            ->get('ticker/price', $params)
+            ->response();
+    }
 }
