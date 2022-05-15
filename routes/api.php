@@ -53,8 +53,18 @@ Route::group([
     });
 });
 
-Route::get('exchange/{exchange}/symbol', [ExchangeController::class, 'symbolIndex']);
-Route::get('exchange/{exchange}/interval', [ExchangeController::class, 'intervalIndex']);
+Route::group([
+    'prefix' => 'exchange',
+], function () {
+    Route::get('/', [ExchangeController::class, 'index']);
+    Route::group([
+        'prefix' => '{exchange}',
+    ], function () {
+        Route::get('ticker', [ExchangeController::class, 'tickerIndex']);
+        Route::get('interval', [ExchangeController::class, 'intervalIndex']);
+        Route::get('symbol/{symbol}', [ExchangeController::class, 'symbolShow']);
+    });
+});
 Route::get('swing-trade/{exchange}/{indicator}', [SwingTradeController::class, 'show']);
 
 Route::get('ping', [WelcomeController::class, 'ping']);
