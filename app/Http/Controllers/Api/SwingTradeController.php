@@ -35,7 +35,7 @@ class SwingTradeController extends ApiController
     {
         $indicator = (new RsiSwingTradeIndicator(
             (new MarketDataApi())->candlestickData(
-                $request->input('symbol', 'BTCUSDT'),
+                $request->input('ticker', 'BTCUSDT'),
                 $request->input('interval', MarketDataApi::INTERVAL_1_HOUR)
             )
         ));
