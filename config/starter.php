@@ -31,6 +31,7 @@ return [
                         'everyMinute',
                     ],
                 ],
+                //
             ],
         ],
     ],
@@ -69,6 +70,12 @@ return [
             ],
         ],
     ],
+    'api' => [
+        'throttle' => [
+            'decay_minutes' => (int)env('API_THROTTLE_DECAY_MINUTES', 1),
+            'max_attempts' => (int)env('API_THROTTLE_MAX_ATTEMPTS', 600),
+        ],
+    ],
     'client' => [
         'default' => 'default',
         'settings' => [
@@ -85,7 +92,7 @@ return [
             ],
         ],
         'routes' => [
-            //'*' => 'default',
+            // '*' => 'default',
         ],
     ],
     'routes' => [

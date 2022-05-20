@@ -14,10 +14,10 @@ class SettingsFromClient
     public function handle(Request $request, Closure $next, ?string $source = null)
     {
         foreach ([
-                     'viaHeader',
-                     'viaCookie',
-                     'viaRoute',
-                 ] as $method) {
+            'viaHeader',
+            'viaCookie',
+            'viaRoute',
+        ] as $method) {
             if ($this->{$method}($request, $source) !== false) {
                 break;
             }
@@ -30,12 +30,16 @@ class SettingsFromClient
 
     protected function viaHeader(Request $request, ?string $source = null): Manager|bool
     {
+        $manager = null;
         if (is_null($source) || $source === 'header') {
+            if (!is_null($client = $request->header('x-client'))) {
+                $manager = $this->mergeSettings($client);
+            }
             if (!is_null($settings = $request->headerJson('x-settings'))) {
-                return $this->mergeSettings($settings);
+                $manager = $this->mergeSettings($settings);
             }
         }
-        return false;
+        return $manager ?: false;
     }
 
     protected function viaCookie(Request $request, ?string $source = null): Manager|bool
