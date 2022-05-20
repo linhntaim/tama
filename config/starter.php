@@ -5,10 +5,9 @@ return [
         'id' => env('APP_ID'),
         'debug_from_request' => (bool)env('APP_DEBUG_FROM_REQUEST', false),
     ],
-    'html_index' => [
-        // in public folder
+    'html_index' => [ // in public folder
         'paths' => [
-            //'admin',
+            // 'admin',
         ],
         'files' => [
             'index.html',
@@ -26,12 +25,13 @@ return [
             'definitions' => [
                 [
                     'schedules' => [
-                        //App\Console\Schedules\TrialSchedule::class,
+                        // App\Console\Schedules\Trial\Schedule::class,
                     ],
                     'frequencies' => [
                         'everyMinute',
                     ],
                 ],
+                //
             ],
         ],
     ],
@@ -70,6 +70,12 @@ return [
             ],
         ],
     ],
+    'api' => [
+        'throttle' => [
+            'decay_minutes' => (int)env('API_THROTTLE_DECAY_MINUTES', 1),
+            'max_attempts' => (int)env('API_THROTTLE_MAX_ATTEMPTS', 600),
+        ],
+    ],
     'client' => [
         'default' => 'default',
         'settings' => [
@@ -86,8 +92,11 @@ return [
             ],
         ],
         'routes' => [
-            //'*' => 'default',
+            // '*' => 'default',
         ],
+    ],
+    'routes' => [
+        'json' => ['api', 'api/*'],
     ],
     'supported_locales' => array_filter(explode(',', env('APP_LOCALE_SUPPORTED', 'en')), function ($locale) {
         return !empty($locale);

@@ -123,19 +123,49 @@ abstract class Storage
 
     public function responseFile(array $headers = []): SymfonyBinaryFileResponse|SymfonyStreamedResponse
     {
-        return response()->streamDownload(function () {
-            echo $this->getContent();
-        }, $this->name, $headers + [
-                'Content-Type' => $this->mimeType,
-            ], 'inline');
+        return $this->responseStream($headers);
     }
 
     public function responseDownload(array $headers = []): SymfonyBinaryFileResponse|SymfonyStreamedResponse
     {
+        return $this->responseStreamDownload($headers);
+    }
+
+    public function responseStream(array $headers = []): SymfonyBinaryFileResponse|SymfonyStreamedResponse
+    {
         return response()->streamDownload(function () {
             echo $this->getContent();
-        }, $this->name, $headers + [
+        }, $this->name, [
                 'Content-Type' => $this->mimeType,
-            ]);
+            ] + $headers, 'inline');
+    }
+
+    public function responseStreamDownload(array $headers = []): SymfonyBinaryFileResponse|SymfonyStreamedResponse
+    {
+        return response()->streamDownload(function () {
+            echo $this->getContent();
+        }, $this->name, [
+                'Content-Type' => $this->mimeType,
+            ] + $headers);
+    }
+
+    public function responseContent(array $headers = []): SymfonyBinaryFileResponse|SymfonyStreamedResponse
+    {
+        $content = $this->getContent();
+        return response()->streamDownload(function () use ($content) {
+            echo $content;
+        }, $this->name, [
+                'Content-Type' => $this->mimeType,
+            ] + $headers, 'inline');
+    }
+
+    public function responseContentDownload(array $headers = []): SymfonyBinaryFileResponse|SymfonyStreamedResponse
+    {
+        $content = $this->getContent();
+        return response()->streamDownload(function () use ($content) {
+            echo $content;
+        }, $this->name, [
+                'Content-Type' => $this->mimeType,
+            ] + $headers);
     }
 }

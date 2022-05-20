@@ -13,6 +13,7 @@ abstract class ModelCsvImport extends CsvImport
 {
     use DatabaseTransaction;
 
+    // TODO: Remove $modelProvider
     protected ModelProvider $modelProvider;
 
     protected array $attributeKeyMap = [];

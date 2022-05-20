@@ -370,4 +370,24 @@ class Filer
     {
         return $this->storage->responseDownload($headers);
     }
+
+    public function responseStream(array $headers = []): SymfonyBinaryFileResponse|SymfonyStreamedResponse
+    {
+        return $this->storage->responseStream($headers);
+    }
+
+    public function responseStreamDownload(array $headers = []): SymfonyBinaryFileResponse|SymfonyStreamedResponse
+    {
+        return $this->storage->responseStreamDownload($headers);
+    }
+
+    public function responseContent(array $headers = []): SymfonyBinaryFileResponse|SymfonyStreamedResponse
+    {
+        return $this->storage->responseContent($headers);
+    }
+
+    public function responseContentDownload(array $headers = []): SymfonyBinaryFileResponse|SymfonyStreamedResponse
+    {
+        return $this->storage->responseContentDownload($headers);
+    }
 }

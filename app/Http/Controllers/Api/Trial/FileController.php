@@ -8,31 +8,29 @@ use App\Support\Exceptions\DatabaseException;
 use App\Support\Exceptions\Exception;
 use App\Support\Filesystem\Filers\Filer;
 use App\Support\Http\Request;
-use Illuminate\Validation\ValidationException;
 
 class FileController extends BaseFileController
 {
+    protected function storeRules(Request $request): array
+    {
+        return [
+            'file' => 'required|file',
+        ];
+    }
+
     /**
-     * @throws ValidationException
      * @throws DatabaseException
      * @throws Exception
      */
-    public function store(Request $request)
+    protected function storeExecute(Request $request)
     {
-        $this->validate($request, [
-            'file' => 'required|file',
-        ]);
-
-        return $this->responseResource(
-            $request,
-            $this->modelProvider
-                ->enablePublish($request->has('publish'))
-                ->usePublic($request->has('public'))
-                ->useInline($request->has('inline'))
-                ->createWithFiler(
-                    Filer::from($request->file('file'))
-                )
-        );
+        return $this->modelProvider()
+            ->enablePublish($request->has('publish'))
+            ->usePublic($request->has('public'))
+            ->useInline($request->has('inline'))
+            ->createWithFiler(
+                Filer::from($request->file('file'))
+            );
     }
 
     /**
@@ -41,7 +39,7 @@ class FileController extends BaseFileController
      */
     protected function showFile(Request $request, $id)
     {
-        return with($this->modelProvider->model($id), function (File $file) {
+        return with($this->modelProvider()->model($id), function (File $file) {
             return $file->responseFile();
         });
     }
@@ -52,7 +50,7 @@ class FileController extends BaseFileController
      */
     protected function showDownload(Request $request, $id)
     {
-        return with($this->modelProvider->model($id), function (File $file) {
+        return with($this->modelProvider()->model($id), function (File $file) {
             return $file->responseDownload();
         });
     }

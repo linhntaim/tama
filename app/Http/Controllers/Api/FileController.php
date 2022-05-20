@@ -11,14 +11,11 @@ use App\Support\Http\Request;
 use Illuminate\Contracts\Filesystem\Filesystem;
 
 /**
- * @property FileProvider $modelProvider
+ * @method FileProvider modelProvider()
  */
 class FileController extends ModelApiController
 {
-    protected function modelProviderClass(): string
-    {
-        return FileProvider::class;
-    }
+    protected string $modelProviderClass = FileProvider::class;
 
     /**
      * @throws DatabaseException
@@ -41,7 +38,7 @@ class FileController extends ModelApiController
      */
     protected function showFile(Request $request, $id)
     {
-        return with($this->modelProvider->model($id), function (File $file) {
+        return with($this->modelProvider()->model($id), function (File $file) {
             if ($file->visibility == Filesystem::VISIBILITY_PRIVATE) {
                 abort(403, 'Access denied.');
             }
@@ -55,7 +52,7 @@ class FileController extends ModelApiController
      */
     protected function showDownload(Request $request, $id)
     {
-        return with($this->modelProvider->model($id), function (File $file) {
+        return with($this->modelProvider()->model($id), function (File $file) {
             if ($file->visibility == Filesystem::VISIBILITY_PRIVATE) {
                 abort(403, 'Access denied.');
             }

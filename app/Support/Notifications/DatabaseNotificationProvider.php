@@ -9,13 +9,11 @@ use Illuminate\Support\Str;
 
 class DatabaseNotificationProvider extends ModelProvider
 {
-    public function modelClass(): string
-    {
-        return DatabaseNotification::class;
-    }
+    public string $modelClass = DatabaseNotification::class;
 
     /**
-     * @throws DatabaseException|Exception
+     * @throws DatabaseException
+     * @throws Exception
      */
     public function generateUniqueId(): string
     {

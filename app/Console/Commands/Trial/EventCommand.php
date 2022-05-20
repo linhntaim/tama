@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands\Trial;
 
-use App\Events\TrialEvent;
+use App\Events\Trial\Event as TrialEvent;
 use App\Support\Console\Commands\Command;
 
 class EventCommand extends Command

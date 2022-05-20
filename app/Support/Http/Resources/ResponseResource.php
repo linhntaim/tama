@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use JsonSerializable;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
 class ResponseResource extends Resource
@@ -41,8 +42,10 @@ class ResponseResource extends Resource
                         ->setResource(null)
                         ->setException($resource);
                 }
-                elseif ($resource = $responseResource->modelResourceFrom($resource, $args[0] ?? ModelResource::class)) {
-                    $responseResource->setResource($resource);
+                else {
+                    $responseResource->setResource(
+                        $responseResource->resourceFrom($resource, $args[0] ?? Resource::class)
+                    );
                 }
             });
     }
@@ -122,43 +125,52 @@ class ResponseResource extends Resource
             $this->setStatus(false);
         }
         if (is_null($this->statusCode)) {
-            if ($throwable instanceof ValidationException) {
-                $this->setStatusCode($throwable->status);
-            }
-            elseif ($throwable instanceof AuthenticationException) {
-                $this->setStatusCode(401);
-            }
-            elseif ($throwable instanceof HttpExceptionInterface) {
-                $this->setStatusCode($throwable->getStatusCode());
-            }
-            else {
-                $this->setStatusCode(500);
+            switch (true) {
+                case $throwable instanceof ValidationException:
+                    $this->setStatusCode($throwable->status);
+                    break;
+                case $throwable instanceof AuthenticationException:
+                    $this->setStatusCode(401);
+                    break;
+                case $throwable instanceof HttpExceptionInterface:
+                    $this->setStatusCode($throwable->getStatusCode());
+                    break;
+                default:
+                    $this->setStatusCode(500);
+                    break;
             }
         }
         if (is_null($this->errorCode)) {
             $this->setErrorCode($throwable->getCode());
         }
         if (is_null($this->messages)) {
-            if ($throwable instanceof ValidationException) {
-                $this->setMessages($throwable->validator->errors()->all());
-            }
-            elseif ($throwable instanceof Exception) {
-                $this->setMessages($throwable->getMessages());
-            }
-            else {
-                $this->setMessages($throwable->getMessage());
+            switch (true) {
+                case $throwable instanceof NotFoundHttpException:
+                    $this->setMessages(($message = $throwable->getMessage()) ? $message : 'Not found.');
+                    break;
+                case $throwable instanceof ValidationException:
+                    $this->setMessages($throwable->validator->errors()->all());
+                    break;
+                case $throwable instanceof Exception:
+                    $this->setMessages($throwable->getMessages());
+                    break;
+                default:
+                    $this->setMessages($throwable->getMessage());
+                    break;
             }
         }
         if (is_null($this->resource)) {
-            if ($throwable instanceof ValidationException) {
-                $this->setResource([
-                    'validation' => $throwable->errors(),
-                ]);
-            }
-            elseif ($throwable instanceof Exception) {
-                if (count($data = $throwable->getData())) {
-                    $this->setResource($data);
-                }
+            switch (true) {
+                case $throwable instanceof ValidationException:
+                    $this->setResource([
+                        'validation' => $throwable->errors(),
+                    ]);
+                    break;
+                case $throwable instanceof Exception:
+                    if (count($data = $throwable->getData())) {
+                        $this->setResource($data);
+                    }
+                    break;
             }
         }
         return $this;
@@ -208,8 +220,8 @@ class ResponseResource extends Resource
             '_status' => $this->getStatus(),
             '_status_code' => $this->getStatusCode(),
             '_error_code' => $this->getErrorCode(),
-            '_exception' => $this->getExceptionAsArray(),
             '_messages' => $this->getMessages(),
+            '_exception' => $this->getExceptionAsArray(),
         ]);
     }
 
@@ -231,7 +243,7 @@ class ResponseResource extends Resource
 
     public function toArray($request): array|Arrayable|JsonSerializable
     {
-        if ($this->resource instanceof IModelResource) {
+        if ($this->resource instanceof IArrayResponsibleResource) {
             return $this->resource->toArrayResponse($request);
         }
         return parent::toArray($request);
