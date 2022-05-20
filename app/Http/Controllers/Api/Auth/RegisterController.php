@@ -23,12 +23,13 @@ class RegisterController extends ModelApiController
     protected function registerRules(Request $request): array
     {
         return [
+            'name' => 'required|string',
             'email' => [
                 'required',
                 'email',
                 Rule::unique('users', 'email'),
             ],
-            'password' => 'required|min:8',
+            'password' => 'required|string|min:8|confirmed',
         ];
     }
 
@@ -60,6 +61,7 @@ class RegisterController extends ModelApiController
     protected function registerExecute(Request $request): User
     {
         return $this->modelProvider()->createWithAttributes([
+            'name' => $request->input('name'),
             'email' => $request->input('email'),
             'password' => $request->input('password'),
         ]);

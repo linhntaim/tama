@@ -61,7 +61,7 @@ class UserProvider extends ModelProvider
      * @throws DatabaseException
      * @throws Exception
      */
-    public function firstByEmail(string $email): User
+    public function firstByEmail(string $email): ?User
     {
         return $this->executeFirst($this->whereQuery()->where('email', $email));
     }

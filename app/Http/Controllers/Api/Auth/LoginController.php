@@ -56,7 +56,7 @@ abstract class LoginController extends ModelApiController
      * @throws DatabaseException
      * @throws Exception
      */
-    protected function loginFindUser(Request $request): User
+    protected function loginFindUser(Request $request): ?User
     {
         return $this->modelProvider()
             ->notStrict()

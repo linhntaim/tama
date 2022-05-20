@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Account\AccountController;
+use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\Auth\Sanctum\LoginController as SanctumLoginController;
 use App\Http\Controllers\Api\Auth\Sanctum\LogoutController as SanctumLogoutController;
 use App\Http\Controllers\Api\DataExportController;
@@ -58,6 +59,7 @@ Route::group([
     'prefix' => 'auth',
 ], function () {
     Route::post('sanctum/login', [SanctumLoginController::class, 'login']);
+    Route::post('register', [RegisterController::class, 'register']);
 });
 
 Route::group([
