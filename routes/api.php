@@ -76,7 +76,5 @@ Route::group([
     });
 });
 
-Route::get('ping', [WelcomeController::class, 'ping']);
-
 Route::any('{path?}', [WelcomeController::class, 'index'])
     ->where('path', '.*');
