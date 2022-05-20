@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\Account\AccountController;
+use App\Http\Controllers\Api\Auth\Sanctum\LoginController as SanctumLoginController;
+use App\Http\Controllers\Api\Auth\Sanctum\LogoutController as SanctumLogoutController;
 use App\Http\Controllers\Api\DataExportController;
 use App\Http\Controllers\Api\EncryptController;
 use App\Http\Controllers\Api\FileController;
@@ -48,6 +51,28 @@ Route::group([
         Route::get('{id}', [TrialUserController::class, 'show']);
         Route::post('{id}', [TrialUserController::class, 'update']);
         Route::delete('{id}', [TrialUserController::class, 'destroy']);
+    });
+});
+
+Route::group([
+    'prefix' => 'auth',
+], function () {
+    Route::post('sanctum/login', [SanctumLoginController::class, 'login']);
+});
+
+Route::group([
+    'middleware' => 'auth:sanctum',
+], function () {
+    Route::group([
+        'prefix' => 'auth',
+    ], function () {
+        Route::post('sanctum/logout', [SanctumLogoutController::class, 'logout']);
+    });
+
+    Route::group([
+        'prefix' => 'account',
+    ], function () {
+        Route::get('current', [AccountController::class, 'current']);
     });
 });
 

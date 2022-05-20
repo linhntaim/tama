@@ -88,6 +88,9 @@ return [
             //'*' => 'default',
         ],
     ],
+    'routes' => [
+        'json' => ['api', 'api/*'],
+    ],
     'supported_locales' => array_filter(explode(',', env('APP_LOCALE_SUPPORTED', 'en')), function ($locale) {
         return !empty($locale);
     }),

@@ -42,8 +42,10 @@ class ResponseResource extends Resource
                         ->setResource(null)
                         ->setException($resource);
                 }
-                elseif ($resource = $responseResource->modelResourceFrom($resource, $args[0] ?? ModelResource::class)) {
-                    $responseResource->setResource($resource);
+                else {
+                    $responseResource->setResource(
+                        $responseResource->resourceFrom($resource, $args[0] ?? Resource::class)
+                    );
                 }
             });
     }
@@ -241,7 +243,7 @@ class ResponseResource extends Resource
 
     public function toArray($request): array|Arrayable|JsonSerializable
     {
-        if ($this->resource instanceof IModelResource) {
+        if ($this->resource instanceof IArrayResponsibleResource) {
             return $this->resource->toArrayResponse($request);
         }
         return parent::toArray($request);
