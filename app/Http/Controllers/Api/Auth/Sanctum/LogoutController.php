@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\Auth\Sanctum;
 
 use App\Http\Controllers\Api\Auth\LogoutController as BaseLogoutController;
-use App\Support\Http\Request;
+use Illuminate\Http\Request;
 
 class LogoutController extends BaseLogoutController
 {

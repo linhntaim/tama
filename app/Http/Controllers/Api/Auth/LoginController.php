@@ -6,11 +6,11 @@ use App\Models\UserProvider;
 use App\Support\Exceptions\DatabaseException;
 use App\Support\Exceptions\Exception;
 use App\Support\Http\Controllers\ModelApiController;
-use App\Support\Http\Request;
 use App\Support\Http\Resources\ResourceTransformer;
 use App\Support\Models\User;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 /**

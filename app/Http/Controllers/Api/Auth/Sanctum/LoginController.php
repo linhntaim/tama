@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api\Auth\Sanctum;
 
 use App\Http\Controllers\Api\Auth\LoginController as BaseLoginController;
-use App\Support\Http\Request;
 use App\Support\Http\Resources\SanctumAccessTokenResource;
 use App\Support\Models\User;
+use Illuminate\Http\Request;
 use Laravel\Sanctum\NewAccessToken;
 
 class LoginController extends BaseLoginController
@@ -25,7 +25,7 @@ class LoginController extends BaseLoginController
      * @param NewAccessToken $token
      * @return array
      */
-    protected function loginTokenTransform(Request $request, $token): array
+    protected function storeResponseAdditional(Request $request, $token): array
     {
         return $this->resourceTransform($token, SanctumAccessTokenResource::class, $request, 'token');
     }

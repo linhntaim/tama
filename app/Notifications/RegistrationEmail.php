@@ -15,6 +15,8 @@ class RegistrationEmail extends Notification implements ViaMail
 {
     public static ?Closure $createUrlCallback;
 
+    public static ?Closure $toMailCallback;
+
     public string $password;
 
     public function __construct(string $password, ?INotifier $notifier = null)
@@ -35,10 +37,19 @@ class RegistrationEmail extends Notification implements ViaMail
 
     public function dataMailable(INotifiable $notifiable): Mailable|MailMessage|null
     {
+        if (static::$toMailCallback) {
+            return call_user_func(static::$toMailCallback, $notifiable, $this->password);
+        }
+
+        return $this->buildMailMessage($this->loginUrl($notifiable));
+    }
+
+    protected function buildMailMessage($url): MailMessage
+    {
         return (new MailMessage)
             ->subject(Lang::get('New registration'))
-            ->line(Lang::get('You have complete your registration.'))
-            ->action(Lang::get('Login'), $this->loginUrl($notifiable))
+            ->line(Lang::get('You have complete your new registration.'))
+            ->action(Lang::get('Login'), $url)
             ->line(Lang::get('If you did not create an account, no further action is required.'));
     }
 }

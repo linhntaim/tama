@@ -6,11 +6,14 @@ use App\Support\Client\Manager;
 use App\Support\Client\Settings;
 use App\Support\Configuration;
 use App\Support\Facades\Client;
-use App\Support\Http\Request;
+use App\Support\Http\Requests;
 use Closure;
+use Illuminate\Http\Request;
 
 class SettingsFromClient
 {
+    use Requests;
+
     public function handle(Request $request, Closure $next, ?string $source = null)
     {
         foreach ([
@@ -35,7 +38,7 @@ class SettingsFromClient
             if (!is_null($client = $request->header('x-client'))) {
                 $manager = $this->mergeSettings($client);
             }
-            if (!is_null($settings = $request->headerJson('x-settings'))) {
+            if (!is_null($settings = $this->advancedRequest()->headerJson('x-settings'))) {
                 $manager = $this->mergeSettings($settings);
             }
         }
@@ -45,7 +48,7 @@ class SettingsFromClient
     protected function viaCookie(Request $request, ?string $source = null): Manager|bool
     {
         if (is_null($source) || $source === 'cookie') {
-            if (!is_null($settings = $request->cookieJson(name_starter('settings')))) {
+            if (!is_null($settings = $this->advancedRequest()->cookieJson(name_starter('settings')))) {
                 return $this->mergeSettings($settings);
             }
         }

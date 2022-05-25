@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Account\AccountController;
+use App\Http\Controllers\Api\Auth\ForgotPasswordController;
 use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\Auth\Sanctum\LoginController as SanctumLoginController;
 use App\Http\Controllers\Api\Auth\Sanctum\LogoutController as SanctumLogoutController;
@@ -58,8 +59,9 @@ Route::group([
 Route::group([
     'prefix' => 'auth',
 ], function () {
-    Route::post('sanctum/login', [SanctumLoginController::class, 'login']);
+    Route::post('sanctum/login', [SanctumLoginController::class, 'store']);
     Route::post('register', [RegisterController::class, 'register']);
+    Route::post('forgot-password', [ForgotPasswordController::class, 'forgot']);
 });
 
 Route::group([

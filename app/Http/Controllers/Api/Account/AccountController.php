@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\Account;
 
 use App\Models\UserProvider;
 use App\Support\Http\Controllers\ModelApiController;
-use App\Support\Http\Request;
+use Illuminate\Http\Request;
 
 /**
  * @method UserProvider modelProvider()

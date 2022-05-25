@@ -2,12 +2,12 @@
 
 namespace App\Support\Http\Controllers;
 
-use App\Support\Http\Request;
 use App\Support\Http\Resources\ModelResource;
 use App\Support\Http\Resources\ResponseResource;
 use App\Support\Models\Model;
 use Closure;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Pagination\AbstractCursorPaginator;
 use Illuminate\Pagination\AbstractPaginator;
 use Illuminate\Support\Collection;
@@ -43,13 +43,13 @@ abstract class ApiController extends Controller
         );
     }
 
-    protected function responseSuccess(Request $request): JsonResponse
+    protected function responseSuccess(Request $request, ?array $data = null): JsonResponse
     {
-        return $this->responseResource($request, true);
+        return $this->responseResource($request, $data ?: true);
     }
 
-    protected function responseFail(Request $request): JsonResponse
+    protected function responseFail(Request $request, ?string $message = null): JsonResponse
     {
-        return $this->responseResource($request, false);
+        return $this->responseResource($request, $message ?: false);
     }
 }

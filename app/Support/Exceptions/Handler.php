@@ -5,10 +5,9 @@ namespace App\Support\Exceptions;
 use App\Support\Database\DatabaseTransaction;
 use App\Support\Facades\App;
 use App\Support\Facades\Artisan;
-use App\Support\Http\Request;
+use App\Support\Http\Requests;
 use App\Support\Http\Responses;
 use Illuminate\Auth\AuthenticationException;
-use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
@@ -17,19 +16,13 @@ use Throwable;
 
 class Handler extends ExceptionHandler
 {
-    use Responses, DatabaseTransaction;
+    use Requests, Responses, DatabaseTransaction;
 
-    /**
-     * @throws BindingResolutionException
-     */
-    protected function request(): Request
+    protected function shouldReturnJson($request, Throwable $e): bool
     {
-        return $this->container->make('request');
+        return $this->advancedRequest()->expectsJson();
     }
 
-    /**
-     * @throws BindingResolutionException
-     */
     protected function requestContent(): mixed
     {
         if (App::runningSolelyInConsole()) {
@@ -38,14 +31,11 @@ class Handler extends ExceptionHandler
             }
         }
         else {
-            return $this->request();
+            return request();
         }
         return null;
     }
 
-    /**
-     * @throws BindingResolutionException
-     */
     protected function context(): array
     {
         return array_filter([
@@ -59,30 +49,21 @@ class Handler extends ExceptionHandler
         return parent::render($request, $e);
     }
 
-    /**
-     * @throws BindingResolutionException
-     */
     protected function prepareJsonResponse($request, Throwable $e): JsonResponse
     {
-        return $this->responseResource($this->request(), $e);
+        return $this->responseResource(request(), $e);
     }
 
-    /**
-     * @throws BindingResolutionException
-     */
     protected function unauthenticated($request, AuthenticationException $exception): SymfonyResponse
     {
         return $this->shouldReturnJson($request, $exception)
-            ? $this->responseResource($this->request(), $exception)
+            ? $this->responseResource(request(), $exception)
             : redirect()->guest($exception->redirectTo() ?? route('login'));
     }
 
-    /**
-     * @throws BindingResolutionException
-     */
     protected function invalidJson($request, ValidationException $exception): JsonResponse
     {
-        return $this->responseResource($this->request(), $exception);
+        return $this->responseResource(request(), $exception);
     }
 
     public function renderForConsole($output, Throwable $e)

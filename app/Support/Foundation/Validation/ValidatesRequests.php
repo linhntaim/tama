@@ -2,8 +2,8 @@
 
 namespace App\Support\Foundation\Validation;
 
-use App\Support\Http\Request;
 use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 trait ValidatesRequests

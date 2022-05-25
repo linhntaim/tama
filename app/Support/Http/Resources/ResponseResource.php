@@ -3,10 +3,10 @@
 namespace App\Support\Http\Resources;
 
 use App\Support\Exceptions\Exception;
-use App\Support\Http\Request;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use JsonSerializable;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
