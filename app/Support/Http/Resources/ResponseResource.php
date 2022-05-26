@@ -22,6 +22,9 @@ class ResponseResource extends Resource
         return $resource instanceof ResponseResource
             ? $resource
             : tap(new static($resource), function (ResponseResource $responseResource) use ($resource, $args) {
+                if (is_null($resource)) {
+                    return;
+                }
                 if (is_bool($resource)) {
                     $responseResource
                         ->setResource(null)

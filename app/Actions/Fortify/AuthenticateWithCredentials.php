@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\UserProvider;
 use App\Support\Exceptions\DatabaseException;
 use App\Support\Exceptions\Exception;
+use App\Support\SetAuthUser;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -38,6 +39,7 @@ class AuthenticateWithCredentials
     protected function setAuthUser(Request $request, User $user)
     {
         auth($this->guard())->setUser($user);
+        auth()->shouldUse($this->guard());
     }
 
     /**

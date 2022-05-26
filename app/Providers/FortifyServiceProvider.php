@@ -7,12 +7,16 @@ use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
 use App\Support\Http\Responses\LoginResponse;
+use App\Support\Http\Responses\LogoutResponse;
+use App\Support\Http\Responses\RegisterResponse;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Facade;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
+use Laravel\Fortify\Contracts\LogoutResponse as LogoutResponseContract;
+use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
 use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
@@ -31,6 +35,10 @@ class FortifyServiceProvider extends ServiceProvider
     {
         $this->app->singleton(LoginResponseContract::class, LoginResponse::class);
         Facade::clearResolvedInstance(LoginResponseContract::class);
+        $this->app->singleton(LogoutResponseContract::class, LogoutResponse::class);
+        Facade::clearResolvedInstance(LogoutResponseContract::class);
+        $this->app->singleton(RegisterResponseContract::class, RegisterResponse::class);
+        Facade::clearResolvedInstance(RegisterResponseContract::class);
     }
 
     /**

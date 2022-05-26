@@ -1,30 +1,20 @@
 <?php
 
-namespace App\Notifications;
+namespace App\Support\Auth\Notifications;
 
 use App\Support\Mail\Mailable;
 use App\Support\Notifications\INotifiable;
-use App\Support\Notifications\INotifier;
 use App\Support\Notifications\Notification;
 use App\Support\Notifications\ViaMail;
 use Closure;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Lang;
 
-class RegistrationEmail extends Notification implements ViaMail
+class WelcomeEmail extends Notification implements ViaMail
 {
-    public static ?Closure $createUrlCallback;
+    public static ?Closure $createUrlCallback = null;
 
-    public static ?Closure $toMailCallback;
-
-    public string $password;
-
-    public function __construct(string $password, ?INotifier $notifier = null)
-    {
-        parent::__construct($notifier);
-
-        $this->password = $password;
-    }
+    public static ?Closure $toMailCallback = null;
 
     protected function loginUrl(INotifiable $notifiable)
     {
@@ -38,7 +28,7 @@ class RegistrationEmail extends Notification implements ViaMail
     public function dataMailable(INotifiable $notifiable): Mailable|MailMessage|null
     {
         if (static::$toMailCallback) {
-            return call_user_func(static::$toMailCallback, $notifiable, $this->password);
+            return call_user_func(static::$toMailCallback, $notifiable);
         }
 
         return $this->buildMailMessage($this->loginUrl($notifiable));

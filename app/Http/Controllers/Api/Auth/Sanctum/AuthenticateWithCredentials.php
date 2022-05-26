@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\Sanctum;
+namespace App\Http\Controllers\Api\Auth\Sanctum;
 
 use App\Actions\Fortify\AuthenticateWithCredentials as BaseAuthenticateWithCredentials;
 use App\Models\User;
@@ -15,21 +15,17 @@ class AuthenticateWithCredentials extends BaseAuthenticateWithCredentials
         return 'sanctum';
     }
 
-    protected function agent(): Agent
-    {
-        return AgentFacade::getFacadeRoot();
-    }
-
     protected function setAuthUser(Request $request, User $user)
     {
         $user->createToken($request->input('device_name', (function (Agent $agent) {
-            return sprintf(
-                '%s (%s) - %s (%s)',
-                $platform = $agent->platform(),
-                $agent->version($platform),
-                $browser = $agent->browser(),
-                $agent->version($browser)
-            );
+            return ($device = $agent->device())
+                ? $device . (function ($infos) {
+                    return count($infos) ? sprintf(' (%s)', implode(' - ', $infos)) : '';
+                })(array_filter([
+                    ($platform = $agent->platform()) ? $platform . (($version = $agent->version($platform)) ? " $version" : '') : null,
+                    ($browser = $agent->browser()) ? $browser . (($version = $agent->version($browser)) ? " $version" : '') : null,
+                ]))
+                : 'Unknown';
         })(AgentFacade::getFacadeRoot())));
         parent::setAuthUser($request, $user);
     }

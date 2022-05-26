@@ -2,12 +2,12 @@
 
 use App\Http\Controllers\Api\Account\AccountController;
 use App\Http\Controllers\Api\Auth\ForgotPasswordController;
-use App\Http\Controllers\Api\Auth\RegisterController;
+use App\Http\Controllers\Api\Auth\RegisteredUserController;
+use App\Http\Controllers\Api\Auth\Sanctum\AuthenticatedTokenController as SanctumAuthenticatedTokenController;
 use App\Http\Controllers\Api\DataExportController;
 use App\Http\Controllers\Api\EncryptController;
 use App\Http\Controllers\Api\FileController;
 use App\Http\Controllers\Api\PrerequisiteController;
-use App\Http\Controllers\Api\Sanctum\AuthenticatedTokenController as SanctumAuthenticatedTokenController;
 use App\Http\Controllers\Api\Trial\EventController as TrialEventController;
 use App\Http\Controllers\Api\Trial\FileController as TrialFileController;
 use App\Http\Controllers\Api\Trial\JobController as TrialJobController;
@@ -59,7 +59,7 @@ Route::group([
     'prefix' => 'auth',
 ], function () {
     Route::post('sanctum/login', [SanctumAuthenticatedTokenController::class, 'store']);
-    Route::post('register', [RegisterController::class, 'register']);
+    Route::post('register', [RegisteredUserController::class, 'store']);
     Route::post('forgot-password', [ForgotPasswordController::class, 'forgot']);
 });
 
