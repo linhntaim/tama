@@ -30,9 +30,14 @@ class AuthenticateWithCredentials
             $this->throwFailedAuthenticationException($request);
         }
 
-        auth($this->guard())->setUser($user);
+        $this->setAuthUser($request, $user);
 
         return $next($request);
+    }
+
+    protected function setAuthUser(Request $request, User $user)
+    {
+        auth($this->guard())->setUser($user);
     }
 
     /**
@@ -58,7 +63,7 @@ class AuthenticateWithCredentials
     protected function attempt(Request $request): ?User
     {
         $user = $this->retrieveUser($request);
-        return $this->matchPassword($request, $user) ? $user : null;
+        return $user && $this->matchPassword($request, $user) ? $user : null;
     }
 
     /**
