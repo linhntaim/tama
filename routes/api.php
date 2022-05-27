@@ -1,7 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\Account\AccountController;
-use App\Http\Controllers\Api\Auth\ForgotPasswordController;
+use App\Http\Controllers\Api\Auth\NewPasswordController;
+use App\Http\Controllers\Api\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Api\Auth\RegisteredUserController;
 use App\Http\Controllers\Api\Auth\Sanctum\AuthenticatedTokenController as SanctumAuthenticatedTokenController;
 use App\Http\Controllers\Api\DataExportController;
@@ -60,7 +61,8 @@ Route::group([
 ], function () {
     Route::post('sanctum/login', [SanctumAuthenticatedTokenController::class, 'store']);
     Route::post('register', [RegisteredUserController::class, 'store']);
-    Route::post('forgot-password', [ForgotPasswordController::class, 'forgot']);
+    Route::post('forgot-password', [PasswordResetLinkController::class, 'store']);
+    Route::post('reset-password', [NewPasswordController::class, 'store']);
 });
 
 Route::group([

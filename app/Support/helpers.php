@@ -4,6 +4,7 @@ use App\Support\Client\DateTimer;
 use App\Support\Client\NumberFormatter;
 use App\Support\Exceptions\FileException;
 use App\Support\Facades\Client;
+use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Symfony\Component\Mime\MimeTypes;
@@ -457,6 +458,18 @@ if (!function_exists('trim_more')) {
     function trim_more(string $string, string $characters = ''): string
     {
         return trim($string, " \t\n\r\0\x0B" . $characters);
+    }
+}
+
+if (!function_exists('uri')) {
+    function uri(string $uri, mixed $parameters = [], bool $absolute = true): string
+    {
+        if ($isAbsolute = (preg_match('/^https?:\/\//', $uri) === 1)) {
+            $absolute = false;
+        }
+        return with(url()->toRoute(new Route('GET', $uri, fn() => true), $parameters, $absolute), function ($url) use ($isAbsolute) {
+            return $isAbsolute ? substr($url, 1) : $url;
+        });
     }
 }
 

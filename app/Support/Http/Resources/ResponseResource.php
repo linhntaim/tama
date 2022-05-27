@@ -197,7 +197,14 @@ class ResponseResource extends Resource
                 'line' => $exception->getLine(),
                 'code' => $exception->getCode(),
                 'message' => $exception->getMessage(),
-                'trace' => $exception->getTrace(),
+                'trace' => array_map(function ($trace) {
+                    $trace['args'] = array_map(function ($arg) {
+                        return is_resource($arg)
+                            ? sprintf('{resource(%s[%s])}', get_resource_type($arg), get_resource_id($arg))
+                            : $arg;
+                    }, $trace['args'] ?? []);
+                    return $trace;
+                }, $exception->getTrace()),
             ];
         }
         while ($exception = $exception->getPrevious());

@@ -37,8 +37,8 @@ class WelcomeEmail extends Notification implements ViaMail
     protected function buildMailMessage($url): MailMessage
     {
         return (new MailMessage)
-            ->subject(Lang::get('New registration'))
-            ->line(Lang::get('You have complete your new registration.'))
+            ->subject(Lang::get('New Registration'))
+            ->line(Lang::get('You have completed your new registration.'))
             ->action(Lang::get('Login'), $url)
             ->line(Lang::get('If you did not create an account, no further action is required.'));
     }
