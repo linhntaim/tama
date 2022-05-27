@@ -6,7 +6,6 @@ use App\Exceptions\Handler;
 use App\Support\Cache\RateLimiter;
 use App\Support\Client\Manager as ClientManager;
 use App\Support\Console\Sheller;
-use App\Support\Http\Request;
 use App\Support\Log\LineFormatter;
 use App\Support\Log\LogManager;
 use App\Support\Notifications\ChannelManager;
@@ -29,7 +28,6 @@ class AppServiceProvider extends ServiceProvider implements DeferrableProvider
     public function register()
     {
         $this->registerAppId();
-        $this->registerRequest();
         $this->registerExceptionHandler();
         $this->registerLog();
         $this->registerCache();
@@ -41,11 +39,6 @@ class AppServiceProvider extends ServiceProvider implements DeferrableProvider
     protected function registerAppId()
     {
         $this->app['id'] = Str::uuid()->toString();
-    }
-
-    protected function registerRequest()
-    {
-        $this->app->alias('request', Request::class);
     }
 
     protected function registerExceptionHandler()

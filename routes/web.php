@@ -17,4 +17,5 @@ use Illuminate\Support\Facades\Route;
 //
 
 Route::any('{path?}', [WelcomeController::class, 'index'])
-    ->where('path', '.*');
+    ->where('path', '.*')
+    ->name('root');

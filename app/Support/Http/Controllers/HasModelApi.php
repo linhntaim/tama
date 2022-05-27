@@ -18,12 +18,14 @@ use App\Support\Exceptions\Exception;
 use App\Support\Exports\Export;
 use App\Support\Exports\ModelCsvExport;
 use App\Support\Filesystem\Filers\Filer;
-use App\Support\Http\Request;
 use App\Support\Http\Resources\ModelResource;
 use App\Support\Imports\Import;
 use App\Support\Models\ModelProvider;
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse as SymfonyBinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse as SymfonyStreamedResponse;
 
 trait HasModelApi
 {
@@ -67,13 +69,13 @@ trait HasModelApi
         $conditions = [];
         foreach ($this->conditionParams($request) as $key => $param) {
             if (is_int($key)) {
-                if ($request->if($param, $input, true)) {
+                if ($this->advancedRequest()->if($param, $input, true)) {
                     $conditions[$param] = $input;
                 }
                 continue;
             }
 
-            if ($request->if($key, $input, true)) {
+            if ($this->advancedRequest()->if($key, $input, true)) {
                 if (is_string($param)) {
                     $conditions[$param] = $input;
                 }
@@ -166,12 +168,12 @@ trait HasModelApi
     {
         return $this->modelProvider()
             ->sort(
-                $request->sortBy($this->sortBy),
-                $request->sortAscending($this->sortAscending)
+                $this->advancedRequest()->sortBy($this->sortBy),
+                $this->advancedRequest()->sortAscending($this->sortAscending)
             )
             ->pagination(
                 $this->indexConditions($request),
-                $request->perPage()
+                $this->advancedRequest()->perPage()
             );
     }
 
@@ -205,14 +207,14 @@ trait HasModelApi
     protected function exporter(Request $request): Export
     {
         if (is_null($exportClass = $this->exporterClass($request))) {
-            abort(404);
+            $this->abort404();
         }
         return with(new $exportClass, function (Export $export) use ($request) {
             if ($export instanceof ModelCsvExport) {
                 $export
                     ->sort(
-                        $request->sortBy($this->sortBy),
-                        $request->sortAscending($this->sortAscending)
+                        $this->advancedRequest()->sortBy($this->sortBy),
+                        $this->advancedRequest()->sortAscending($this->sortAscending)
                     )
                     ->conditions($this->indexConditions($request));
             }
@@ -261,12 +263,12 @@ trait HasModelApi
     protected function importSampler(Request $request): ?Export
     {
         if (is_null($importClass = $this->importerClass($request))) {
-            abort(404);
+            $this->abort404();
         }
         return $importClass::sample();
     }
 
-    protected function showImportSampler(Request $request)
+    protected function showImportSampler(Request $request): SymfonyBinaryFileResponse|SymfonyStreamedResponse
     {
         return $this->responseExport($this->importSampler($request));
     }
@@ -274,7 +276,7 @@ trait HasModelApi
     protected function importer(Request $request): Import
     {
         if (is_null($importClass = $this->importerClass($request))) {
-            abort(404);
+            $this->abort404();
         }
         return new $importClass;
     }
@@ -399,11 +401,19 @@ trait HasModelApi
     #endregion
 
     #region Show
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
     protected function showExecute(Request $request, $id)
     {
         return $this->modelProvider()->model($id);
     }
 
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
     public function show(Request $request, $id)
     {
         return $this->showResponse($request, $this->showExecute($request, $id));

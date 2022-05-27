@@ -6,6 +6,7 @@ use App\Events\CoinIdentificationEvent;
 use App\Events\Trial\Event as TrialEvent;
 use App\Listeners\CoinIdentificationListener;
 use App\Listeners\OnQueryExecuted;
+use App\Listeners\SendEmailWelcomeNotification;
 use App\Listeners\Trial\Listener as TrialListener;
 use App\Listeners\Trial\QueueableListener as TrialQueueableListener;
 use App\Support\Facades\App;
@@ -24,6 +25,7 @@ class EventServiceProvider extends ServiceProvider
      */
     protected $listen = [
         Registered::class => [
+            SendEmailWelcomeNotification::class,
             SendEmailVerificationNotification::class,
         ],
         TrialEvent::class => [

@@ -8,6 +8,7 @@ use App\Support\Facades\App;
 use App\Support\Facades\Artisan;
 use App\Support\Mail\Mailable;
 use Illuminate\Notifications\Messages\BroadcastMessage;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification as BaseNotification;
 use Illuminate\Support\Facades\Notification as NotificationFacade;
 
@@ -86,12 +87,12 @@ class Notification extends BaseNotification
         return [];
     }
 
-    public function toMail(INotifiable $notifiable): ?Mailable
+    public function toMail(INotifiable $notifiable): Mailable|MailMessage|null
     {
-        return $this->dataMailable($notifiable)?->to($notifiable);
+        return $this->dataMailable($notifiable);
     }
 
-    public function dataMailable(INotifiable $notifiable): ?Mailable
+    public function dataMailable(INotifiable $notifiable): Mailable|MailMessage|null
     {
         return null;
     }
