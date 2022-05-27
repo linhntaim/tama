@@ -19,11 +19,11 @@ class PasswordResetLinkController extends ApiController
     protected function createUrlCallback(Request $request): ?Closure
     {
         return match (true) {
-            $request->has('reset_uri') => fn($notifiable, $token) => url(uri(rawurldecode($request->input('reset_uri')), [
+            $request->filled('reset_uri') => fn($notifiable, $token) => url(uri(rawurldecode($request->input('reset_uri')), [
                 'token' => $token,
                 'email' => $notifiable->getEmailForPasswordReset(),
             ], false)),
-            $request->has('reset_url') => fn($notifiable, $token) => uri(rawurldecode($request->input('reset_url')), [
+            $request->filled('reset_url') => fn($notifiable, $token) => uri(rawurldecode($request->input('reset_url')), [
                 'token' => $token,
                 'email' => $notifiable->getEmailForPasswordReset(),
             ]),

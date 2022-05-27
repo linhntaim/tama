@@ -21,8 +21,8 @@ class RegisteredUserController extends ApiController
     protected function welcomeCreateUrlCallback(Request $request): ?Closure
     {
         return match (true) {
-            $request->has('login_uri') => fn() => url($request->input('login_uri')),
-            $request->has('login_url') => fn() => $request->input('login_url'),
+            $request->filled('login_uri') => fn() => url($request->input('login_uri')),
+            $request->filled('login_url') => fn() => $request->input('login_url'),
             !Route::has('login') => fn() => url('auth/login'),
             default => null,
         };

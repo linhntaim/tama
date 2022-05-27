@@ -4,8 +4,10 @@ namespace App\Actions\Fortify;
 
 use App\Models\User;
 use App\Models\UserProvider;
+use App\Support\Client\DateTimer;
 use App\Support\Exceptions\DatabaseException;
 use App\Support\Exceptions\Exception;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -39,11 +41,12 @@ class CreateNewUser implements CreatesNewUsers
         ])->validate();
 
         return with(
-            (new UserProvider())->createWithAttributes([
+            (new UserProvider())->createWithAttributes(array_filter([
                 'name' => $input['name'],
                 'email' => $input['email'],
                 'password' => $input['password'],
-            ]),
+                'email_verified_at' => class_implements(User::class, MustVerifyEmail::class) ? DateTimer::databaseNow() : null
+            ])),
             function (User $user) use ($input) {
                 $user->setRawPassword($input['password']);
                 return $user;
