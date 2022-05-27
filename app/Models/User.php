@@ -2,22 +2,22 @@
 
 namespace App\Models;
 
+use App\Support\Contracts\Auth\MustWelcomeEmail;
 use App\Support\Models\HasProtected;
 use App\Support\Models\IProtected;
-use App\Support\Models\User as Authenticatable;
+use App\Support\Models\SanctumUser;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Laravel\Sanctum\HasApiTokens;
 
 /**
  * @property int $id
  * @property string $name
  * @property string $email
  */
-class User extends Authenticatable implements IProtected
+class User extends SanctumUser implements MustWelcomeEmail, IProtected
 {
-    use HasApiTokens, HasFactory, HasProtected;
+    use HasFactory, HasProtected;
 
     public const SYSTEM_ID = 1;
     public const OWNER_ID = 2;

@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\UserProvider;
+use App\Support\Client\DateTimer;
 use App\Support\Exceptions\DatabaseException;
 use App\Support\Exceptions\Exception;
 use App\Support\Facades\App;
@@ -38,6 +39,7 @@ class DefaultUsersSeeder extends Seeder
         ], [
             'name' => $name = ($attributes['name'] ?? Str::ucfirst($defaultName)),
             'password' => $password = ($attributes['password'] ?? (App::runningInProduction() ? $this->randomPassword() : $this->defaultPassword)),
+            'email_verified_at' => DateTimer::databaseNow(),
         ]);
         $this->command->line(sprintf('<comment>%s</comment>: %s / %s', $name, $email, $password));
     }

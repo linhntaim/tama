@@ -2,7 +2,7 @@
 
 namespace App\Support\Models;
 
-use App\Notifications\RegistrationEmail;
+use App\Support\Auth\MustWelcomeEmail;
 use App\Support\Mail\IEmailAddress;
 use App\Support\Notifications\INotifiable;
 use App\Support\Notifications\INotifier;
@@ -24,14 +24,22 @@ abstract class User extends Model implements AuthenticatableContract,
                                              INotifier,
                                              IEmailAddress
 {
-    use Authenticatable, Authorizable, CanResetPassword, Notifiable, MustVerifyEmail;
+    use Authenticatable, Authorizable, CanResetPassword, Notifiable, MustWelcomeEmail, MustVerifyEmail;
 
     public static function hashPassword($password): string
     {
         return Hash::make($password);
     }
 
+    public string $rawPassword;
+
     public array $uniques = ['email'];
+
+    public function setRawPassword(string $rawPassword): static
+    {
+        $this->rawPassword = $rawPassword;
+        return $this;
+    }
 
     protected function password(): Attribute
     {
@@ -63,10 +71,5 @@ abstract class User extends Model implements AuthenticatableContract,
     public function matchPassword(string $password): bool
     {
         return Hash::check($password, $this->getAuthPassword());
-    }
-
-    public function sendEmailRegistrationNotification(string $password)
-    {
-        $this->notify(new RegistrationEmail($password));
     }
 }

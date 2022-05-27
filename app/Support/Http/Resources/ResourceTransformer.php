@@ -2,8 +2,8 @@
 
 namespace App\Support\Http\Resources;
 
-use App\Support\Http\Request;
 use App\Support\Models\Model;
+use Illuminate\Http\Request;
 use Illuminate\Pagination\AbstractCursorPaginator;
 use Illuminate\Pagination\AbstractPaginator;
 use Illuminate\Support\Collection;

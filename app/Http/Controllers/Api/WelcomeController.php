@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Support\Http\Controllers\ApiController;
-use App\Support\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class WelcomeController extends ApiController
 {

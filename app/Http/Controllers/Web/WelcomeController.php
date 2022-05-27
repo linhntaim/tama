@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Web;
 
 use App\Support\Http\Controllers\WebController;
-use App\Support\Http\Request;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\Request;
 
 class WelcomeController extends WebController
 {

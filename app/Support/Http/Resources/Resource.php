@@ -2,9 +2,9 @@
 
 namespace App\Support\Http\Resources;
 
-use App\Support\Http\Request;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource as BaseResource;
 use JsonSerializable;
 

@@ -2,13 +2,48 @@
 
 namespace App\Support\Http;
 
-use Illuminate\Http\Request as BaseRequest;
+use Illuminate\Http\Request;
 
-class Request extends BaseRequest
+/**
+ * @mixin Request
+ */
+class AdvancedRequest
 {
+    public Request $request;
+
+    public function __construct($request = null)
+    {
+        $this->request = $request;
+    }
+
+    public function original()
+    {
+        return $this->request;
+    }
+
+    public function __call(string $name, array $arguments)
+    {
+        return $this->request->{$name}(...$arguments);
+    }
+
+    public function __isset(string $name): bool
+    {
+        return isset($this->request->{$name});
+    }
+
+    public function __get(string $name)
+    {
+        return $this->request->{$name};
+    }
+
+    public function __clone(): void
+    {
+        $this->request = clone $this->request;
+    }
+
     public function expectsJson(): bool
     {
-        return parent::expectsJson()
+        return $this->request->expectsJson()
             || $this->is(config_starter('routes.json'));
     }
 
@@ -90,7 +125,9 @@ class Request extends BaseRequest
             $bagStringGroup
                 ->putBag('Headers', HeaderBagString::create($this->headers->all()))
                 ->putBag('Cookies', BagString::create($this->cookies->all()))
-                ->putBag('Sessions', BagString::create($this->session?->all()))
+                ->putBag('Sessions', BagString::create(
+                    value(fn() => $this->hasSession() ? $this->session()->all() : null))
+                )
                 ->putBag('Query', BagString::create($this->query()))
                 ->putBag('Request', BagString::create($this->post()))
                 ->putBag('Files', FileBagString::create($this->allFiles()))

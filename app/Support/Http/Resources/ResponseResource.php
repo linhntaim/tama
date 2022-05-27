@@ -3,10 +3,10 @@
 namespace App\Support\Http\Resources;
 
 use App\Support\Exceptions\Exception;
-use App\Support\Http\Request;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use JsonSerializable;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
@@ -22,6 +22,9 @@ class ResponseResource extends Resource
         return $resource instanceof ResponseResource
             ? $resource
             : tap(new static($resource), function (ResponseResource $responseResource) use ($resource, $args) {
+                if (is_null($resource)) {
+                    return;
+                }
                 if (is_bool($resource)) {
                     $responseResource
                         ->setResource(null)
@@ -194,7 +197,14 @@ class ResponseResource extends Resource
                 'line' => $exception->getLine(),
                 'code' => $exception->getCode(),
                 'message' => $exception->getMessage(),
-                'trace' => $exception->getTrace(),
+                'trace' => array_map(function ($trace) {
+                    $trace['args'] = array_map(function ($arg) {
+                        return is_resource($arg)
+                            ? sprintf('{resource(%s[%s])}', get_resource_type($arg), get_resource_id($arg))
+                            : $arg;
+                    }, $trace['args'] ?? []);
+                    return $trace;
+                }, $exception->getTrace()),
             ];
         }
         while ($exception = $exception->getPrevious());

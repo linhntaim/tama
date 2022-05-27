@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\Api\Account\AccountController;
-use App\Http\Controllers\Api\Auth\Sanctum\LoginController as SanctumLoginController;
-use App\Http\Controllers\Api\Auth\Sanctum\LogoutController as SanctumLogoutController;
+use App\Http\Controllers\Api\Auth\NewPasswordController;
+use App\Http\Controllers\Api\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Api\Auth\RegisteredUserController;
+use App\Http\Controllers\Api\Auth\Sanctum\AuthenticatedTokenController as SanctumAuthenticatedTokenController;
 use App\Http\Controllers\Api\DataExportController;
 use App\Http\Controllers\Api\EncryptController;
 use App\Http\Controllers\Api\FileController;
@@ -57,7 +59,10 @@ Route::group([
 Route::group([
     'prefix' => 'auth',
 ], function () {
-    Route::post('sanctum/login', [SanctumLoginController::class, 'login']);
+    Route::post('sanctum/login', [SanctumAuthenticatedTokenController::class, 'store']);
+    Route::post('register', [RegisteredUserController::class, 'store']);
+    Route::post('forgot-password', [PasswordResetLinkController::class, 'store']);
+    Route::post('reset-password', [NewPasswordController::class, 'store']);
 });
 
 Route::group([
@@ -66,7 +71,7 @@ Route::group([
     Route::group([
         'prefix' => 'auth',
     ], function () {
-        Route::post('sanctum/logout', [SanctumLogoutController::class, 'logout']);
+        Route::post('sanctum/logout', [SanctumAuthenticatedTokenController::class, 'destroy']);
     });
 
     Route::group([
