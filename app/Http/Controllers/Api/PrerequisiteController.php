@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Support\Facades\Client;
 use App\Support\Http\Controllers\ApiController;
-use App\Support\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Str;
 
 class PrerequisiteController extends ApiController
 {
@@ -13,29 +15,23 @@ class PrerequisiteController extends ApiController
 
     public function index(Request $request): JsonResponse
     {
+        $dataset = [];
+        foreach ($request->input('names', []) as $name) {
+            $dataset[$name] = method_exists($this, $method = sprintf('data%s', Str::studly($name)))
+                ? $this->{$method}($request)
+                : null;
+        }
         return $this
-            ->registerDataset($request)
-            ->response($request, $this->dataset);
+            ->response($request, $dataset);
     }
 
-    protected function attachDataset($name, $data): static
+    protected function dataServer(Request $request): array
     {
-        $this->dataset[$name] = $data;
-        return $this;
-    }
-
-    protected function registerDataset(Request $request): static
-    {
-        return $this
-            ->attachServer($request);
-    }
-
-    protected function attachServer(Request $request): static
-    {
-        return $request->query->has('_server')
-            ? $this->attachDataset('server', [
-                'max_uploaded_filesize' => UploadedFile::getMaxFilesize(),
-            ])
-            : $this;
+        return [
+            'server_time' => microtime(true),
+            'server_timezone' => date_default_timezone_get(),
+            'upload_max_filesize' => UploadedFile::getMaxFilesize(),
+            'settings' => Client::settings()->toArray(),
+        ];
     }
 }

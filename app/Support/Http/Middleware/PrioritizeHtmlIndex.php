@@ -2,9 +2,9 @@
 
 namespace App\Support\Http\Middleware;
 
-use App\Support\Http\Request;
 use App\Support\Http\Responses;
 use Closure;
+use Illuminate\Http\Request;
 
 class PrioritizeHtmlIndex
 {

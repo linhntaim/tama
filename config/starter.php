@@ -6,13 +6,13 @@ return [
         'debug_from_request' => (bool)env('APP_DEBUG_FROM_REQUEST', false),
     ],
     'html_index' => [ // in public folder
-                      'paths' => [
-                          // 'admin',
-                      ],
-                      'files' => [
-                          'index.html',
-                          'index.htm',
-                      ],
+        'paths' => [
+            // 'admin',
+        ],
+        'files' => [
+            'index.html',
+            'index.htm',
+        ],
     ],
     'console' => [
         'commands' => [
@@ -31,6 +31,7 @@ return [
                         'everyMinute',
                     ],
                 ],
+                //
                 [
                     'schedules' => [
                         App\Console\Commands\Coin\IdentificationCommand::class,
@@ -99,8 +100,11 @@ return [
             ],
         ],
         'routes' => [
-            //'*' => 'default',
+            // '*' => 'default',
         ],
+    ],
+    'routes' => [
+        'json' => ['api', 'api/*'],
     ],
     'supported_locales' => array_filter(explode(',', env('APP_LOCALE_SUPPORTED', 'en')), function ($locale) {
         return !empty($locale);

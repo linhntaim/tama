@@ -2,8 +2,8 @@
 
 namespace App\Support\Http\Middleware;
 
-use App\Support\Http\Request;
 use Closure;
+use Illuminate\Http\Request;
 
 class EnableDebug
 {

@@ -4,9 +4,11 @@ use App\Support\Client\DateTimer;
 use App\Support\Client\NumberFormatter;
 use App\Support\Exceptions\FileException;
 use App\Support\Facades\Client;
+use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Symfony\Component\Mime\MimeTypes;
+use Symfony\Component\VarDumper\VarDumper;
 
 const JSON_READABLE = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_LINE_TERMINATORS;
 const JSON_PRETTY = JSON_READABLE | JSON_PRETTY_PRINT;
@@ -190,6 +192,23 @@ if (!function_exists('describe_var')) {
             return '{callable}';
         }
         return (string)$value;
+    }
+}
+
+if (!function_exists('dd_with_headers')) {
+    function dd_with_headers(array $headers, ...$vars)
+    {
+        if (!in_array(\PHP_SAPI, ['cli', 'phpdbg'], true) && !headers_sent()) {
+            header('HTTP/1.1 500 Internal Server Error');
+            foreach ($headers as $name => $value) {
+                header(sprintf('%s: %s', $name, $value));
+            }
+        }
+
+        foreach ($vars as $v) {
+            VarDumper::dump($v);
+        }
+        exit();
     }
 }
 
@@ -439,6 +458,18 @@ if (!function_exists('trim_more')) {
     function trim_more(string $string, string $characters = ''): string
     {
         return trim($string, " \t\n\r\0\x0B" . $characters);
+    }
+}
+
+if (!function_exists('uri')) {
+    function uri(string $uri, mixed $parameters = [], bool $absolute = true): string
+    {
+        if ($isAbsolute = (preg_match('/^https?:\/\//', $uri) === 1)) {
+            $absolute = false;
+        }
+        return with(url()->toRoute(new Route('GET', $uri, fn() => true), $parameters, $absolute), function ($url) use ($isAbsolute) {
+            return $isAbsolute ? substr($url, 1) : $url;
+        });
     }
 }
 
