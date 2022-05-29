@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Account\AccountController;
+use App\Http\Controllers\Api\Account\HoldingController as AccountHoldingController;
 use App\Http\Controllers\Api\Auth\NewPasswordController;
 use App\Http\Controllers\Api\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Api\Auth\RegisteredUserController;
@@ -80,6 +81,16 @@ Route::group([
         'prefix' => 'account',
     ], function () {
         Route::get('current', [AccountController::class, 'current']);
+
+        //
+        Route::group([
+            'prefix' => 'holding',
+        ], function () {
+            Route::get('current', [AccountHoldingController::class, 'current']);
+            Route::post('current', [AccountHoldingController::class, 'save']);
+            Route::post('asset', [AccountHoldingController::class, 'assetStore']);
+            Route::post('asset/{id}', [AccountHoldingController::class, 'assetUpdate']);
+        });
     });
 });
 

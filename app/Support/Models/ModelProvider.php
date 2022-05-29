@@ -2,6 +2,7 @@
 
 namespace App\Support\Models;
 
+use App\Support\Database\DatabaseTransaction;
 use App\Support\Exceptions\DatabaseException;
 use App\Support\Exceptions\Exception;
 use App\Support\Models\QueryConditions\LimitCondition;
@@ -22,6 +23,7 @@ use RuntimeException;
 use Throwable;
 
 /**
+ * @method int lock(int $newValue)
  * @method bool force(bool $newValue)
  * @method bool strict(bool $newValue)
  * @method bool pinned(bool $newValue)
@@ -30,6 +32,11 @@ use Throwable;
  */
 abstract class ModelProvider
 {
+    use DatabaseTransaction;
+
+    private const LOCK_NONE = 0;
+    private const LOCK_UPDATE = 1;
+    private const LOCK_SHARED = 2;
     public const SORT_ASC = 'asc';
     public const SORT_DESC = 'desc';
 
@@ -40,6 +47,8 @@ abstract class ModelProvider
     protected ?bool $useSoftDeletes = null;
 
     protected int $perPage;
+
+    protected int $lock = self::LOCK_NONE;
 
     protected bool $force = false;
 
@@ -79,6 +88,18 @@ abstract class ModelProvider
         }
 
         $this->model($model);
+    }
+
+    public function lockForUpdate(): static
+    {
+        $this->lock = self::LOCK_UPDATE;
+        return $this;
+    }
+
+    public function sharedLock(): static
+    {
+        $this->lock = self::LOCK_SHARED;
+        return $this;
     }
 
     public function forced(): static
@@ -351,6 +372,15 @@ abstract class ModelProvider
         );
     }
 
+    protected function queryLock(Builder $query): Builder
+    {
+        return match ($this->lock(self::LOCK_NONE)) {
+            self::LOCK_UPDATE => $query->lockForUpdate(),
+            self::LOCK_SHARED => $query->sharedLock(),
+            default => $query,
+        };
+    }
+
     /**
      * @throws DatabaseException
      * @throws Exception
@@ -358,7 +388,7 @@ abstract class ModelProvider
     protected function executeAll(Builder $query): EloquentCollection
     {
         return $this->catch(function () use ($query) {
-            return $query->get();
+            return $this->queryLock($query)->get();
         });
     }
 
@@ -380,7 +410,9 @@ abstract class ModelProvider
     protected function executeFirst(Builder $query): ?Model
     {
         $model = $this->catch(function () use ($query) {
-            return $this->strict(true) ? $query->firstOrFail() : $query->first();
+            return $this->strict(true)
+                ? $this->queryLock($query)->firstOrFail()
+                : $this->queryLock($query)->first();
         });
         return $this->pinned(false) ? ($this->model = $model) : $model;
     }
