@@ -6,18 +6,21 @@ use App\Support\Client\Manager;
 use App\Support\Client\Settings;
 use App\Support\Configuration;
 use App\Support\Facades\Client;
-use App\Support\Http\Request;
+use App\Support\Http\Requests;
 use Closure;
+use Illuminate\Http\Request;
 
 class SettingsFromClient
 {
+    use Requests;
+
     public function handle(Request $request, Closure $next, ?string $source = null)
     {
         foreach ([
-                     'viaHeader',
-                     'viaCookie',
-                     'viaRoute',
-                 ] as $method) {
+            'viaHeader',
+            'viaCookie',
+            'viaRoute',
+        ] as $method) {
             if ($this->{$method}($request, $source) !== false) {
                 break;
             }
@@ -30,18 +33,22 @@ class SettingsFromClient
 
     protected function viaHeader(Request $request, ?string $source = null): Manager|bool
     {
+        $manager = null;
         if (is_null($source) || $source === 'header') {
-            if (!is_null($settings = $request->headerJson('x-settings'))) {
-                return $this->mergeSettings($settings);
+            if (!is_null($client = $request->header('x-client'))) {
+                $manager = $this->mergeSettings($client);
+            }
+            if (!is_null($settings = $this->advancedRequest()->headerJson('x-settings'))) {
+                $manager = $this->mergeSettings($settings);
             }
         }
-        return false;
+        return $manager ?: false;
     }
 
     protected function viaCookie(Request $request, ?string $source = null): Manager|bool
     {
         if (is_null($source) || $source === 'cookie') {
-            if (!is_null($settings = $request->cookieJson(name_starter('settings')))) {
+            if (!is_null($settings = $this->advancedRequest()->cookieJson(name_starter('settings')))) {
                 return $this->mergeSettings($settings);
             }
         }

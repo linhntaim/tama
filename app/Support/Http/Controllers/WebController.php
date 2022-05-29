@@ -2,8 +2,8 @@
 
 namespace App\Support\Http\Controllers;
 
-use App\Support\Http\Request;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\Request;
 
 abstract class WebController extends Controller
 {

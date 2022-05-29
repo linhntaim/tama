@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Support\Http\Controllers\ApiController;
-use App\Support\Http\Request;
 use App\Support\Services\Binance\Api\V3\MarketDataApi;
 use App\Support\Trading\SwingTrading\RsiSwingTradeIndicator;
+use Illuminate\Http\Request;
 
 class SwingTradeController extends ApiController
 {
@@ -35,7 +35,7 @@ class SwingTradeController extends ApiController
     {
         $indicator = (new RsiSwingTradeIndicator(
             (new MarketDataApi())->candlestickData(
-                $request->input('symbol', 'BTCUSDT'),
+                $request->input('ticker', 'BTCUSDT'),
                 $request->input('interval', MarketDataApi::INTERVAL_1_HOUR)
             )
         ));

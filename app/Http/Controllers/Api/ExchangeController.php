@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Support\Http\Controllers\ApiController;
-use App\Support\Http\Request;
 use App\Support\Services\Binance\Api\V3\MarketDataApi;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ExchangeController extends ApiController
 {
