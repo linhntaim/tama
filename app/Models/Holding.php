@@ -28,6 +28,7 @@ class Holding extends Model
     ];
 
     protected $visible = [
+        'user_id',
         'initial',
     ];
 

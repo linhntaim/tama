@@ -31,7 +31,11 @@ class HoldingController extends ModelApiController
      */
     public function current(Request $request): JsonResponse
     {
-        return $this->responseModel($request, $this->modelProvider()->firstOrCreateWithAttributes(['user_id' => $request->user()]));
+        return $this->responseModel(
+            $request,
+            $this->modelProvider()->firstOrCreateWithAttributes(['user_id' => $request->user()->id]),
+            $this->modelResourceClass
+        );
     }
 
     /**
@@ -40,24 +44,26 @@ class HoldingController extends ModelApiController
      */
     public function save(Request $request): JsonResponse
     {
+        $this->modelProvider()->firstOrCreateWithAttributes(['user_id' => $request->user()->id]);
+
         $this->validate($request, [
-            'initial' => 'required|numeric',
-            'assets' => 'required|array',
-            'assets.*.exchange' => 'required|string|max:255',
-            'assets.*.symbol' => 'required|string|max:255',
-            'assets.*.amount' => 'required|numeric',
+            'initial' => 'sometimes|numeric',
+            'assets' => 'sometimes|array',
+            'assets.*.exchange' => 'required_with:assets|string|max:255',
+            'assets.*.symbol' => 'required_with:assets|string|max:255',
+            'assets.*.amount' => 'required_with:assets|numeric',
         ]);
 
         return $this->responseModel(
             $request,
-            $this->modelProvider()->save(
-                $request->user(),
-                (float)$request->input('initial'),
-                array_map(function ($asset) {
+            $this->modelProvider()->update(
+                is_null($initial = $request->input('initial')) ? null : (float)$initial,
+                is_null($assets = $request->input('assets')) ? null : array_map(function ($asset) {
                     $asset['amount'] = (float)$asset['amount'];
                     return $asset;
-                }, $request->input('assets'))
-            )
+                }, $assets)
+            ),
+            $this->modelResourceClass
         );
     }
 

@@ -29,31 +29,39 @@ class HoldingProvider extends ModelProvider
     /**
      * @throws Throwable
      */
-    public function save($user, float $initial, array $assets): Holding
+    public function update(?float $initial = null, ?array $assets = null): Holding
     {
         $this->transactionStart();
         try {
-            $this->updateOrCreateWithAttributes([
-                'user_id' => $this->retrieveKey($user),
-            ], [
-                'initial' => $initial,
-            ]);
-            take(new HoldingAssetProvider(), function (HoldingAssetProvider $holdingAssetProvider) use ($assets) {
-                $ids = [];
-                foreach ($assets as $asset) {
-                    array_push($ids, $holdingAssetProvider->updateOrCreateWithAttributes([
-                        'user_id' => $this->model->user_id,
-                        'exchange' => $asset['exchange'],
-                        'symbol' => $asset['symbol'],
-                    ], [
-                        'amount' => $asset['amount'],
-                    ])->id);
-                }
-                $holdingAssetProvider->deleteAll([
-                    'user_id' => $this->model->user_id,
-                    new WhereNotInCondition('id', $ids),
+            if (!is_null($initial)) {
+                $this->updateWithAttributes([
+                    'initial' => $initial,
                 ]);
-            });
+            }
+
+            if (!is_null($assets)) {
+                if (count($assets) > 0) {
+                    take(new HoldingAssetProvider(), function (HoldingAssetProvider $holdingAssetProvider) use ($assets) {
+                        $ids = [];
+                        foreach ($assets as $asset) {
+                            array_push($ids, $holdingAssetProvider->updateOrCreateWithAttributes([
+                                'user_id' => $this->model->user_id,
+                                'exchange' => $asset['exchange'],
+                                'symbol' => $asset['symbol'],
+                            ], [
+                                'amount' => $asset['amount'],
+                            ])->id);
+                        }
+                        $holdingAssetProvider->deleteAll([
+                            'user_id' => $this->model->user_id,
+                            new WhereNotInCondition('id', $ids),
+                        ]);
+                    });
+                }
+                else {
+                    (new HoldingAssetProvider())->deleteAll(['user_id' => $this->model->user_id]);
+                }
+            }
             $this->transactionComplete();
             return $this->model;
         }

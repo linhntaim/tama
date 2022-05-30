@@ -10,6 +10,7 @@ use App\Support\Models\Model;
  * @property string $exchange
  * @property string $symbol
  * @property float $amount
+ * @property int $order
  */
 class HoldingAsset extends Model
 {
@@ -20,15 +21,18 @@ class HoldingAsset extends Model
         'exchange',
         'symbol',
         'amount',
+        'order',
     ];
 
     protected $casts = [
         'amount' => 'float',
+        'order' => 'integer',
     ];
 
     protected $visible = [
         'exchange',
         'symbol',
         'amount',
+        'order',
     ];
 }

@@ -14,7 +14,7 @@ return new class extends Migration {
     {
         Schema::create('holdings', function (Blueprint $table) {
             $table->bigInteger('user_id')->unsigned()->primary();
-            $table->decimal('initial', 18, 18)->unsigned()->default(0.000000000000000000);
+            $table->decimal('initial', 36, 18)->unsigned()->default(0.000000000000000000);
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')
@@ -28,7 +28,8 @@ return new class extends Migration {
             $table->bigInteger('user_id')->unsigned();
             $table->string('exchange');
             $table->string('symbol');
-            $table->decimal('amount', 18, 18)->unsigned()->default(0.00);
+            $table->decimal('amount', 36, 18)->unsigned()->default(0.00);
+            $table->integer('order')->unsigned();
             $table->timestamps();
 
             $table->foreign('user_id')->references('user_id')->on('holdings')
@@ -46,7 +47,7 @@ return new class extends Migration {
      */
     public function down()
     {
-        Schema::dropIfExists('holdings');
         Schema::dropIfExists('holding_assets');
+        Schema::dropIfExists('holdings');
     }
 };
