@@ -168,7 +168,7 @@ abstract class ModelProvider
     public function __call(string $name, array $arguments)
     {
         if (property_exists($this, $name)) {
-            return tap($this->{$name}, function () use ($name, $arguments) {
+            return take($this->{$name}, function () use ($name, $arguments) {
                 $this->{$name} = $arguments[0] ?? null;
             });
         }
@@ -237,10 +237,10 @@ abstract class ModelProvider
         return !is_null($this->model) && $this->model->exists;
     }
 
-    public function newModel(): Model
+    public function newModel(bool $pinned = false): Model
     {
         $modelClass = $this->modelClass;
-        return $this->pinned(false) ? ($this->model = new $modelClass) : new $modelClass;
+        return $pinned ? ($this->model = new $modelClass) : new $modelClass;
     }
 
     public function newQuery(): Builder
@@ -421,16 +421,29 @@ abstract class ModelProvider
      * @throws DatabaseException
      * @throws Exception
      */
-    protected function executeCount(Builder $query): int
+    protected function executeCount(Builder $query, string $columns = '*'): int
     {
-        return $this->catch(function () use ($query) {
-            return $query->count();
+        return $this->catch(function () use ($query, $columns) {
+            return $query->count($columns);
+        });
+    }
+
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
+    protected function executeMax(Builder $query, string $column): mixed
+    {
+        return $this->catch(function () use ($query, $column) {
+            return $query->max($column);
         });
     }
 
     public function protectedQuery(): Builder
     {
+        $old = $this->pinned;
         $model = $this->newModel();
+        $this->pinned = $old;
         if ($model instanceof IProtected && $this->protected(true)) {
             return $this->query()->whereNotIn($model->getProtectedKey(), $model->getProtectedValues());
         }
@@ -670,9 +683,18 @@ abstract class ModelProvider
      * @throws DatabaseException
      * @throws Exception
      */
-    public function count(array $conditions = []): int
+    public function count(array $conditions = [], string $columns = '*'): int
     {
-        return $this->executeCount($this->queryWhere($conditions));
+        return $this->executeCount($this->queryWhere($conditions), $columns);
+    }
+
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
+    public function max(string $column, array $conditions = []): mixed
+    {
+        return $this->executeMax($this->queryWhere($conditions), $column);
     }
 
     /**

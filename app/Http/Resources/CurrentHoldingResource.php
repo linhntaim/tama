@@ -19,7 +19,7 @@ class CurrentHoldingResource extends ModelResource
     {
         return parent::toArray($request)
             + [
-                'assets' => $this->resourceTransform($this->assets),
+                'assets' => $this->resourceTransform($this->orderedAssets),
             ];
     }
 }

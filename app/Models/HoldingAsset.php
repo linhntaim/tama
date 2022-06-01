@@ -30,6 +30,7 @@ class HoldingAsset extends Model
     ];
 
     protected $visible = [
+        'id',
         'exchange',
         'symbol',
         'amount',

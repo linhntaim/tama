@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api\Account;
 
 use App\Http\Resources\CurrentHoldingResource;
-use App\Models\HoldingAssetProvider;
 use App\Models\HoldingProvider;
 use App\Support\Exceptions\DatabaseException;
 use App\Support\Exceptions\Exception;
@@ -64,52 +63,6 @@ class HoldingController extends ModelApiController
                 }, $assets)
             ),
             $this->modelResourceClass
-        );
-    }
-
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     * @throws ValidationException
-     */
-    public function assetStore(Request $request): JsonResponse
-    {
-        $this->validate($request, [
-            'exchange' => 'required|string|max:255',
-            'symbol' => 'required|string|max:255',
-            'amount' => 'required|numeric',
-        ]);
-
-        return $this->responseModel(
-            $request,
-            (new HoldingAssetProvider())->add(
-                $request->user(),
-                $request->input('exchange'),
-                $request->input('symbol'),
-                (float)$request->input('amount'),
-            )
-        );
-    }
-
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     * @throws ValidationException
-     */
-    public function assetUpdate(Request $request, $id): JsonResponse
-    {
-        ($holdingAssetProvider = new HoldingAssetProvider())->model($id);
-        if (!$holdingAssetProvider->belongsTo($request->user())) {
-            $this->abort404();
-        }
-
-        $this->validate($request, [
-            'amount' => 'required|numeric',
-        ]);
-
-        return $this->responseModel(
-            $request,
-            $holdingAssetProvider->updateAmount((float)$request->input('amount'))
         );
     }
 }

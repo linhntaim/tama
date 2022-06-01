@@ -6,6 +6,7 @@ use App\Support\Exceptions\DatabaseException;
 use App\Support\Exceptions\Exception;
 use App\Support\Models\Model;
 use App\Support\Models\ModelProvider;
+use App\Support\Models\QueryConditions\WhereCondition;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
@@ -34,16 +35,18 @@ class HoldingAssetProvider extends ModelProvider
      * @throws DatabaseException
      * @throws Exception
      */
-    public function add(User|int $user, string $exchange, string $symbol, float $amount): ?HoldingAsset
+    public function add(User|int $user, string $exchange, string $symbol, float $amount): HoldingAsset
     {
+        $userId = $this->retrieveKey($user);
         $this->notStrict()
             ->pinModel()
             ->lockForUpdate()
             ->first([
-                'user_id' => $this->retrieveKey($user),
+                'user_id' => $userId,
                 'exchange' => $exchange,
                 'symbol' => $symbol,
             ]);
+
         if ($this->hasModel()) {
             $this->updateWithAttributes([
                 'amount' => $this->model->amount + $amount,
@@ -51,10 +54,11 @@ class HoldingAssetProvider extends ModelProvider
         }
         else {
             $this->createWithAttributes([
-                'user_id' => $this->retrieveKey($user),
+                'user_id' => $userId,
                 'exchange' => $exchange,
                 'symbol' => $symbol,
                 'amount' => $amount,
+                'order' => is_null($max = $this->max('order', ['user_id' => $userId])) ? 0 : (int)$max + 1,
             ]);
         }
         return $this->model;
@@ -62,7 +66,7 @@ class HoldingAssetProvider extends ModelProvider
 
     public function belongsTo(User|int $user): bool
     {
-        return $this->model->user_id != $this->retrieveKey($user);
+        return $this->model->user_id == $this->retrieveKey($user);
     }
 
     /**
@@ -74,5 +78,32 @@ class HoldingAssetProvider extends ModelProvider
         return $this->updateWithAttributes([
             'amount' => $amount,
         ]);
+    }
+
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
+    public function updateOrder(int $order): HoldingAsset
+    {
+        return $this->updateWithAttributes([
+            'order' => $order,
+        ]);
+    }
+
+    public function delete(): bool
+    {
+        $userId = $this->model->user_id;
+        $order = $this->model->order;
+        if (parent::delete()) {
+            $this
+                ->queryWhere([
+                    'user_id' => $userId,
+                    new WhereCondition('order', $order, '>'),
+                ])
+                ->decrement('order');
+            return true;
+        }
+        return false;
     }
 }

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * @property int $user_id
  * @property Collection|HoldingAsset[] $assets
+ * @property Collection|HoldingAsset[] $orderedAssets
  */
 class Holding extends Model
 {
@@ -35,5 +36,10 @@ class Holding extends Model
     public function assets(): HasMany
     {
         return $this->hasMany(HoldingAsset::class, 'user_id', 'user_id');
+    }
+
+    public function orderedAssets(): HasMany
+    {
+        return $this->assets()->orderBy('order');
     }
 }
