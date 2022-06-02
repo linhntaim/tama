@@ -43,13 +43,14 @@ class HoldingProvider extends ModelProvider
                 if (count($assets) > 0) {
                     take(new HoldingAssetProvider(), function (HoldingAssetProvider $holdingAssetProvider) use ($assets) {
                         $ids = [];
-                        foreach ($assets as $asset) {
+                        foreach ($assets as $index => $asset) {
                             array_push($ids, $holdingAssetProvider->updateOrCreateWithAttributes([
                                 'user_id' => $this->model->user_id,
                                 'exchange' => $asset['exchange'],
                                 'symbol' => $asset['symbol'],
                             ], [
                                 'amount' => $asset['amount'],
+                                'order' => $index,
                             ])->id);
                         }
                         $holdingAssetProvider->deleteAll([

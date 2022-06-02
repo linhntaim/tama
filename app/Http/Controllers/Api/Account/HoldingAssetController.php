@@ -8,8 +8,10 @@ use App\Support\Exceptions\DatabaseException;
 use App\Support\Exceptions\Exception;
 use App\Support\Http\Controllers\ModelApiController;
 use App\Support\Http\Resources\ResourceTransformer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 /**
  * @method HoldingAssetProvider modelProvider()
@@ -43,21 +45,27 @@ class HoldingAssetController extends ModelApiController
         );
     }
 
-    public function store(Request $request)
+    /**
+     * @throws Throwable
+     * @throws DatabaseException
+     * @throws Exception
+     * @throws ValidationException
+     */
+    public function store(Request $request): JsonResponse
     {
         if ($request->has('_orders')) {
             return $this->updateOrders($request);
         }
-        parent::store($request);
+        return parent::store($request);
     }
 
     /**
      * @throws DatabaseException
      * @throws Exception
      * @throws ValidationException
-     * @throws \Throwable
+     * @throws Throwable
      */
-    protected function updateOrders(Request $request)
+    protected function updateOrders(Request $request): JsonResponse
     {
         $this->validate($request, [
             'assets' => 'required|array',
@@ -76,7 +84,7 @@ class HoldingAssetController extends ModelApiController
             }
             $this->transactionComplete();
         }
-        catch (\Throwable $exception) {
+        catch (Throwable $exception) {
             $this->transactionAbort();
             throw $exception;
         }
