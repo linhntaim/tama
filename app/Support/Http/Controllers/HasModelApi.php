@@ -400,23 +400,57 @@ trait HasModelApi
     }
     #endregion
 
-    #region Show
     /**
      * @throws DatabaseException
      * @throws Exception
      */
-    protected function showExecute(Request $request, $id)
+    protected function model(Request $request, $id)
     {
         return $this->modelProvider()->model($id);
+    }
+
+    #region Show
+    protected function showRules(Request $request): array
+    {
+        return [];
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    protected function showValidate(Request $request)
+    {
+        $this->validate($request, $this->showRules($request));
     }
 
     /**
      * @throws DatabaseException
      * @throws Exception
      */
+    protected function showExecute(Request $request)
+    {
+        return $this->modelProvider()->model();
+    }
+
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
+    protected function showModel(Request $request, $id)
+    {
+        return $this->model($request, $id);
+    }
+
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     * @throws ValidationException
+     */
     public function show(Request $request, $id)
     {
-        return $this->showResponse($request, $this->showExecute($request, $id));
+        $this->showModel($request, $id);
+        $this->showValidate($request);
+        return $this->showResponse($request, $this->showExecute($request));
     }
 
     protected function showResponse(Request $request, $model)
@@ -445,6 +479,15 @@ trait HasModelApi
     }
 
     /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
+    protected function updateModel(Request $request, $id)
+    {
+        return $this->model($request, $id);
+    }
+
+    /**
      * @throws ValidationException
      * @throws DatabaseException
      * @throws Exception
@@ -455,7 +498,7 @@ trait HasModelApi
             return $this->destroy($request, $id);
         }
 
-        $this->modelProvider()->model($id);
+        $this->updateModel($request, $id);
 
         $this->updateValidate($request);
 
@@ -470,7 +513,20 @@ trait HasModelApi
     }
     #endregion
 
-    #region Show
+    #region Destroy
+    protected function destroyRules(Request $request): array
+    {
+        return [];
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    protected function destroyValidate(Request $request)
+    {
+        $this->validate($request, $this->destroyRules($request));
+    }
+
     /**
      * @throws DatabaseException
      * @throws Exception
@@ -484,9 +540,20 @@ trait HasModelApi
      * @throws DatabaseException
      * @throws Exception
      */
+    protected function destroyModel(Request $request, $id)
+    {
+        return $this->model($request, $id);
+    }
+
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     * @throws ValidationException
+     */
     public function destroy(Request $request, $id)
     {
-        $this->modelProvider()->model($id);
+        $this->destroyModel($request, $id);
+        $this->destroyValidate($request);
         $this->transactionStart();
         return $this->destroyResponse($request, $this->destroyExecute($request));
     }

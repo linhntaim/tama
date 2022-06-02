@@ -2,6 +2,7 @@
 
 namespace App\Support\Models;
 
+use App\Support\Database\DatabaseTransaction;
 use App\Support\Exceptions\DatabaseException;
 use App\Support\Exceptions\Exception;
 use App\Support\Models\QueryConditions\LimitCondition;
@@ -22,6 +23,7 @@ use RuntimeException;
 use Throwable;
 
 /**
+ * @method int lock(int $newValue)
  * @method bool force(bool $newValue)
  * @method bool strict(bool $newValue)
  * @method bool pinned(bool $newValue)
@@ -30,6 +32,11 @@ use Throwable;
  */
 abstract class ModelProvider
 {
+    use DatabaseTransaction;
+
+    private const LOCK_NONE = 0;
+    private const LOCK_UPDATE = 1;
+    private const LOCK_SHARED = 2;
     public const SORT_ASC = 'asc';
     public const SORT_DESC = 'desc';
 
@@ -40,6 +47,8 @@ abstract class ModelProvider
     protected ?bool $useSoftDeletes = null;
 
     protected int $perPage;
+
+    protected int $lock = self::LOCK_NONE;
 
     protected bool $force = false;
 
@@ -79,6 +88,18 @@ abstract class ModelProvider
         }
 
         $this->model($model);
+    }
+
+    public function lockForUpdate(): static
+    {
+        $this->lock = self::LOCK_UPDATE;
+        return $this;
+    }
+
+    public function sharedLock(): static
+    {
+        $this->lock = self::LOCK_SHARED;
+        return $this;
     }
 
     public function forced(): static
@@ -147,7 +168,7 @@ abstract class ModelProvider
     public function __call(string $name, array $arguments)
     {
         if (property_exists($this, $name)) {
-            return tap($this->{$name}, function () use ($name, $arguments) {
+            return take($this->{$name}, function () use ($name, $arguments) {
                 $this->{$name} = $arguments[0] ?? null;
             });
         }
@@ -216,10 +237,10 @@ abstract class ModelProvider
         return !is_null($this->model) && $this->model->exists;
     }
 
-    public function newModel(): Model
+    public function newModel(bool $pinned = false): Model
     {
         $modelClass = $this->modelClass;
-        return $this->pinned(false) ? ($this->model = new $modelClass) : new $modelClass;
+        return $pinned ? ($this->model = new $modelClass) : new $modelClass;
     }
 
     public function newQuery(): Builder
@@ -351,6 +372,15 @@ abstract class ModelProvider
         );
     }
 
+    protected function queryLock(Builder $query): Builder
+    {
+        return match ($this->lock(self::LOCK_NONE)) {
+            self::LOCK_UPDATE => $query->lockForUpdate(),
+            self::LOCK_SHARED => $query->sharedLock(),
+            default => $query,
+        };
+    }
+
     /**
      * @throws DatabaseException
      * @throws Exception
@@ -358,7 +388,7 @@ abstract class ModelProvider
     protected function executeAll(Builder $query): EloquentCollection
     {
         return $this->catch(function () use ($query) {
-            return $query->get();
+            return $this->queryLock($query)->get();
         });
     }
 
@@ -380,7 +410,9 @@ abstract class ModelProvider
     protected function executeFirst(Builder $query): ?Model
     {
         $model = $this->catch(function () use ($query) {
-            return $this->strict(true) ? $query->firstOrFail() : $query->first();
+            return $this->strict(true)
+                ? $this->queryLock($query)->firstOrFail()
+                : $this->queryLock($query)->first();
         });
         return $this->pinned(false) ? ($this->model = $model) : $model;
     }
@@ -389,16 +421,29 @@ abstract class ModelProvider
      * @throws DatabaseException
      * @throws Exception
      */
-    protected function executeCount(Builder $query): int
+    protected function executeCount(Builder $query, string $columns = '*'): int
     {
-        return $this->catch(function () use ($query) {
-            return $query->count();
+        return $this->catch(function () use ($query, $columns) {
+            return $query->count($columns);
+        });
+    }
+
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
+    protected function executeMax(Builder $query, string $column): mixed
+    {
+        return $this->catch(function () use ($query, $column) {
+            return $query->max($column);
         });
     }
 
     public function protectedQuery(): Builder
     {
+        $old = $this->pinned;
         $model = $this->newModel();
+        $this->pinned = $old;
         if ($model instanceof IProtected && $this->protected(true)) {
             return $this->query()->whereNotIn($model->getProtectedKey(), $model->getProtectedValues());
         }
@@ -638,9 +683,18 @@ abstract class ModelProvider
      * @throws DatabaseException
      * @throws Exception
      */
-    public function count(array $conditions = []): int
+    public function count(array $conditions = [], string $columns = '*'): int
     {
-        return $this->executeCount($this->queryWhere($conditions));
+        return $this->executeCount($this->queryWhere($conditions), $columns);
+    }
+
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
+    public function max(string $column, array $conditions = []): mixed
+    {
+        return $this->executeMax($this->queryWhere($conditions), $column);
     }
 
     /**
