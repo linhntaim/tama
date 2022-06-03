@@ -6,8 +6,6 @@ use App\Models\DataExport;
 use App\Models\DataExportProvider;
 use App\Models\File;
 use App\Models\FileProvider;
-use App\Support\Exceptions\DatabaseException;
-use App\Support\Exceptions\Exception;
 use App\Support\Exports\Export;
 use Throwable;
 
@@ -37,10 +35,6 @@ trait BaseDataExportJob
         return $this->export ?? $this->setExport($this->dataExport->export)->export;
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function export(): bool
     {
         $export = $this->getExport();
@@ -62,10 +56,6 @@ trait BaseDataExportJob
         return $exportCompleted;
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function handling()
     {
         if ($this->export()) {
@@ -85,10 +75,6 @@ trait BaseDataExportJob
         }
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     public function failed(?Throwable $e = null)
     {
         (new DataExportProvider())

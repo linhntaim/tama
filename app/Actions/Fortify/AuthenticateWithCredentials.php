@@ -4,9 +4,6 @@ namespace App\Actions\Fortify;
 
 use App\Models\User;
 use App\Models\UserProvider;
-use App\Support\Exceptions\DatabaseException;
-use App\Support\Exceptions\Exception;
-use App\Support\SetAuthUser;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -20,8 +17,6 @@ class AuthenticateWithCredentials
     }
 
     /**
-     * @throws DatabaseException
-     * @throws Exception
      * @throws ValidationException
      */
     public function handle(Request $request, $next)
@@ -42,10 +37,6 @@ class AuthenticateWithCredentials
         auth()->shouldUse($this->guard());
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function retrieveUser(Request $request): ?User
     {
         return (new UserProvider())
@@ -58,10 +49,6 @@ class AuthenticateWithCredentials
         return $user->matchPassword($request->input('password'));
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function attempt(Request $request): ?User
     {
         $user = $this->retrieveUser($request);
