@@ -3,8 +3,6 @@
 namespace App\Support\Notifications;
 
 use App\Support\Client\IHasSettings;
-use App\Support\Exceptions\DatabaseException;
-use App\Support\Exceptions\Exception;
 use App\Support\Facades\App;
 use App\Support\Facades\Artisan;
 use App\Support\Facades\Client;
@@ -19,8 +17,6 @@ class NotificationSender extends BaseNotificationSender
      * @param Notification $notification
      * @param array|null $channels
      * @return void
-     * @throws DatabaseException
-     * @throws Exception
      */
     public function sendNow($notifiables, $notification, array $channels = null)
     {
@@ -34,10 +30,6 @@ class NotificationSender extends BaseNotificationSender
             : $this->sendNowWithSettings($notifiables, $notification, $channels);
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function sendNowWithSettings($notifiables, $notification, array $channels = null)
     {
         $notifiables = $this->formatNotifiables($notifiables);
@@ -66,10 +58,6 @@ class NotificationSender extends BaseNotificationSender
         }
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function generateNotificationId(): string
     {
         return config_starter('notification.uses.database')

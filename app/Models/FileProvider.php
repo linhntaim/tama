@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-use App\Support\Exceptions\DatabaseException;
-use App\Support\Exceptions\Exception;
 use App\Support\Filesystem\Filers\Filer;
 use App\Support\Models\Model;
 use App\Support\Models\ModelProvider;
@@ -14,8 +12,8 @@ use App\Support\Models\ModelProvider;
  * @method File createWithAttributes(array $attributes = [])
  * @method File updateWithAttributes(array $attributes = [])
  *
- * @method bool publish (bool $newValue)
- * @method bool public (bool $newValue)
+ * @method bool publish(bool $newValue)
+ * @method bool public(bool $newValue)
  * @method bool inline(bool $newValue)
  */
 class FileProvider extends ModelProvider
@@ -69,10 +67,6 @@ class FileProvider extends ModelProvider
         return $filer;
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     public function createWithFiler(Filer $filer, ?string $title = null): File
     {
         $filer = $this->publishFiler($filer);
@@ -88,10 +82,6 @@ class FileProvider extends ModelProvider
         ]);
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     public function updateWithFiler(Filer $filer, ?string $title = null): File
     {
         $filer = $this->publishFiler($filer);
@@ -108,10 +98,6 @@ class FileProvider extends ModelProvider
             ]));
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     public function updateTitle(string $title): File
     {
         return $this->updateWithAttributes([
