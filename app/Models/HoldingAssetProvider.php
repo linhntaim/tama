@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-use App\Support\Exceptions\DatabaseException;
-use App\Support\Exceptions\Exception;
 use App\Support\Models\Model;
 use App\Support\Models\ModelProvider;
 use App\Support\Models\QueryConditions\WhereCondition;
@@ -23,18 +21,12 @@ class HoldingAssetProvider extends ModelProvider
     /**
      * @param Holding|int $holding
      * @return Collection|HoldingAsset[]
-     * @throws DatabaseException
-     * @throws Exception
      */
     public function allByHolding(Holding|int $holding): Collection
     {
         return $this->all(['holding_id' => $this->retrieveKey($holding)]);
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     public function add(User|int $user, string $exchange, string $symbol, float $amount): HoldingAsset
     {
         $userId = $this->retrieveKey($user);
@@ -69,10 +61,6 @@ class HoldingAssetProvider extends ModelProvider
         return $this->model->user_id == $this->retrieveKey($user);
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     public function updateAmount(float $amount): HoldingAsset
     {
         return $this->updateWithAttributes([
@@ -80,10 +68,6 @@ class HoldingAssetProvider extends ModelProvider
         ]);
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     public function updateOrder(int $order): HoldingAsset
     {
         return $this->updateWithAttributes([

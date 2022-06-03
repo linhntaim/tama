@@ -11,6 +11,7 @@ use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification as BaseNotification;
 use Illuminate\Support\Facades\Notification as NotificationFacade;
+use RuntimeException;
 
 class Notification extends BaseNotification
 {
@@ -47,6 +48,9 @@ class Notification extends BaseNotification
     {
         $via = [];
         if ($this instanceof ViaDatabase) {
+            if (!config_starter('notification.uses.database')) {
+                throw new RuntimeException('Notification via database is not enabled.');
+            }
             $via[] = 'database';
         }
         if ($this instanceof ViaBroadcast) {

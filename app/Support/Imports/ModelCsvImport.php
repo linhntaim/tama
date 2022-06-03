@@ -3,8 +3,6 @@
 namespace App\Support\Imports;
 
 use App\Support\Database\DatabaseTransaction;
-use App\Support\Exceptions\DatabaseException;
-use App\Support\Exceptions\Exception;
 use App\Support\Exceptions\FileException;
 use App\Support\Models\ModelProvider;
 use Throwable;
@@ -60,10 +58,6 @@ abstract class ModelCsvImport extends CsvImport
         return $attributes;
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function dataImport(array $data)
     {
         $this->modelProvider->createWithAttributes($data);

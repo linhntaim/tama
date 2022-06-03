@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Api\Account;
 
 use App\Http\Resources\CurrentHoldingResource;
 use App\Models\HoldingProvider;
-use App\Support\Exceptions\DatabaseException;
-use App\Support\Exceptions\Exception;
 use App\Support\Http\Controllers\ModelApiController;
 use App\Support\Http\Resources\ResourceTransformer;
 use Illuminate\Http\JsonResponse;
@@ -24,10 +22,6 @@ class HoldingController extends ModelApiController
 
     protected string $modelResourceClass = CurrentHoldingResource::class;
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     public function current(Request $request): JsonResponse
     {
         return $this->responseModel(

@@ -65,10 +65,17 @@ return [
             ],
         ],
     ],
+    'notification' => [
+        'uses' => [
+            'database' => (bool)env('NOTIFICATION_USES_DATABASE', false),
+        ],
+    ],
     'filesystems' => [
         'uses' => [
             's3' => (bool)env('FILESYSTEM_USES_AWS_S3', false),
             'azure' => (bool)env('FILESYSTEM_USES_AZURE_STORAGE', false),
+            'ftp' => (bool)env('FILESYSTEM_USES_FTP_STORAGE', false),
+            'sftp' => (bool)env('FILESYSTEM_USES_SFTP_STORAGE', false),
         ],
         'storages' => [
             'local' => env('FILESYSTEM_LOCAL_STORAGE', 'private'),
