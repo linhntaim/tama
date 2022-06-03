@@ -212,6 +212,15 @@ if (!function_exists('dd_with_headers')) {
     }
 }
 
+if (!function_exists('dd_with_cors')) {
+    function dd_with_cors(...$vars)
+    {
+        dd_with_headers([
+            'Access-Control-Allow-Origin' => '*',
+        ], ...$vars);
+    }
+}
+
 if (!function_exists('empty_string')) {
     function empty_string(?string $string, $trimmed = false): bool
     {

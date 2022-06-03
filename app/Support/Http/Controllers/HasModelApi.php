@@ -13,8 +13,6 @@ use App\Models\DataImportProvider;
 use App\Models\File;
 use App\Models\FileProvider;
 use App\Support\Database\DatabaseTransaction;
-use App\Support\Exceptions\DatabaseException;
-use App\Support\Exceptions\Exception;
 use App\Support\Exports\Export;
 use App\Support\Exports\ModelCsvExport;
 use App\Support\Filesystem\Filers\Filer;
@@ -160,10 +158,6 @@ trait HasModelApi
         return array_filter($conditions);
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function indexExecute(Request $request)
     {
         return $this->modelProvider()
@@ -177,10 +171,6 @@ trait HasModelApi
             );
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     public function index(Request $request)
     {
         if ($request->has('_export')) {
@@ -227,10 +217,6 @@ trait HasModelApi
         return $request->has('queued') ? QueueableDataExportJob::class : DataExportJob::class;
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function exportExecute(Request $request): DataExport
     {
         return (new DataExportProvider())->createWithExport(
@@ -239,10 +225,6 @@ trait HasModelApi
         );
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function export(Request $request)
     {
         return $this->exportResponse($request, $this->exportExecute($request));
@@ -301,10 +283,6 @@ trait HasModelApi
         return Filer::from($this->importFileInput($request));
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function importFile(Request $request): File
     {
         return (new FileProvider())
@@ -327,10 +305,6 @@ trait HasModelApi
         $this->validate($request, $this->importRules($request));
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function importExecute(Request $request): DataImport
     {
         return (new DataImportProvider())->createWithImport(
@@ -342,8 +316,6 @@ trait HasModelApi
 
     /**
      * @throws ValidationException
-     * @throws DatabaseException
-     * @throws Exception
      */
     protected function import(Request $request)
     {
@@ -378,8 +350,6 @@ trait HasModelApi
 
     /**
      * @throws ValidationException
-     * @throws DatabaseException
-     * @throws Exception
      */
     public function store(Request $request)
     {
@@ -400,23 +370,43 @@ trait HasModelApi
     }
     #endregion
 
-    #region Show
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
-    protected function showExecute(Request $request, $id)
+    protected function model(Request $request, $id)
     {
         return $this->modelProvider()->model($id);
     }
 
+    #region Show
+    protected function showRules(Request $request): array
+    {
+        return [];
+    }
+
     /**
-     * @throws DatabaseException
-     * @throws Exception
+     * @throws ValidationException
+     */
+    protected function showValidate(Request $request)
+    {
+        $this->validate($request, $this->showRules($request));
+    }
+
+    protected function showExecute(Request $request)
+    {
+        return $this->modelProvider()->model();
+    }
+
+    protected function showModel(Request $request, $id)
+    {
+        return $this->model($request, $id);
+    }
+
+    /**
+     * @throws ValidationException
      */
     public function show(Request $request, $id)
     {
-        return $this->showResponse($request, $this->showExecute($request, $id));
+        $this->showModel($request, $id);
+        $this->showValidate($request);
+        return $this->showResponse($request, $this->showExecute($request));
     }
 
     protected function showResponse(Request $request, $model)
@@ -444,10 +434,13 @@ trait HasModelApi
         return null;
     }
 
+    protected function updateModel(Request $request, $id)
+    {
+        return $this->model($request, $id);
+    }
+
     /**
      * @throws ValidationException
-     * @throws DatabaseException
-     * @throws Exception
      */
     public function update(Request $request, $id)
     {
@@ -455,7 +448,7 @@ trait HasModelApi
             return $this->destroy($request, $id);
         }
 
-        $this->modelProvider()->model($id);
+        $this->updateModel($request, $id);
 
         $this->updateValidate($request);
 
@@ -470,23 +463,37 @@ trait HasModelApi
     }
     #endregion
 
-    #region Show
+    #region Destroy
+    protected function destroyRules(Request $request): array
+    {
+        return [];
+    }
+
     /**
-     * @throws DatabaseException
-     * @throws Exception
+     * @throws ValidationException
      */
+    protected function destroyValidate(Request $request)
+    {
+        $this->validate($request, $this->destroyRules($request));
+    }
+
     protected function destroyExecute(Request $request): bool
     {
         return $this->modelProvider()->delete();
     }
 
+    protected function destroyModel(Request $request, $id)
+    {
+        return $this->model($request, $id);
+    }
+
     /**
-     * @throws DatabaseException
-     * @throws Exception
+     * @throws ValidationException
      */
     public function destroy(Request $request, $id)
     {
-        $this->modelProvider()->model($id);
+        $this->destroyModel($request, $id);
+        $this->destroyValidate($request);
         $this->transactionStart();
         return $this->destroyResponse($request, $this->destroyExecute($request));
     }
