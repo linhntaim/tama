@@ -5,8 +5,6 @@ namespace App\Actions\Fortify;
 use App\Models\User;
 use App\Models\UserProvider;
 use App\Support\Client\DateTimer;
-use App\Support\Exceptions\DatabaseException;
-use App\Support\Exceptions\Exception;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -23,8 +21,6 @@ class CreateNewUser implements CreatesNewUsers
      * @param array $input
      * @return User
      * @throws ValidationException
-     * @throws DatabaseException
-     * @throws Exception
      */
     public function create(array $input): User
     {
