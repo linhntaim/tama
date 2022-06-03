@@ -7,8 +7,6 @@ use App\Http\Resources\UserResource;
 use App\Imports\UserCsvImport;
 use App\Models\UserProvider;
 use App\Support\Client\DateTimer;
-use App\Support\Exceptions\DatabaseException;
-use App\Support\Exceptions\Exception;
 use App\Support\Facades\Client;
 use App\Support\Http\Controllers\ModelApiController;
 use Illuminate\Http\Request;
@@ -76,10 +74,6 @@ class UserController extends ModelApiController
         ];
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function storeExecute(Request $request)
     {
         return $this->modelProvider()->createWithAttributes([
@@ -104,10 +98,6 @@ class UserController extends ModelApiController
         ];
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function updateExecute(Request $request)
     {
         return $this->modelProvider()->updateWithAttributes([
