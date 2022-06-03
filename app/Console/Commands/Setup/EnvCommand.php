@@ -4,6 +4,7 @@ namespace App\Console\Commands\Setup;
 
 use App\Support\Console\Commands\ForceCommand;
 use App\Support\EnvironmentFile;
+use Illuminate\Support\Str;
 
 class EnvCommand extends ForceCommand
 {
@@ -33,7 +34,7 @@ class EnvCommand extends ForceCommand
             (($appEnv = $this->choice('Environment?', [
                 'Local',
                 'Production',
-            ], 1)) == 1 // prod
+            ], 1)) == 'Production' // prod
                 ? [
                     'APP_ENV' => 'production',
                     'APP_DEBUG' => false,
@@ -44,11 +45,11 @@ class EnvCommand extends ForceCommand
                 ])
             + [
                 'APP_NAME' => ($appName = $this->ask('App name?', 'Starter')),
-                'APP_ID' => ($appId = $this->ask('App ID?', str($appName)->snake()->toString())),
-                'APP_URL' => ($appId = $this->ask('App ID?', 'http://localhost')),
+                'APP_ID' => ($appId = $this->ask('App ID?', Str::snake($appName))),
+                'APP_URL' => ($appUrl = $this->ask('App URL?', 'http://localhost')),
 
                 'DB_HOST' => ($dbHost = $this->ask('Database host?', '127.0.0.1')),
-                'DB_PORT' => ($dbPort = $this->ask('Database host?', '3306')),
+                'DB_PORT' => ($dbPort = $this->ask('Database port?', '3306')),
                 'DB_DATABASE' => ($dbDatabase = $this->ask('Database name?', $appId)),
                 'DB_USERNAME' => ($dbUsername = $this->ask('Database username?', $appId)),
                 'DB_PASSWORD' => ($dbPassword = $this->ask('Database password?')),

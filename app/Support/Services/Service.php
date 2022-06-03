@@ -29,9 +29,14 @@ class Service
 
     protected string $rateLimiterKey;
 
+    public function getBaseUrl(): string
+    {
+        return $this->baseUrl;
+    }
+
     protected function createRequest(): PendingRequest
     {
-        return Http::baseUrl($this->baseUrl)->accept($this->accept);
+        return Http::baseUrl($this->getBaseUrl())->accept($this->accept);
     }
 
     protected function body(): array|string

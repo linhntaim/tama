@@ -1,5 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\Account\AccountController;
+use App\Http\Controllers\Api\Auth\NewPasswordController;
+use App\Http\Controllers\Api\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Api\Auth\RegisteredUserController;
+use App\Http\Controllers\Api\Auth\Sanctum\AuthenticatedTokenController as SanctumAuthenticatedTokenController;
 use App\Http\Controllers\Api\DataExportController;
 use App\Http\Controllers\Api\EncryptController;
 use App\Http\Controllers\Api\FileController;
@@ -22,11 +27,11 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::post('encrypt', [EncryptController::class, 'encrypt']);
+Route::post('decrypt', [EncryptController::class, 'decrypt']);
 Route::get('prerequisite', [PrerequisiteController::class, 'index']);
 Route::get('file/{id}', [FileController::class, 'show'])->name('file.show');
 Route::get('data-export/{id}', [DataExportController::class, 'show'])->name('data-export.show');
-Route::post('encrypt', [EncryptController::class, 'encrypt']);
-Route::post('decrypt', [EncryptController::class, 'decrypt']);
 
 //
 Route::group([
@@ -48,6 +53,31 @@ Route::group([
         Route::get('{id}', [TrialUserController::class, 'show']);
         Route::post('{id}', [TrialUserController::class, 'update']);
         Route::delete('{id}', [TrialUserController::class, 'destroy']);
+    });
+});
+
+Route::group([
+    'prefix' => 'auth',
+], function () {
+    Route::post('sanctum/login', [SanctumAuthenticatedTokenController::class, 'store']);
+    Route::post('register', [RegisteredUserController::class, 'store']);
+    Route::post('forgot-password', [PasswordResetLinkController::class, 'store']);
+    Route::post('reset-password', [NewPasswordController::class, 'store']);
+});
+
+Route::group([
+    'middleware' => 'auth:sanctum',
+], function () {
+    Route::group([
+        'prefix' => 'auth',
+    ], function () {
+        Route::post('sanctum/logout', [SanctumAuthenticatedTokenController::class, 'destroy']);
+    });
+
+    Route::group([
+        'prefix' => 'account',
+    ], function () {
+        Route::get('current', [AccountController::class, 'current']);
     });
 });
 

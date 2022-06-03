@@ -8,6 +8,7 @@ use App\Support\Facades\App;
 use App\Support\Jobs\Job;
 use Illuminate\Console\Scheduling\Event as ConsoleScheduleEvent;
 use Illuminate\Console\Scheduling\Schedule as ConsoleSchedule;
+use Illuminate\Support\Str;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
 
 class Scheduler
@@ -70,7 +71,7 @@ class Scheduler
             $composeCommandParamsDescription = function (array $commandParams): string {
                 $commandArgs = [];
                 foreach ($commandParams as $name => $value) {
-                    $commandArgs[] = str($name)->startsWith('--')
+                    $commandArgs[] = Str::startsWith($name, '--')
                         ? sprintf('%s="%s"', $name, str_replace('"', '\\"', $value))
                         : sprintf('"%s"', str_replace('"', '\\"', $value));
                 }

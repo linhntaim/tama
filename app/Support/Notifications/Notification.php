@@ -8,8 +8,10 @@ use App\Support\Facades\App;
 use App\Support\Facades\Artisan;
 use App\Support\Mail\Mailable;
 use Illuminate\Notifications\Messages\BroadcastMessage;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification as BaseNotification;
 use Illuminate\Support\Facades\Notification as NotificationFacade;
+use RuntimeException;
 
 class Notification extends BaseNotification
 {
@@ -46,6 +48,9 @@ class Notification extends BaseNotification
     {
         $via = [];
         if ($this instanceof ViaDatabase) {
+            if (!config_starter('notification.uses.database')) {
+                throw new RuntimeException('Notification via database is not enabled.');
+            }
             $via[] = 'database';
         }
         if ($this instanceof ViaBroadcast) {
@@ -86,12 +91,12 @@ class Notification extends BaseNotification
         return [];
     }
 
-    public function toMail(INotifiable $notifiable): ?Mailable
+    public function toMail(INotifiable $notifiable): Mailable|MailMessage|null
     {
-        return $this->dataMailable($notifiable)?->to($notifiable);
+        return $this->dataMailable($notifiable);
     }
 
-    public function dataMailable(INotifiable $notifiable): ?Mailable
+    public function dataMailable(INotifiable $notifiable): Mailable|MailMessage|null
     {
         return null;
     }

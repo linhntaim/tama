@@ -10,6 +10,7 @@ use App\Support\Facades\Artisan;
 use App\Support\Facades\Client;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\NotificationSender as BaseNotificationSender;
+use Illuminate\Support\Str;
 
 class NotificationSender extends BaseNotificationSender
 {
@@ -18,6 +19,8 @@ class NotificationSender extends BaseNotificationSender
      * @param Notification $notification
      * @param array|null $channels
      * @return void
+     * @throws DatabaseException
+     * @throws Exception
      */
     public function sendNow($notifiables, $notification, array $channels = null)
     {
@@ -26,32 +29,41 @@ class NotificationSender extends BaseNotificationSender
                 $notification->setForcedInternalSettings($runningCommand->settings());
             }
         }
-        $notification->withInternalSettings(function () use ($notifiables, $notification, $channels) {
-            $notifiables = $this->formatNotifiables($notifiables);
+        $notification instanceof Notification
+            ? $notification->withInternalSettings(fn() => $this->sendNowWithSettings($notifiables, $notification, $channels))
+            : $this->sendNowWithSettings($notifiables, $notification, $channels);
+    }
 
-            $original = clone $notification;
+    /**
+     * @throws DatabaseException
+     * @throws Exception
+     */
+    protected function sendNowWithSettings($notifiables, $notification, array $channels = null)
+    {
+        $notifiables = $this->formatNotifiables($notifiables);
 
-            foreach ($notifiables as $notifiable) {
-                if (empty($viaChannels = $channels ?: $notification->via($notifiable))) {
-                    continue;
-                }
+        $original = clone $notification;
 
-                $this->withLocale($this->preferredLocale($notifiable, $notification), function () use ($viaChannels, $notifiable, $original) {
-                    Client::settingsTemporary(
-                        $notifiable instanceof IHasSettings ? $notifiable->getSettings() : null,
-                        function () use ($viaChannels, $notifiable, $original) {
-                            $notificationId = $this->generateNotificationId();
+        foreach ($notifiables as $notifiable) {
+            if (empty($viaChannels = $channels ?: $notification->via($notifiable))) {
+                continue;
+            }
 
-                            foreach ((array)$viaChannels as $channel) {
-                                if (!($notifiable instanceof AnonymousNotifiable && $channel === 'database')) {
-                                    $this->sendToNotifiable($notifiable, $notificationId, clone $original, $channel);
-                                }
+            $this->withLocale($this->preferredLocale($notifiable, $notification), function () use ($viaChannels, $notifiable, $original) {
+                Client::settingsTemporary(
+                    $notifiable instanceof IHasSettings ? $notifiable->getSettings() : null,
+                    function () use ($viaChannels, $notifiable, $original) {
+                        $notificationId = $this->generateNotificationId();
+
+                        foreach ((array)$viaChannels as $channel) {
+                            if (!($notifiable instanceof AnonymousNotifiable && $channel === 'database')) {
+                                $this->sendToNotifiable($notifiable, $notificationId, clone $original, $channel);
                             }
                         }
-                    );
-                });
-            }
-        });
+                    }
+                );
+            });
+        }
     }
 
     /**
@@ -60,7 +72,9 @@ class NotificationSender extends BaseNotificationSender
      */
     protected function generateNotificationId(): string
     {
-        return (new DatabaseNotificationProvider())->generateUniqueId();
+        return config_starter('notification.uses.database')
+            ? (new DatabaseNotificationProvider())->generateUniqueId()
+            : Str::uuid()->toString();
     }
 
     protected function sendToNotifiable($notifiable, $id, $notification, $channel)

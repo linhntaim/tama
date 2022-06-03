@@ -2,9 +2,10 @@
 
 namespace App\Support\Http\Middleware;
 
-use App\Support\Http\Request;
 use App\Support\Http\Responses;
 use Closure;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class PrioritizeHtmlIndex
 {
@@ -19,7 +20,7 @@ class PrioritizeHtmlIndex
         array_unshift($htmlIndexPaths, '');
         foreach ($htmlIndexPaths as $htmlIndexPath) {
             if (($htmlIndexPath = concat_paths(true, $htmlIndexPath)) == $currentPath
-                || str($currentPath)->startsWith($htmlIndexPath)) {
+                || Str::startsWith($currentPath, $htmlIndexPath)) {
                 foreach ($htmlIndexFiles as $htmlIndexFile) {
                     if (is_file($htmlIndexFile = public_path(concat_paths(true, $htmlIndexPath, $htmlIndexFile)))) {
                         return $htmlIndexFile;

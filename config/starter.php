@@ -31,6 +31,7 @@ return [
                         'everyMinute',
                     ],
                 ],
+                //
             ],
         ],
     ],
@@ -56,10 +57,17 @@ return [
             ],
         ],
     ],
+    'notification' => [
+        'uses' => [
+            'database' => (bool)env('NOTIFICATION_USES_DATABASE', false),
+        ],
+    ],
     'filesystems' => [
         'uses' => [
             's3' => (bool)env('FILESYSTEM_USES_AWS_S3', false),
             'azure' => (bool)env('FILESYSTEM_USES_AZURE_STORAGE', false),
+            'ftp' => (bool)env('FILESYSTEM_USES_FTP_STORAGE', false),
+            'sftp' => (bool)env('FILESYSTEM_USES_SFTP_STORAGE', false),
         ],
         'storages' => [
             'local' => env('FILESYSTEM_LOCAL_STORAGE', 'private'),
@@ -67,6 +75,12 @@ return [
                 'private' => env('FILESYSTEM_PRIVATE_PUBLISH_STORAGE', 'private'),
                 'public' => env('FILESYSTEM_PUBLIC_PUBLISH_STORAGE', 'public'),
             ],
+        ],
+    ],
+    'api' => [
+        'throttle' => [
+            'decay_minutes' => (int)env('API_THROTTLE_DECAY_MINUTES', 1),
+            'max_attempts' => (int)env('API_THROTTLE_MAX_ATTEMPTS', 600),
         ],
     ],
     'client' => [
@@ -85,8 +99,11 @@ return [
             ],
         ],
         'routes' => [
-            //'*' => 'default',
+            // '*' => 'default',
         ],
+    ],
+    'routes' => [
+        'json' => ['api', 'api/*'],
     ],
     'supported_locales' => array_filter(explode(',', env('APP_LOCALE_SUPPORTED', 'en')), function ($locale) {
         return !empty($locale);

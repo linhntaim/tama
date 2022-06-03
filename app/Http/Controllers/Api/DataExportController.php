@@ -7,7 +7,7 @@ use App\Models\DataExportProvider;
 use App\Support\Exceptions\DatabaseException;
 use App\Support\Exceptions\Exception;
 use App\Support\Http\Controllers\ModelApiController;
-use App\Support\Http\Request;
+use Illuminate\Http\Request;
 
 /**
  * @method DataExportProvider modelProvider()
