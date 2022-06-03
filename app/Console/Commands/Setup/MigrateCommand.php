@@ -240,7 +240,7 @@ class MigrateCommand extends ForceCommand
             $this->info('Migrate changed successfully.');
         }
         if (!in_array('notifications', $migrationTables)) {
-            if ($this->confirm('Migrate table of notifications?')) {
+            if (config_starter('notification.uses.database')) {
                 if ($this->call('notifications:table') != self::SUCCESS) {
                     return false;
                 }

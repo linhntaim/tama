@@ -10,6 +10,7 @@ use App\Support\Facades\Artisan;
 use App\Support\Facades\Client;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\NotificationSender as BaseNotificationSender;
+use Illuminate\Support\Str;
 
 class NotificationSender extends BaseNotificationSender
 {
@@ -71,7 +72,9 @@ class NotificationSender extends BaseNotificationSender
      */
     protected function generateNotificationId(): string
     {
-        return (new DatabaseNotificationProvider())->generateUniqueId();
+        return config_starter('notification.uses.database')
+            ? (new DatabaseNotificationProvider())->generateUniqueId()
+            : Str::uuid()->toString();
     }
 
     protected function sendToNotifiable($notifiable, $id, $notification, $channel)

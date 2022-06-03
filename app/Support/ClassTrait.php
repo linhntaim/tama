@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use Closure;
+use Illuminate\Support\Str;
 
 trait ClassTrait
 {
@@ -30,28 +31,21 @@ trait ClassTrait
     public function classSnakedName(): string
     {
         return $this->classAttribute('snaked_name', function () {
-            return str($this->classBasename())
-                ->snake()
-                ->toString();
+            return Str::snake($this->classBasename());
         });
     }
 
     public function classChainedName(): string
     {
         return $this->classAttribute('chained_name', function () {
-            return str($this->classBasename())
-                ->snake('-')
-                ->toString();
+            return Str::snake($this->classBasename(), '-');
         });
     }
 
     public function classFriendlyName(): string
     {
         return $this->classAttribute('friendly_name', function () {
-            return str($this->classBasename())
-                ->snake(' ')
-                ->title()
-                ->toString();
+            return Str::title(Str::snake($this->classBasename(), ' '));
         });
     }
 }
