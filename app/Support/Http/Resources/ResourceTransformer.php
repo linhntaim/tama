@@ -36,11 +36,24 @@ trait ResourceTransformer
                     return new ModelResourceCollection($resource);
                 }
             }
+            else {
+                if (is_a($resourceClass, Resource::class, true)) {
+                    return $resourceClass::collection($resource);
+                }
+                if (!is_a($resourceClass, ResourceCollection::class, true)) {
+                    return new ResourceCollection($resource);
+                }
+            }
         }
         else {
             if ($resource instanceof Model) {
                 if (!is_a($resourceClass, ModelResource::class, true)) {
                     return new ModelResource($resource);
+                }
+            }
+            else {
+                if (!is_a($resourceClass, Resource::class, true)) {
+                    return new Resource($resource);
                 }
             }
         }
