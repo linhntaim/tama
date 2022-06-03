@@ -7,7 +7,7 @@ use App\Models\File;
 use App\Support\Exceptions\DatabaseException;
 use App\Support\Exceptions\Exception;
 use App\Support\Filesystem\Filers\Filer;
-use App\Support\Http\Request;
+use Illuminate\Http\Request;
 
 class FileController extends BaseFileController
 {
