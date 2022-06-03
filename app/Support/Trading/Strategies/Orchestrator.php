@@ -2,8 +2,6 @@
 
 namespace App\Support\Trading\Strategies;
 
-use App\Support\Exceptions\DatabaseException;
-use App\Support\Exceptions\Exception;
 use App\Support\Trading\Strategies\DataServices\DataServiceFactory;
 use App\Support\Trading\Strategies\Executors\ExecutorFactory;
 use App\Support\Trading\Strategies\Model\Strategy;
@@ -11,10 +9,6 @@ use App\Support\Trading\Strategies\Model\StrategyProvider;
 
 class Orchestrator
 {
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     public function buy($user)
     {
         foreach ((new StrategyProvider())->allByUser($user)->mapToGroups(function (Strategy $strategy) {
@@ -51,10 +45,6 @@ class Orchestrator
         }
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     public function sell()
     {
         foreach ((new StrategyProvider())->all() as $strategy) {
