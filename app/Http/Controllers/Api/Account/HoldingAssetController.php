@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Api\Account;
 
 use App\Models\HoldingAsset;
 use App\Models\HoldingAssetProvider;
-use App\Support\Exceptions\DatabaseException;
-use App\Support\Exceptions\Exception;
 use App\Support\Http\Controllers\ModelApiController;
 use App\Support\Http\Resources\ResourceTransformer;
 use Illuminate\Http\JsonResponse;
@@ -31,10 +29,6 @@ class HoldingAssetController extends ModelApiController
         ];
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function storeExecute(Request $request): HoldingAsset
     {
         return $this->modelProvider()->add(
@@ -47,8 +41,6 @@ class HoldingAssetController extends ModelApiController
 
     /**
      * @throws Throwable
-     * @throws DatabaseException
-     * @throws Exception
      * @throws ValidationException
      */
     public function store(Request $request): JsonResponse
@@ -60,8 +52,6 @@ class HoldingAssetController extends ModelApiController
     }
 
     /**
-     * @throws DatabaseException
-     * @throws Exception
      * @throws ValidationException
      * @throws Throwable
      */
@@ -106,10 +96,6 @@ class HoldingAssetController extends ModelApiController
         parent::updateValidate($request);
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function updateExecute(Request $request): HoldingAsset
     {
         return $this->modelProvider()->updateAmount((float)$request->input('amount'));
