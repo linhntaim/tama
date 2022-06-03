@@ -2,8 +2,6 @@
 
 namespace App\Support\Exports;
 
-use App\Support\Exceptions\DatabaseException;
-use App\Support\Exceptions\Exception;
 use App\Support\Http\Resources\ResourceTransformer;
 use App\Support\Models\ModelProvider;
 use Illuminate\Database\Eloquent\Collection;
@@ -71,10 +69,6 @@ abstract class ModelCsvExport extends CsvExport
         $this->read = 0;
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function prepareData()
     {
         if ($this->more) {
@@ -96,10 +90,6 @@ abstract class ModelCsvExport extends CsvExport
         }
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function data()
     {
         $this->prepareData();

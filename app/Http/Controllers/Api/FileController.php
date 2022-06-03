@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\File;
 use App\Models\FileProvider;
-use App\Support\Exceptions\DatabaseException;
-use App\Support\Exceptions\Exception;
 use App\Support\Http\Controllers\ModelApiController;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Http\Request;
@@ -17,10 +15,6 @@ class FileController extends ModelApiController
 {
     protected string $modelProviderClass = FileProvider::class;
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     public function show(Request $request, $id)
     {
         if ($request->has('_file')) {
@@ -32,10 +26,6 @@ class FileController extends ModelApiController
         return $this->responseFail($request);
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function showFile(Request $request, $id)
     {
         return with($this->modelProvider()->model($id), function (File $file) {
@@ -46,10 +36,6 @@ class FileController extends ModelApiController
         });
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function showDownload(Request $request, $id)
     {
         return with($this->modelProvider()->model($id), function (File $file) {

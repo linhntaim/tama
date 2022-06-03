@@ -7,15 +7,9 @@ use App\Notifications\Trial\BroadcastNotification as TrialBroadcastNotification;
 use App\Notifications\Trial\DatabaseNotification as TrialDatabaseNotification;
 use App\Notifications\Trial\MailNotification as TrialMailNotification;
 use App\Support\Console\Commands\Command;
-use App\Support\Exceptions\DatabaseException;
-use App\Support\Exceptions\Exception;
 
 class NotificationCommand extends Command
 {
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function handling(): int
     {
         $userProvider = new UserProvider();

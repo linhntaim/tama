@@ -5,8 +5,6 @@ namespace App\Models;
 use App\Jobs\DataImportJob;
 use App\Jobs\QueueableDataImportJob;
 use App\Support\Client\DateTimer;
-use App\Support\Exceptions\DatabaseException;
-use App\Support\Exceptions\Exception;
 use App\Support\Imports\Import;
 use App\Support\Models\ModelProvider;
 use InvalidArgumentException;
@@ -20,10 +18,6 @@ class DataImportProvider extends ModelProvider
 {
     public string $modelClass = DataImport::class;
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     public function createWithImport(File $file, Import $import, string $importJobClass = QueueableDataImportJob::class): DataImport
     {
         if (!is_a($importJobClass, DataImportJob::class, true)
@@ -41,10 +35,6 @@ class DataImportProvider extends ModelProvider
         return $this->model;
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     public function updateImported(): DataImport
     {
         return $this->updateWithAttributes([
@@ -54,10 +44,6 @@ class DataImportProvider extends ModelProvider
         ]);
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     public function updateFailed(?Throwable $e): DataImport
     {
         return $this->updateWithAttributes([

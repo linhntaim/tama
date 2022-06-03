@@ -2,10 +2,7 @@
 
 namespace App\Support\Console\Commands;
 
-use App\Models\File;
 use App\Models\FileProvider;
-use App\Support\Exceptions\DatabaseException;
-use App\Support\Exceptions\Exception;
 use App\Support\Filesystem\Filers\Filer;
 use App\Support\Imports\BatchModelCsvImport;
 use App\Support\Imports\Import;
@@ -43,10 +40,6 @@ abstract class ImportCommand extends Command
         });
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function handling(): int
     {
         $this->warn('Import started.');

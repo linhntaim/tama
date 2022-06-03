@@ -10,6 +10,7 @@ use App\Support\Facades\Client;
 use Closure;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -103,12 +104,12 @@ trait ExecutionWrap
                 ]),
             ]);
             foreach ($traces as $i => $trace) {
-                $order = str($i);
+                $order = Str::padLeft($i, $padLength, '0');
                 if (isset($trace['file'])) {
                     $output->writeln(
                         sprintf(
                             '<comment>#%s</comment> [%s:%s]',
-                            $order->padLeft($padLength, '0'),
+                            $order,
                             $trace['file'] ?? '',
                             $trace['line'] ?? ''
                         ),
@@ -143,7 +144,7 @@ trait ExecutionWrap
                         $output->writeln(
                             sprintf(
                                 '<comment>#%s</comment> %s%s%s(%s)',
-                                $order->padLeft($padLength, '0'),
+                                $order,
                                 $trace['class'] ?? '',
                                 $trace['type'] ?? '',
                                 $trace['function'] ?? '',
@@ -156,7 +157,7 @@ trait ExecutionWrap
                         $output->writeln(
                             sprintf(
                                 '<comment>#%s</comment> %s',
-                                $order->padLeft($padLength, '0'),
+                                $order,
                                 $trace['text'] ?? ''
                             )
                         );
@@ -165,7 +166,7 @@ trait ExecutionWrap
                         $output->writeln(
                             sprintf(
                                 '<comment>#%s</comment> %s',
-                                $order->padLeft($padLength, '0'),
+                                $order,
                                 json_encode_readable($trace)
                             ),
                             OutputInterface::VERBOSITY_QUIET

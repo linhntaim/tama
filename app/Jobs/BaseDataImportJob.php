@@ -6,8 +6,6 @@ use App\Models\DataImport;
 use App\Models\DataImportProvider;
 use App\Models\File;
 use App\Models\FileProvider;
-use App\Support\Exceptions\DatabaseException;
-use App\Support\Exceptions\Exception;
 use App\Support\Filesystem\Filers\Filer;
 use App\Support\Imports\Import;
 use Throwable;
@@ -40,11 +38,6 @@ trait BaseDataImportJob
         return $this->import ?? $this->setImport($this->dataImport->import)->import;
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     * @throws Throwable
-     */
     protected function handling()
     {
         if (!isset($this->file)) {
@@ -77,10 +70,6 @@ trait BaseDataImportJob
         }
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     public function failed(?Throwable $e = null)
     {
         (new DataImportProvider())

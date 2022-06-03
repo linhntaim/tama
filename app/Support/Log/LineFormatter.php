@@ -6,6 +6,7 @@ use App\Support\Console\RunningCommand;
 use App\Support\Exceptions\ShellException;
 use App\Support\Http\Requests;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Monolog\Formatter\LineFormatter as BaseLineFormatter;
 use Throwable;
 
@@ -69,11 +70,11 @@ class LineFormatter extends BaseLineFormatter
                 ]),
             ]);
             foreach ($traces as $i => $trace) {
-                $order = str($i);
+                $order = Str::padLeft($i, $padLength, '0');
                 if (isset($trace['file'])) {
                     $normalized[] = sprintf(
                         '#%s [%s:%s]',
-                        $order->padLeft($padLength, '0'),
+                        $order,
                         $trace['file'] ?? '',
                         $trace['line'] ?? ''
                     );
@@ -99,7 +100,7 @@ class LineFormatter extends BaseLineFormatter
                     if (isset($trace['function'])) {
                         $normalized[] = sprintf(
                             '#%s %s%s%s(%s)',
-                            $order->padLeft($padLength, '0'),
+                            $order,
                             $trace['class'] ?? '',
                             $trace['type'] ?? '',
                             $trace['function'] ?? '',
@@ -109,14 +110,14 @@ class LineFormatter extends BaseLineFormatter
                     elseif (isset($trace['text'])) {
                         $normalized[] = sprintf(
                             '#%s %s',
-                            $order->padLeft($padLength, '0'),
+                            $order,
                             $trace['text'] ?? ''
                         );
                     }
                     else {
                         $normalized[] = sprintf(
                             '#%s %s',
-                            $order->padLeft($padLength, '0'),
+                            $order,
                             json_encode_readable($trace)
                         );
                     }

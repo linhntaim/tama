@@ -4,8 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\UserProvider;
 use App\Support\Client\DateTimer;
-use App\Support\Exceptions\DatabaseException;
-use App\Support\Exceptions\Exception;
 use App\Support\Facades\App;
 use Illuminate\Support\Str;
 
@@ -13,10 +11,6 @@ class DefaultUsersSeeder extends Seeder
 {
     protected string $defaultPassword = '12345678';
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     public function run()
     {
         $this->createUser(config_starter('database.seeders.users.system'), 'System');
@@ -28,10 +22,6 @@ class DefaultUsersSeeder extends Seeder
         return Str::random(8);
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function createUser(array $attributes, string $defaultName = 'User')
     {
         (new UserProvider())->updateOrCreateWithAttributes([

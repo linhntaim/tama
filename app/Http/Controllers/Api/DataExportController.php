@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\DataExport;
 use App\Models\DataExportProvider;
-use App\Support\Exceptions\DatabaseException;
-use App\Support\Exceptions\Exception;
 use App\Support\Http\Controllers\ModelApiController;
 use Illuminate\Http\Request;
 
@@ -16,10 +14,6 @@ class DataExportController extends ModelApiController
 {
     protected string $modelProviderClass = DataExportProvider::class;
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     public function show(Request $request, $id)
     {
         if ($request->has('_file')) {
@@ -31,10 +25,6 @@ class DataExportController extends ModelApiController
         return parent::show($request, $id);
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function showFile(Request $request, $id)
     {
         return with($this->modelProvider()->model($id), function (DataExport $dataExport) {
@@ -43,10 +33,6 @@ class DataExportController extends ModelApiController
         });
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function showDownload(Request $request, $id)
     {
         return with($this->modelProvider()->model($id), function (DataExport $dataExport) {

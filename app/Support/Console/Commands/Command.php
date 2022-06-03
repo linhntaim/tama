@@ -10,6 +10,7 @@ use App\Support\Console\Sheller;
 use App\Support\Exceptions\ShellException;
 use App\Support\Facades\Shell;
 use Illuminate\Console\Command as BaseCommand;
+use Illuminate\Support\Str;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -51,7 +52,7 @@ abstract class Command extends BaseCommand
             ':',
             array_map(
                 function ($name) {
-                    return str($name)->snake('-')->toString();
+                    return Str::snake($name, '-');
                 },
                 (function (array $names) {
                     if (($count = count($names)) == 1 && $names[0] == '') {

@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-use App\Support\Exceptions\DatabaseException;
-use App\Support\Exceptions\Exception;
 use App\Support\Models\ModelProvider;
 use App\Support\Models\QueryConditions\WhereNotInCondition;
 use Throwable;
@@ -17,10 +15,6 @@ class HoldingProvider extends ModelProvider
 {
     public string $modelClass = Holding::class;
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     public function firstByUser(User|int $user): ?Holding
     {
         return $this->first(['user_id', $this->retrieveKey($user)]);

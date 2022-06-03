@@ -2,8 +2,6 @@
 
 namespace App\Support\Imports;
 
-use App\Support\Exceptions\DatabaseException;
-use App\Support\Exceptions\Exception;
 use App\Support\Exceptions\FileException;
 use App\Support\Filesystem\Filers\CsvFiler;
 
@@ -35,8 +33,6 @@ abstract class BatchModelCsvImport extends ModelCsvImport
 
     /**
      * @param CsvFiler $filer
-     * @throws DatabaseException
-     * @throws Exception
      * @throws FileException
      */
     protected function importBefore($filer)
@@ -47,8 +43,6 @@ abstract class BatchModelCsvImport extends ModelCsvImport
 
     /**
      * @param CsvFiler $filer
-     * @throws DatabaseException
-     * @throws Exception
      */
     protected function importAfter($filer)
     {
@@ -56,10 +50,6 @@ abstract class BatchModelCsvImport extends ModelCsvImport
         parent::importAfter($filer);
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     protected function dataImport(array $data)
     {
         $this->modelProvider->write($data);

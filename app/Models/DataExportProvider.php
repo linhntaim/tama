@@ -5,8 +5,6 @@ namespace App\Models;
 use App\Jobs\DataExportJob;
 use App\Jobs\QueueableDataExportJob;
 use App\Support\Client\DateTimer;
-use App\Support\Exceptions\DatabaseException;
-use App\Support\Exceptions\Exception;
 use App\Support\Exports\Export;
 use App\Support\Models\ModelProvider;
 use InvalidArgumentException;
@@ -20,10 +18,6 @@ class DataExportProvider extends ModelProvider
 {
     public string $modelClass = DataExport::class;
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     public function createWithExport(Export $export, string $exportJobClass = QueueableDataExportJob::class): DataExport
     {
         if (!is_a($exportJobClass, DataExportJob::class, true)
@@ -40,10 +34,6 @@ class DataExportProvider extends ModelProvider
         return $this->model;
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     public function updateExported($file): DataExport
     {
         return $this->updateWithAttributes([
@@ -54,10 +44,6 @@ class DataExportProvider extends ModelProvider
         ]);
     }
 
-    /**
-     * @throws DatabaseException
-     * @throws Exception
-     */
     public function updateFailed(?Throwable $e): DataExport
     {
         return $this->updateWithAttributes([

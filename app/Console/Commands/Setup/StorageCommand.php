@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Setup;
 
 use App\Support\Console\Commands\ForceCommand;
+use App\Support\Exceptions\FileException;
 use App\Support\Exceptions\ShellException;
 
 class StorageCommand extends ForceCommand
@@ -34,7 +35,7 @@ class StorageCommand extends ForceCommand
      */
     protected function s3(): bool
     {
-        if ($this->confirm('Use AWS S3?')) {
+        if (config_starter('filesystems.uses.s3')) {
             return $this->handleShell('composer require -W league/flysystem-aws-s3-v3 "^3.0"') == self::SUCCESS;
         }
         return true;
@@ -45,7 +46,7 @@ class StorageCommand extends ForceCommand
      */
     protected function azure(): bool
     {
-        if ($this->confirm('Use Azure Blob Storage?')) {
+        if (config_starter('filesystems.uses.azure')) {
             return $this->handleShell('composer require matthewbdaly/laravel-azure-storage') == self::SUCCESS;
         }
         return true;
@@ -56,7 +57,7 @@ class StorageCommand extends ForceCommand
      */
     protected function ftp(): bool
     {
-        if ($this->confirm('Use FTP?')) {
+        if (config_starter('filesystems.uses.ftp')) {
             return $this->handleShell('composer require league/flysystem-ftp "^3.0"') == self::SUCCESS;
         }
         return true;
@@ -67,12 +68,15 @@ class StorageCommand extends ForceCommand
      */
     protected function sftp(): bool
     {
-        if ($this->confirm('Use SFTP?')) {
+        if (config_starter('filesystems.uses.sftp')) {
             return $this->handleShell('composer require league/flysystem-sftp-v3 "^3.0"') == self::SUCCESS;
         }
         return true;
     }
 
+    /**
+     * @throws FileException
+     */
     protected function storageLink(): bool
     {
         if ($this->call('storage:link', [
