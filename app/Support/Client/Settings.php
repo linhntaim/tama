@@ -4,6 +4,7 @@ namespace App\Support\Client;
 
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
+use Illuminate\Support\Str;
 
 /**
  * Class Settings
@@ -116,7 +117,7 @@ class Settings implements ISettings, Arrayable, Jsonable
         }
         if (is_array($settings)) {
             foreach ($settings as $name => $value) {
-                if (method_exists($this, $method = 'set' . str($name)->studly()->toString())) {
+                if (method_exists($this, $method = 'set' . Str::studly($name))) {
                     $this->{$method}($value);
                 }
                 else {
@@ -133,21 +134,19 @@ class Settings implements ISettings, Arrayable, Jsonable
 
     public function __get(string $name)
     {
-        $name = str($name);
-        if (method_exists($this, $method = 'get' . $name->studly()->toString())) {
+        if (method_exists($this, $method = 'get' . Str::studly($name))) {
             return $this->{$method}();
         }
-        return $this->settings[$name->snake()->toString()] ?? null;
+        return $this->settings[Str::snake($name)] ?? null;
     }
 
     public function __set(string $name, $value): void
     {
-        $name = str($name);
-        if (method_exists($this, $method = 'set' . $name->studly()->toString())) {
+        if (method_exists($this, $method = 'set' . Str::studly($name))) {
             $this->{$method}($value);
         }
         else {
-            $this->set($name->snake()->toString(), $value);
+            $this->set(Str::snake($name), $value);
         }
     }
 

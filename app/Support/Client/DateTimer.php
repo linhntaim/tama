@@ -4,6 +4,7 @@ namespace App\Support\Client;
 
 use Carbon\Carbon;
 use Carbon\CarbonTimeZone;
+use Illuminate\Support\Str;
 
 class DateTimer extends SettingsApplier
 {
@@ -72,8 +73,8 @@ class DateTimer extends SettingsApplier
         if ($timezone == 'UTC') {
             return 0;
         }
-        if (str($timezone)->startsWith('UTC')) {
-            return (int)(floatval(str($timezone)->substr(3)->toString()) * 3600);
+        if (Str::startsWith($timezone, 'UTC')) {
+            return (int)(floatval(Str::substr($timezone, 3)) * 3600);
         }
         return (new CarbonTimeZone($timezone))->getOffset(new Carbon());
     }

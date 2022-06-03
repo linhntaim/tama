@@ -4,12 +4,10 @@ namespace App\Console\Commands\Setup;
 
 use App\Support\Console\Commands\ForceCommand;
 use App\Support\EnvironmentFile;
-use App\Support\Exceptions\DatabaseException;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Composer;
 use PDO;
-use PDOException;
 use Symfony\Component\Finder\Finder;
 
 class MigrateCommand extends ForceCommand
@@ -50,9 +48,6 @@ class MigrateCommand extends ForceCommand
         return $this->databaseConnectionWrite[$key] ?? $this->databaseConnection[$key];
     }
 
-    /**
-     * @throws DatabaseException
-     */
     protected function createDatabaseConnector(): PDO
     {
         return match ($this->databaseConnection['driver']) {
@@ -60,26 +55,18 @@ class MigrateCommand extends ForceCommand
         };
     }
 
-    /**
-     * @throws DatabaseException
-     */
     protected function createMySqlDatabaseConnector(): PDO
     {
-        try {
-            return new PDO(
-                sprintf(
-                    'mysql:host=%s;port:%d',
-                    $this->getDatabaseConfig('host'),
-                    $this->getDatabaseConfig('port')
-                ),
-                $this->getDatabaseConfig('username'),
-                $this->getDatabaseConfig('password'),
-                $this->getDatabaseConfig('options')
-            );
-        }
-        catch (PDOException $exception) {
-            throw DatabaseException::from($exception);
-        }
+        return new PDO(
+            sprintf(
+                'mysql:host=%s;port:%d',
+                $this->getDatabaseConfig('host'),
+                $this->getDatabaseConfig('port')
+            ),
+            $this->getDatabaseConfig('username'),
+            $this->getDatabaseConfig('password'),
+            $this->getDatabaseConfig('options')
+        );
     }
 
     protected function handleBefore(): void
@@ -90,9 +77,6 @@ class MigrateCommand extends ForceCommand
         parent::handleBefore();
     }
 
-    /**
-     * @throws DatabaseException
-     */
     protected function whenForced()
     {
         $this->uninstallDatabase();
@@ -115,9 +99,6 @@ class MigrateCommand extends ForceCommand
         return $this->exitSuccess();
     }
 
-    /**
-     * @throws DatabaseException
-     */
     protected function migrateDatabase(): bool
     {
         $databaseConnector = $this->createDatabaseConnector();
@@ -126,25 +107,14 @@ class MigrateCommand extends ForceCommand
         };
     }
 
-    /**
-     * @throws DatabaseException
-     */
     protected function migrateMySqlDatabase(PDO $connector): bool
     {
-        try {
-            return ($query = $connector->prepare(
-                    sprintf('create database if not exists `%s`', $this->getDatabaseConfig('database'))
-                )) !== false
-                && $query->execute();
-        }
-        catch (PDOException $exception) {
-            throw DatabaseException::from($exception);
-        }
+        return ($query = $connector->prepare(
+                sprintf('create database if not exists `%s`', $this->getDatabaseConfig('database'))
+            )) !== false
+            && $query->execute();
     }
 
-    /**
-     * @throws DatabaseException
-     */
     protected function uninstallDatabase(): bool
     {
         $databaseConnector = $this->createDatabaseConnector();
@@ -153,20 +123,12 @@ class MigrateCommand extends ForceCommand
         };
     }
 
-    /**
-     * @throws DatabaseException
-     */
     protected function uninstallMySqlDatabase(PDO $connector): bool
     {
-        try {
-            return ($query = $connector->prepare(
-                    sprintf('drop database if exists `%s`', $this->getDatabaseConfig('database'))
-                )) !== false
-                && $query->execute();
-        }
-        catch (PDOException $exception) {
-            throw DatabaseException::from($exception);
-        }
+        return ($query = $connector->prepare(
+                sprintf('drop database if exists `%s`', $this->getDatabaseConfig('database'))
+            )) !== false
+            && $query->execute();
     }
 
     /**
@@ -240,7 +202,7 @@ class MigrateCommand extends ForceCommand
             $this->info('Migrate changed successfully.');
         }
         if (!in_array('notifications', $migrationTables)) {
-            if ($this->confirm('Migrate table of notifications?')) {
+            if (config_starter('notification.uses.database')) {
                 if ($this->call('notifications:table') != self::SUCCESS) {
                     return false;
                 }
