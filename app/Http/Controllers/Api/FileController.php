@@ -7,8 +7,8 @@ use App\Models\FileProvider;
 use App\Support\Exceptions\DatabaseException;
 use App\Support\Exceptions\Exception;
 use App\Support\Http\Controllers\ModelApiController;
-use App\Support\Http\Request;
 use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Http\Request;
 
 /**
  * @method FileProvider modelProvider()
