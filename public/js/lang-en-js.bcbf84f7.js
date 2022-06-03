@@ -1,0 +1,2 @@
+"use strict";(self["webpackChunkstarter"]=self["webpackChunkstarter"]||[]).push([[820],{8367:function(e,l,t){t.r(l),l["default"]={hello:"Hello {world}"}}}]);
+//# sourceMappingURL=lang-en-js.bcbf84f7.js.map
