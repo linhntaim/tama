@@ -26,7 +26,7 @@ class HoldingController extends ModelApiController
     {
         return $this->responseModel(
             $request,
-            $this->modelProvider()->firstOrCreateWithAttributes(['user_id' => $request->user()->id]),
+            $this->modelProvider()->firstOrCreateWithAttributes(['user_id' => $request->user()->id], ['initial' => 0]),
             $this->modelResourceClass
         );
     }
