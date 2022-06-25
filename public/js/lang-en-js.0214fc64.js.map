@@ -1,0 +1,1 @@
+{"version":3,"file":"js/lang-en-js.0214fc64.js","mappings":"sJAAA,cACIA,MAAO","sources":["webpack://@linhntaim/vue-3-starter/./src/lang/en.js"],"sourcesContent":["export default {\r\n    hello: 'Hello {world}',\r\n}\r\n"],"names":["hello"],"sourceRoot":""}

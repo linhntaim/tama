@@ -1,0 +1,1 @@
+{"version":3,"file":"js/lang-vi-js.bac366dd.js","mappings":"sJAAA,cACIA,MAAO","sources":["webpack://@linhntaim/vue-3-starter/./src/lang/vi.js"],"sourcesContent":["export default {\r\n    hello: 'Xin chào {world}',\r\n}\r\n"],"names":["hello"],"sourceRoot":""}

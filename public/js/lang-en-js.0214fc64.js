@@ -1,0 +1,2 @@
+"use strict";(self["webpackChunk_linhntaim_vue_3_starter"]=self["webpackChunk_linhntaim_vue_3_starter"]||[]).push([[820],{8367:function(e,l,t){t.r(l),l["default"]={hello:"Hello {world}"}}}]);
+//# sourceMappingURL=lang-en-js.0214fc64.js.map
