@@ -10,11 +10,15 @@ class Prices
 {
     protected array $times;
 
+    protected int $count;
+
     public function __construct(
+        protected string       $ticker,
+        protected string       $interval,
         protected array        $data,
-        string                 $interval,
         Carbon|string|int|null $lastAt = null)
     {
+        $this->count = count($data);
         if (!($lastAt instanceof Carbon)) {
             $lastAt = is_int($lastAt)
                 ? Carbon::createFromTimestamp($lastAt, new CarbonTimeZone('UTC'))
@@ -58,17 +62,33 @@ class Prices
             default:
                 throw new InvalidArgumentException('Interval was not supported.');
         }
-        for ($i = 0, $count = count($data); $i < $count; ++$i) {
+        for ($i = 0; $i < $this->count; ++$i) {
             $this->times[] = (clone $lastAt)
-                ->{$method}($intervalValue * ($count - $i - 1))
+                ->{$method}($intervalValue * ($this->count - $i - 1))
                 ->format('Y-m-d H:i:s');
         }
     }
 
     /**
+     * @return string
+     */
+    public function getTicker(): string
+    {
+        return $this->ticker;
+    }
+
+    /**
+     * @return string
+     */
+    public function getInterval(): string
+    {
+        return $this->interval;
+    }
+
+    /**
      * @return array
      */
-    public function getPrices(): array
+    public function getValues(): array
     {
         return $this->data;
     }
@@ -79,5 +99,10 @@ class Prices
     public function getTimes(): array
     {
         return $this->times;
+    }
+
+    public function count(): int
+    {
+        return $this->count;
     }
 }

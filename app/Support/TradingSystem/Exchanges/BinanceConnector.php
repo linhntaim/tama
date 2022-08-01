@@ -17,8 +17,12 @@ class BinanceConnector extends Connector
 
     public function getPrices(string $ticker, string $interval, int $limit = 1000): Prices
     {
-        return new BinanceCandles($this->spot->klines($ticker, $interval, [
-            'limit' => $limit,
-        ]), $interval);
+        return new BinanceCandles(
+            $ticker,
+            $interval,
+            $this->spot->klines($ticker, $interval, [
+                'limit' => $limit,
+            ])
+        );
     }
 }
