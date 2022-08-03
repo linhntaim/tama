@@ -71,22 +71,31 @@ class TradesCommand extends Command
 
     protected function describe(array $indicates): string
     {
-        return implode(
-            PHP_EOL . str_repeat('=', 30) . PHP_EOL,
-            array_map(
-                function ($signal) {
-                    return sprintf(
-                            '%s signal at %s when price is %s.',
-                            $signal['value'] == -1 ? 'Buy' : 'Sell',
-                            $signal['time'],
-                            $signal['price'],
-                        )
-                        . PHP_EOL . 'Meta:'
-                        . $this->describeArray($signal['meta']);
-                },
-                $indicates
+        return sprintf(
+                'Exchange: %s - Ticker: %s - Interval: %s - Oscillator: %s - Count: %s',
+                $this->exchange(),
+                $this->ticker(),
+                $this->interval(),
+                $this->oscillatorName(),
+                count($indicates),
             )
-        );
+            . PHP_EOL . str_repeat('=', 30) . PHP_EOL
+            . implode(
+                PHP_EOL . str_repeat('=', 30) . PHP_EOL,
+                array_map(
+                    function ($signal) {
+                        return sprintf(
+                                '%s signal at %s when price is %s.',
+                                $signal['value'] == -1 ? 'Buy' : 'Sell',
+                                $signal['time'],
+                                $signal['price'],
+                            )
+                            . PHP_EOL . 'Meta:'
+                            . $this->describeArray($signal['meta']);
+                    },
+                    $indicates
+                )
+            );
     }
 
     protected function handling(): int
