@@ -83,7 +83,7 @@ class RsiComponent extends Component
                         ? 'high_lower' : ($rsiValue < $this->upperBand()
                             ? 'low_upper' : 'upper')),
 
-                'trades' => [],
+                'signals' => [],
             ];
 
             if (!$start && !$end) {
@@ -116,20 +116,16 @@ class RsiComponent extends Component
                                     $jPriceValue = $priceValues[$j];
                                     if ($jRsiValue > min($d2RsiValue, $lowestRsiValue)) {
                                         if ($jRsiValue > $d2RsiValue && $jPriceValue < $d2PriceValue) {
-                                            $data[$index]['trades'][] = [
-                                                'type' => 'bullish_divergence',
-                                                'strength' => 'hidden',
-                                                'divergence_1' => [
-                                                    'time' => $jTimeValue,
-                                                    'price' => $jPriceValue,
-                                                    'rsi' => $jRsiValue,
-                                                ],
-                                                'divergence_2' => [
-                                                    'time' => $d2TimeValue,
-                                                    'rsi' => $d2RsiValue,
-                                                    'price' => $d2PriceValue,
-                                                ],
-                                            ];
+                                            $data[$index]['signals'][] = $this->createDivergenceSignal(
+                                                'bullish_divergence',
+                                                'hidden',
+                                                $jTimeValue,
+                                                $jPriceValue,
+                                                $jRsiValue,
+                                                $d2TimeValue,
+                                                $d2PriceValue,
+                                                $d2RsiValue,
+                                            );
                                             break;
                                         }
                                         continue;
@@ -138,22 +134,18 @@ class RsiComponent extends Component
                                         continue;
                                     }
                                     if ($jPriceValue >= $d2PriceValue) {
-                                        $data[$index]['trades'][] = [
-                                            'type' => 'bullish_divergence',
-                                            'strength' => $jRsiValue == $d2RsiValue
+                                        $data[$index]['signals'][] = $this->createDivergenceSignal(
+                                            'bullish_divergence',
+                                            $jRsiValue == $d2RsiValue
                                                 ? 'weak'
                                                 : ($jPriceValue == $d2PriceValue ? 'medium' : 'strong'),
-                                            'divergence_1' => [
-                                                'time' => $jTimeValue,
-                                                'price' => $jPriceValue,
-                                                'rsi' => $jRsiValue,
-                                            ],
-                                            'divergence_2' => [
-                                                'time' => $d2TimeValue,
-                                                'price' => $d2PriceValue,
-                                                'rsi' => $d2RsiValue,
-                                            ],
-                                        ];
+                                            $jTimeValue,
+                                            $jPriceValue,
+                                            $jRsiValue,
+                                            $d2TimeValue,
+                                            $d2PriceValue,
+                                            $d2RsiValue,
+                                        );
                                         break;
                                     }
                                     if ($jRsiValue < $lowestRsiValue) {
@@ -186,20 +178,16 @@ class RsiComponent extends Component
                                     $jPriceValue = $priceValues[$j];
                                     if ($jRsiValue < max($d2RsiValue, $highestRsiValue)) {
                                         if ($jRsiValue < $d2RsiValue && $jPriceValue > $d2PriceValue) {
-                                            $data[$index]['trades'][] = [
-                                                'type' => 'bearish_divergence',
-                                                'strength' => 'hidden',
-                                                'divergence_1' => [
-                                                    'time' => $jTimeValue,
-                                                    'price' => $jPriceValue,
-                                                    'rsi' => $jRsiValue,
-                                                ],
-                                                'divergence_2' => [
-                                                    'time' => $d2TimeValue,
-                                                    'rsi' => $d2RsiValue,
-                                                    'price' => $d2PriceValue,
-                                                ],
-                                            ];
+                                            $data[$index]['signals'][] = $this->createDivergenceSignal(
+                                                'bearish_divergence',
+                                                'hidden',
+                                                $jTimeValue,
+                                                $jPriceValue,
+                                                $jRsiValue,
+                                                $d2TimeValue,
+                                                $d2PriceValue,
+                                                $d2RsiValue,
+                                            );
                                             break;
                                         }
                                         continue;
@@ -208,22 +196,18 @@ class RsiComponent extends Component
                                         continue;
                                     }
                                     if ($jPriceValue <= $d2PriceValue) {
-                                        $data[$index]['trades'][] = [
-                                            'type' => 'bearish_divergence',
-                                            'strength' => $jRsiValue == $d2RsiValue
+                                        $data[$index]['signals'][] = $this->createDivergenceSignal(
+                                            'bearish_divergence',
+                                            $jRsiValue == $d2RsiValue
                                                 ? 'weak'
                                                 : ($jPriceValue == $d2PriceValue ? 'medium' : 'strong'),
-                                            'divergence_1' => [
-                                                'time' => $jTimeValue,
-                                                'price' => $jPriceValue,
-                                                'rsi' => $jRsiValue,
-                                            ],
-                                            'divergence_2' => [
-                                                'time' => $d2TimeValue,
-                                                'price' => $d2PriceValue,
-                                                'rsi' => $d2RsiValue,
-                                            ],
-                                        ];
+                                            $jTimeValue,
+                                            $jPriceValue,
+                                            $jRsiValue,
+                                            $d2TimeValue,
+                                            $d2PriceValue,
+                                            $d2RsiValue,
+                                        );
                                         break;
                                     }
                                     if ($jRsiValue > $highestRsiValue) {
@@ -240,6 +224,30 @@ class RsiComponent extends Component
         return $packet->set('analyzers.rsi', $data);
     }
 
+    protected function createSignal($type, $strength, array $additional = []): array
+    {
+        return array_merge([
+            'type' => $type,
+            'strength' => $strength,
+        ], $additional);
+    }
+
+    protected function createDivergenceSignal($type, $strength, $time1, $price1, $rsi1, $time2, $price2, $rsi2): array
+    {
+        return $this->createSignal($type, $strength, [
+            'divergence_1' => [
+                'time' => $time1,
+                'price' => $price1,
+                'rsi' => $rsi1,
+            ],
+            'divergence_2' => [
+                'time' => $time2,
+                'price' => $price2,
+                'rsi' => $rsi2,
+            ],
+        ]);
+    }
+
     protected function transform(Packet $packet): Packet
     {
         return $packet->set(
@@ -249,15 +257,15 @@ class RsiComponent extends Component
                     return [
                         'value' => $value = is_null($item['rsi'])
                             ? 0
-                            : (function (Collection $trades) {
-                                return $trades->whereIn('type', [
+                            : (function (Collection $signals) {
+                                return $signals->whereIn('type', [
                                     'bearish_divergence',
                                 ])->count() > 0
                                     ? 1
-                                    : ($trades->whereIn('type', [
+                                    : ($signals->whereIn('type', [
                                         'bullish_divergence',
                                     ])->count() > 0 ? -1 : 0);
-                            })(collect($item['trades'])),
+                            })(collect($item['signals'])),
                         'time' => $item['time'],
                         'price' => $item['price'],
                         'meta' => $value == 0
@@ -266,7 +274,7 @@ class RsiComponent extends Component
                                 [
                                     'type' => 'rsi',
                                     'rsi' => $item['rsi'],
-                                    'trades' => $item['trades'],
+                                    'signals' => $item['signals'],
                                 ],
                             ],
                     ];
