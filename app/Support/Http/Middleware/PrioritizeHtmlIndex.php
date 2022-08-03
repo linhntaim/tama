@@ -34,7 +34,7 @@ class PrioritizeHtmlIndex
     public function handle(Request $request, Closure $next)
     {
         if ($htmlIndexFile = $this->htmlIndexFile($request)) {
-            return $this->responseFile($request, $htmlIndexFile);
+            return $this->responseFile($request, $htmlIndexFile)->setMaxAge(315360000);
         }
         return $next($request);
     }

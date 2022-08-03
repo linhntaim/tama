@@ -2,19 +2,17 @@
 
 namespace App\Trading\Console\Commands\Telegram;
 
-use App\Trading\Bots\OscillatingBot;
+use App\Trading\Bots\BotFactory;
 use App\Trading\Notifications\Telegram\ConsoleNotification;
 use App\Trading\Notifications\TelegramUpdateNotifiable;
 
 class TradesCommand extends Command
 {
-    public $signature = '{--latest=1} {--exchange=binance} {--ticker=BTCUSDT} {--interval=1d} {--oscillator-name=rsi}';
+    public $signature = '{--bot=oscillating_bot} {--exchange=binance} {--ticker=BTCUSDT} {--interval=1d} {--latest=1} {--bot-options=}';
 
-    protected function latest(): int
+    protected function bot(): string
     {
-        return modify((int)($this->option('latest') ?? 1), function (int $latest) {
-            return $latest > 0 ? $latest : 1;
-        });
+        return $this->option('bot') ?? 'oscillating_bot';
     }
 
     protected function exchange(): string
@@ -32,94 +30,39 @@ class TradesCommand extends Command
         return $this->option('interval') ?? '1d';
     }
 
-    protected function oscillatorName(): string
+    protected function latest(): int
     {
-        return $this->option('oscillator-name') ?? 'rsi';
+        return modify((int)($this->option('latest') ?? 1), function (int $latest) {
+            return $latest > 0 && $latest <= 5 ? $latest : 1;
+        });
     }
 
-    protected function oscillatorOptions(): array
+    protected function botOptions(): array
     {
-        return [];
+        return not_null_or(json_decode_array($this->option('bot-options') ?? ''), []);
     }
 
-    protected function describeArray(array $array, $level = 0, $parentIsAssoc = false): string
+    protected function mergeBotOptions(): array
     {
-        $output = '';
-        $first = true;
-        foreach ($array as $key => $item) {
-            if (is_int($key)) {
-                if (is_array($item)) {
-                    $output .= $this->describeArray($item, !$parentIsAssoc ? $level + 1 : $level);
-                }
-                else {
-                    $output .= PHP_EOL . str_repeat(' ', $level) . $item;
-                }
-            }
-            else {
-                if (is_array($item)) {
-                    $output .= PHP_EOL . str_repeat(' ', $level) . $key . ':';
-                    $output .= $this->describeArray($item, $level + 1, true);
-                }
-                else {
-                    $output .= PHP_EOL . ($first && !$parentIsAssoc ? (str_repeat(' ', $level - 1)) . '-' : str_repeat(' ', $level)) . $key . ': ' . $item;
-                }
-            }
-            $first = false;
-        }
-        return $output;
-    }
-
-    protected function describe(array $indicates): string
-    {
-        return sprintf(
-                'Exchange: %s - Ticker: %s - Interval: %s - Oscillator: %s - Count: %s',
-                $this->exchange(),
-                $this->ticker(),
-                $this->interval(),
-                $this->oscillatorName(),
-                count($indicates),
-            )
-            . PHP_EOL . str_repeat('=', 30) . PHP_EOL
-            . implode(
-                PHP_EOL . str_repeat('=', 30) . PHP_EOL,
-                array_map(
-                    function ($signal) {
-                        return sprintf(
-                                '%s signal at %s when price is %s.',
-                                $signal['value'] == -1 ? 'Buy' : 'Sell',
-                                $signal['time'],
-                                $signal['price'],
-                            )
-                            . PHP_EOL . 'Meta:'
-                            . $this->describeArray($signal['meta']);
-                    },
-                    $indicates
-                )
-            );
+        return array_merge([
+            'exchange' => $this->exchange(),
+            'ticker' => $this->ticker(),
+            'interval' => $this->interval(),
+            'latest' => $this->latest(),
+        ], $this->botOptions());
     }
 
     protected function handling(): int
     {
         ConsoleNotification::send(
             new TelegramUpdateNotifiable($this->telegramUpdate),
-            $this->describe(
-                array_slice(
-                    array_reverse(
-                        (new OscillatingBot([
-                            'exchange' => $this->exchange(),
-                            'ticker' => $this->ticker(),
-                            'interval' => $this->interval(),
-                            'oscillator' => [
-                                'name' => $this->oscillatorName(),
-                                'options' => $this->oscillatorOptions(),
-                            ],
-                        ]))->indicate()
-                    ),
-                    0,
-                    $this->latest()
-                )
-            )
+            $this->report()
         );
         return $this->exitSuccess();
+    }
+
+    protected function report(): string
+    {
+        return BotFactory::factory($this->bot(), $this->mergeBotOptions())->report();
     }
 }

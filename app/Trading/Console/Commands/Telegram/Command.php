@@ -28,7 +28,7 @@ abstract class Command extends BaseCommand
         if (is_null($telegram = $this->option('telegram-update'))) {
             throw new InvalidArgumentException('Telegram update option must be provided.');
         }
-        $this->telegramUpdate = new TelegramUpdate(json_decode($telegram, true));
+        $this->telegramUpdate = new TelegramUpdate(json_decode(base64_decode($telegram), true));
 
         parent::handleBefore();
     }
