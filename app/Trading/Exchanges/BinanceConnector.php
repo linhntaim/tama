@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Support\TradingSystem\Exchanges;
+namespace App\Trading\Exchanges;
 
-use App\Support\TradingSystem\Prices\BinanceCandles;
-use App\Support\TradingSystem\Prices\Prices;
+use App\Trading\Prices\BinanceCandles;
+use App\Trading\Prices\Prices;
 use Binance\Spot as BinanceSpot;
 
 class BinanceConnector extends Connector
@@ -17,6 +17,7 @@ class BinanceConnector extends Connector
 
     public function getPrices(string $ticker, string $interval, int $limit = 1000): Prices
     {
+        $ticker = strtoupper($ticker);
         return new BinanceCandles(
             $ticker,
             $interval,

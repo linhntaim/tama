@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Support\TradingSystem\Bots\Oscillators;
+namespace App\Trading\Bots\Oscillators;
 
-use App\Support\TradingSystem\Prices\Prices;
+use App\Trading\Prices\Prices;
 
 abstract class Component
 {

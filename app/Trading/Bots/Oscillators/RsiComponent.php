@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Support\TradingSystem\Bots\Oscillators;
+namespace App\Trading\Bots\Oscillators;
 
-use App\Support\TradingSystem\Trader;
+use App\Trading\Trader;
 use Illuminate\Support\Collection;
 
 class RsiComponent extends Component

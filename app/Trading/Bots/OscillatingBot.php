@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Support\TradingSystem\Bots;
+namespace App\Trading\Bots;
 
-use App\Support\TradingSystem\Bots\Oscillators\Oscillator;
-use App\Support\TradingSystem\Bots\Oscillators\RsiOscillator;
-use App\Support\TradingSystem\Exchanges\BinanceConnector;
-use App\Support\TradingSystem\Exchanges\Connector as ExchangeConnector;
+use App\Trading\Bots\Oscillators\Oscillator;
+use App\Trading\Bots\Oscillators\RsiOscillator;
+use App\Trading\Exchanges\BinanceConnector;
+use App\Trading\Exchanges\Connector as ExchangeConnector;
 
 class OscillatingBot extends Bot
 {
@@ -42,16 +42,7 @@ class OscillatingBot extends Bot
         );
     }
 
-    public function act(): void
-    {
-        $this->broadcast(
-            $this->determine(
-                $this->indicate()
-            )
-        );
-    }
-
-    protected function indicate(): array
+    public function indicate(): array
     {
         return $this->oscillator()->run(
             $this->exchangeConnector()->getPrices(
@@ -61,13 +52,13 @@ class OscillatingBot extends Bot
         );
     }
 
-    protected function determine(array $output): array
+    public function determine(): array
     {
-        return $output;
+        return $this->indicate();
     }
 
-    protected function broadcast(array $output)
+    public function broadcast(): array
     {
-        print_r($output);
+        return $this->determine();
     }
 }

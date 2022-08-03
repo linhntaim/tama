@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support\TradingSystem\Bots\Oscillators;
+namespace App\Trading\Bots\Oscillators;
 
 class RsiOscillator extends Oscillator
 {
@@ -15,7 +15,6 @@ class RsiOscillator extends Oscillator
             ->filter(function ($item) {
                 return $item['value'] != 0;
             })
-            ->keyBy('time')
             ->all();
     }
 }

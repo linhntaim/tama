@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support\TradingSystem\Bots\Oscillators;
+namespace App\Trading\Bots\Oscillators;
 
 class Packet
 {

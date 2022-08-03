@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Support\TradingSystem\Exchanges;
+namespace App\Trading\Exchanges;
 
-use App\Support\TradingSystem\Prices\Prices;
+use App\Trading\Prices\Prices;
 
 abstract class Connector
 {

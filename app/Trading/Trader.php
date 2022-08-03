@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Support\TradingSystem;
+namespace App\Trading;
 
 use BadMethodCallException;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 
 /**
  * @see https://www.php.net/manual/en/function.trader-ema.php
@@ -38,16 +39,24 @@ class Trader
     public const INTERVAL_3_DAYS = '3d';
     public const INTERVAL_1_WEEK = '1w';
     public const INTERVAL_1_MONTH = '1M';
+    public const MA_TYPE_SMA = 'MA_TYPE_SMA';
+    public const MA_TYPE_EMA = 'MA_TYPE_EMA';
+    public const MA_TYPE_WMA = 'MA_TYPE_WMA';
+    public const MA_TYPE_DEMA = 'MA_TYPE_DEMA';
+    public const MA_TYPE_TEMA = 'MA_TYPE_TEMA';
+    public const MA_TYPE_TRIMA = 'MA_TYPE_TRIMA';
+    public const MA_TYPE_KAMA = 'MA_TYPE_KAMA';
+    public const MA_TYPE_MAMA = 'MA_TYPE_MAMA';
+    public const MA_TYPE_T3 = 'MA_TYPE_T3';
 
-    public const TRADER_MA_TYPE_SMA = TRADER_MA_TYPE_SMA;
-    public const TRADER_MA_TYPE_EMA = TRADER_MA_TYPE_EMA;
-    public const TRADER_MA_TYPE_WMA = TRADER_MA_TYPE_WMA;
-    public const TRADER_MA_TYPE_DEMA = TRADER_MA_TYPE_DEMA;
-    public const TRADER_MA_TYPE_TEMA = TRADER_MA_TYPE_TEMA;
-    public const TRADER_MA_TYPE_TRIMA = TRADER_MA_TYPE_TRIMA;
-    public const TRADER_MA_TYPE_KAMA = TRADER_MA_TYPE_KAMA;
-    public const TRADER_MA_TYPE_MAMA = TRADER_MA_TYPE_MAMA;
-    public const TRADER_MA_TYPE_T3 = TRADER_MA_TYPE_T3;
+    public static function constant(string $name)
+    {
+        $name = 'TRADER_' . strtoupper($name);
+        if (!defined($name)) {
+            throw new InvalidArgumentException('Constant does not exist.');
+        }
+        return constant($name);
+    }
 
     public static function __callStatic(string $name, array $arguments)
     {

@@ -35,4 +35,7 @@ return [
         'api_key' => env('COIN_MARKET_CAP_API_KEY'),
     ],
 
+    'telegram-bot-api' => [
+        'token' => env('TELEGRAM_BOT_TOKEN', 'YOUR BOT TOKEN HERE')
+    ],
 ];
