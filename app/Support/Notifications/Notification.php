@@ -17,11 +17,16 @@ class Notification extends BaseNotification
 {
     use ClassTrait, InternalSettings;
 
-    public static function sendOnDemand(array $routes, mixed ...$args)
+    public static function sendOnDemand(array|AnonymousNotifiable $routes, mixed ...$args)
     {
-        $notifiable = new AnonymousNotifiable;
-        foreach ($routes as $channel => $route) {
-            $notifiable->route($channel, $route);
+        if ($routes instanceof AnonymousNotifiable) {
+            $notifiable = $routes;
+        }
+        else {
+            $notifiable = new AnonymousNotifiable;
+            foreach ($routes as $channel => $route) {
+                $notifiable->route($channel, $route);
+            }
         }
         $notifiable->notify(new static(...$args));
     }
