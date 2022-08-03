@@ -5,7 +5,6 @@ namespace App\Trading\Console\Commands\Telegram;
 use App\Trading\Bots\OscillatingBot;
 use App\Trading\Notifications\Telegram\ConsoleNotification;
 use App\Trading\Notifications\TelegramUpdateNotifiable;
-use Illuminate\Support\Arr;
 
 class TradesCommand extends Command
 {
