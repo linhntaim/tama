@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\Trial\FileController as TrialFileController;
 use App\Http\Controllers\Api\Trial\JobController as TrialJobController;
 use App\Http\Controllers\Api\Trial\UserController as TrialUserController;
 use App\Http\Controllers\Api\WelcomeController;
+use App\Trading\Http\Controllers\Api\Integration\Telegram\BotController as TelegramBotController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -114,6 +115,16 @@ Route::group([
     });
 });
 Route::get('swing-trade/{exchange}/{indicator}', [SwingTradeController::class, 'show']);
+
+Route::group([
+    'prefix' => 'integration',
+], function () {
+    Route::group([
+        'prefix' => 'telegram',
+    ], function () {
+        Route::post('bot', [TelegramBotController::class, 'store']);
+    });
+});
 
 Route::any('{path?}', [WelcomeController::class, 'index'])
     ->where('path', '.*');
