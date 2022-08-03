@@ -4,45 +4,30 @@ namespace App\Trading\Bots;
 
 use App\Trading\Bots\Oscillators\Oscillator;
 use App\Trading\Bots\Oscillators\RsiOscillator;
-use App\Trading\Exchanges\BinanceConnector;
-use App\Trading\Exchanges\Connector as ExchangeConnector;
 
 class OscillatingBot extends Bot
 {
-    protected function exchange()
-    {
-        return $this->options['exchange'] ?? 'binance';
-    }
+    protected string $oscillatorName;
 
-    protected function exchangeConnector(): ExchangeConnector
+    public function oscillatorName()
     {
-        return match ($this->exchange()) {
-            default => new BinanceConnector(),
-        };
-    }
-
-    protected function ticker()
-    {
-        return $this->options['ticker'] ?? 'BTCUSDT';
-    }
-
-    protected function interval()
-    {
-        return $this->options['interval'] ?? '1d';
+        return $this->oscillatorName ?? $this->oscillatorName = $this->options['oscillator']['name'] ?? 'rsi';
     }
 
     protected function oscillator(): Oscillator
     {
-        $oscillatorOption = $this->options['oscillator'] ?? [];
         return (fn($class, $options) => new $class($options))(
-            (fn($name) => match ($name) {
-                default => RsiOscillator::class
-            })($oscillatorOption['name'] ?? 'rsi'),
-            $oscillatorOption['options'] ?? []
+            (fn() => match ($this->oscillatorName()) {
+                'rsi' => RsiOscillator::class,
+                default => take(RsiOscillator::class, function () {
+                    $this->oscillatorName = 'rsi';
+                })
+            })(),
+            $this->options['oscillator']['options'] ?? []
         );
     }
 
-    public function indicate(): array
+    public function discover(): array
     {
         return $this->oscillator()->run(
             $this->exchangeConnector()->getPrices(
@@ -52,13 +37,8 @@ class OscillatingBot extends Bot
         );
     }
 
-    public function determine(): array
+    protected function reporterClass(): string
     {
-        return $this->indicate();
-    }
-
-    public function broadcast(): array
-    {
-        return $this->determine();
+        return OscillatingBotReporter::class;
     }
 }

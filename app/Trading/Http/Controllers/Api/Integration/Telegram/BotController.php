@@ -12,20 +12,27 @@ class BotController extends ApiController
 {
     public function store(Request $request)
     {
-        if (is_null($command = $this->parseCommandFromMessageText($request->input('message.text')))) {
+        if (!$this->matchSecret($request)) {
+            report(new InvalidArgumentException('Secret from header does not match.'));
+        }
+        elseif (is_null($command = $this->parseCommandFromMessageText($request->input('message.text')))) {
             report(new InvalidArgumentException('Message is invalid.'));
-            return $this->responseContent($request);
         }
-        try {
-            return $this->responseContent(
-                $request,
-                $this->execute($request, $this->transform($request, $command))
-            );
+        else {
+            try {
+                $this->execute($request, $this->transform($request, $command));
+            }
+            catch (Throwable $throwable) {
+                report($throwable);
+            }
         }
-        catch (Throwable $throwable) {
-            report($throwable);
-            return $this->responseContent($request);
-        }
+        return $this->responseContent($request);
+    }
+
+    protected function matchSecret(Request $request): bool
+    {
+        return is_null($secret = config('services.telegram-bot-api.webhook_secret'))
+            || $request->header('X-Telegram-Bot-Api-Secret-Token') == $secret;
     }
 
     protected function parseCommandFromMessageText(?string $messageText): ?string
@@ -49,7 +56,7 @@ class BotController extends ApiController
         if ($command == 'telegram:hello') {
             $command = 'telegram:ping';
         }
-        return $command . sprintf(' --telegram-update=\'%s\'', $request->getContent());
+        return $command . sprintf(' --telegram-update=\'%s\'', base64_encode($request->getContent()));
     }
 
     protected function execute(Request $request, string $command): string
