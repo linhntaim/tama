@@ -5,18 +5,27 @@ namespace App\Trading\Http\Controllers\Api\Integration\Telegram;
 use App\Support\Facades\Artisan;
 use App\Support\Http\Controllers\ApiController;
 use Illuminate\Http\Request;
+use InvalidArgumentException;
+use Throwable;
 
 class BotController extends ApiController
 {
     public function store(Request $request)
     {
         if (is_null($command = $this->parseCommandFromMessageText($request->input('message.text')))) {
-            $this->abort404();
+            report(new InvalidArgumentException('Message is invalid.'));
+            return $this->responseContent($request);
         }
-        return $this->responseContent(
-            $request,
-            $this->execute($request, $this->transform($request, $command))
-        );
+        try {
+            return $this->responseContent(
+                $request,
+                $this->execute($request, $this->transform($request, $command))
+            );
+        }
+        catch (Throwable $throwable) {
+            report($throwable);
+            return $this->responseContent($request);
+        }
     }
 
     protected function parseCommandFromMessageText(?string $messageText): ?string
