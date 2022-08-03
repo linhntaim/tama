@@ -48,7 +48,7 @@ abstract class Command extends BaseCommand
     {
         return $this->definitionForDescriptor ?? $this->definitionForDescriptor = modify(new InputDefinition(), function (InputDefinition $inputDefinition) {
                 $inputDefinition->setArguments($this->getNativeDefinition()->getArguments());
-                $inputDefinition->setOptions(array_filter($this->getOptions(), function (InputOption $option) {
+                $inputDefinition->setOptions(array_filter($this->getNativeDefinition()->getOptions(), function (InputOption $option) {
                     return !in_array($option->getName(), [
                         'telegram-update',
                         'x-debug',
