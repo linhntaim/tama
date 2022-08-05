@@ -48,8 +48,8 @@ class BotBroadcaster
 
     protected function fineTime(Indication $indication): bool
     {
-        return $indication->get('now')
-            && Carbon::now()->diffInSeconds($indication->get('time')) < self::IN_SECONDS;
+        return $indication->get('action_now')
+            && Carbon::now()->diffInSeconds($indication->get('action_time')) < self::IN_SECONDS;
     }
 
     protected function fineToCreateBroadcast(Indication $indication): bool
@@ -59,7 +59,7 @@ class BotBroadcaster
             ->pinModel()
             ->first([
                 'trading_id' => $this->trading->id,
-                'time' => $indication->get('time'),
+                'time' => $indication->get('action_time'),
             ]);
         if (!is_null($tradingBroadcast) && !$tradingBroadcast->failed) {
             return false;
@@ -67,7 +67,7 @@ class BotBroadcaster
         if (is_null($tradingBroadcast)) {
             $this->provider->createWithAttributes([
                 'trading_id' => $this->trading->id,
-                'time' => $indication->get('time'),
+                'time' => $indication->get('action_time'),
             ]);
         }
         else {
