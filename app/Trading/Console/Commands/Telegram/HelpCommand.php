@@ -12,7 +12,7 @@ use Symfony\Component\Console\Output\BufferedOutput;
 
 class HelpCommand extends Command
 {
-    public $signature = '{command_name? : Command name (eg. help, hello, ...).}';
+    public $signature = '{command_name? : Command name (eg. help, ping, ...).}';
 
     protected $description = 'Show the guide.';
 

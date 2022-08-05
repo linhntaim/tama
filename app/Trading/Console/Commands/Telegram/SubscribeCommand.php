@@ -87,6 +87,16 @@ class SubscribeCommand extends Command
                 $chat['id'] . '@telegram.group',
                 $chat['id'],
             ),
+            'supergroup' => $this->createUser(
+                $chat['title'],
+                $chat['id'] . '@telegram.supergroup',
+                $chat['id'],
+            ),
+            'channel' => $this->createUser(
+                $chat['title'],
+                $chat['id'] . '@telegram.channel',
+                $chat['id'],
+            ),
             default => null,
         };
     }
