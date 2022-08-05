@@ -39,6 +39,23 @@ class Trader
     public const INTERVAL_3_DAYS = '3d';
     public const INTERVAL_1_WEEK = '1w';
     public const INTERVAL_1_MONTH = '1M';
+    public const INTERVAL_TO_MINUTES = [
+        self::INTERVAL_1_MINUTE => 1,
+        self::INTERVAL_3_MINUTES => 3,
+        self::INTERVAL_5_MINUTES => 5,
+        self::INTERVAL_15_MINUTES => 15,
+        self::INTERVAL_30_MINUTES => 30,
+        self::INTERVAL_1_HOUR => 60,
+        self::INTERVAL_2_HOURS => 120,
+        self::INTERVAL_4_HOURS => 240,
+        self::INTERVAL_6_HOURS => 360,
+        self::INTERVAL_8_HOURS => 480,
+        self::INTERVAL_12_HOURS => 720,
+        self::INTERVAL_1_DAY => 1440,
+        self::INTERVAL_3_DAYS => 3 * 1440,
+        self::INTERVAL_1_WEEK => 7 * 1440,
+        self::INTERVAL_1_MONTH => 30 * 1440,
+    ];
     public const MA_TYPE_SMA = 'MA_TYPE_SMA';
     public const MA_TYPE_EMA = 'MA_TYPE_EMA';
     public const MA_TYPE_WMA = 'MA_TYPE_WMA';

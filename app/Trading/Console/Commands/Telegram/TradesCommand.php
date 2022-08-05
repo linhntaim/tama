@@ -2,13 +2,17 @@
 
 namespace App\Trading\Console\Commands\Telegram;
 
+use App\Trading\Bots\Bot;
 use App\Trading\Bots\BotFactory;
+use App\Trading\Bots\BotReporter;
 use App\Trading\Notifications\Telegram\ConsoleNotification;
 use App\Trading\Notifications\TelegramUpdateNotifiable;
 
 class TradesCommand extends Command
 {
     public $signature = '{--bot=oscillating_bot} {--exchange=binance} {--ticker=BTCUSDT} {--interval=1d} {--latest=1} {--bot-options=}';
+
+    protected $description = 'Get latest possible tradings.';
 
     protected function bot(): string
     {
@@ -48,7 +52,6 @@ class TradesCommand extends Command
             'exchange' => $this->exchange(),
             'ticker' => $this->ticker(),
             'interval' => $this->interval(),
-            'latest' => $this->latest(),
         ], $this->botOptions());
     }
 
@@ -63,6 +66,11 @@ class TradesCommand extends Command
 
     protected function report(): string
     {
-        return BotFactory::factory($this->bot(), $this->mergeBotOptions())->report();
+        return $this->reportIndication(BotFactory::create($this->bot(), $this->mergeBotOptions()));
+    }
+
+    protected function reportIndication(Bot $bot): string
+    {
+        return (new BotReporter())->report($bot, $bot->indicate($this->latest()));
     }
 }
