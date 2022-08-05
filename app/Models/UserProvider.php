@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
  * @method  User|null model(Model|callable|int|string $model = null, bool $byUnique = true)
  * @method  User|null executeFirst(Builder $query)
  * @method  User|null firstByKey(int|string $key)
+ * @method  User firstOrCreateWithAttributes(array $attributes = [], array $values = [])
  * @method  User createWithAttributes(array $attributes = [])
  */
 class UserProvider extends ModelProvider implements IUserProvider
@@ -56,5 +57,16 @@ class UserProvider extends ModelProvider implements IUserProvider
     public function firstByEmail(string $email): ?User
     {
         return $this->executeFirst($this->whereQuery()->where('email', $email));
+    }
+
+    public function firstByProvider(string $provider, string $providerId): ?User
+    {
+        return $this->executeFirst(
+            $this->whereQuery()
+                ->whereHas('socials', function ($query) use ($provider, $providerId) {
+                    $query->where('provider', $provider)
+                        ->where('provider_id', $providerId);
+                })
+        );
     }
 }

@@ -2,11 +2,13 @@
 
 namespace App\Trading\Bots\Oscillators;
 
+use App\Trading\Bots\Indication;
 use App\Trading\Trader;
 use Illuminate\Support\Collection;
 
 class RsiComponent extends Component
 {
+    public const NAME = 'rsi';
     protected const DEFAULT_TIME_PERIOD = 14;
     protected const DEFAULT_LOWER_BAND = 30;
     protected const DEFAULT_UPPER_BAND = 70;
@@ -22,14 +24,24 @@ class RsiComponent extends Component
         return $this->options['lower_band'] ?? self::DEFAULT_LOWER_BAND;
     }
 
+    public function middleBand(): float
+    {
+        return $this->options['middle_band'] ?? self::DEFAULT_MIDDLE_BAND;
+    }
+
     public function upperBand(): float
     {
         return $this->options['upper_band'] ?? self::DEFAULT_UPPER_BAND;
     }
 
-    public function middleBand(): float
+    public function options(): array
     {
-        return $this->options['middle_band'] ?? self::DEFAULT_MIDDLE_BAND;
+        return [
+            'time_period' => $this->timePeriod(),
+            'lower_band' => $this->lowerBand(),
+            'middle_band' => $this->middleBand(),
+            'upper_band' => $this->upperBand(),
+        ];
     }
 
     protected function convert(Packet $packet): Packet
@@ -250,11 +262,12 @@ class RsiComponent extends Component
 
     protected function transform(Packet $packet): Packet
     {
+        $latestTime = $this->getPrices($packet)->getLatestTime();
         return $packet->set(
             'transformers.rsi',
             collect($packet->get('analyzers.rsi'))
-                ->map(function ($item) {
-                    return [
+                ->map(function ($item) use ($latestTime) {
+                    return new Indication([
                         'value' => $value = is_null($item['rsi'])
                             ? 0
                             : (function (Collection $signals) {
@@ -267,6 +280,7 @@ class RsiComponent extends Component
                                     ])->count() > 0 ? -1 : 0);
                             })(collect($item['signals'])),
                         'time' => $item['time'],
+                        'now' => $item['time'] == $latestTime,
                         'price' => $item['price'],
                         'meta' => $value == 0
                             ? null
@@ -277,9 +291,8 @@ class RsiComponent extends Component
                                     'signals' => $item['signals'],
                                 ],
                             ],
-                    ];
+                    ]);
                 })
-                ->all()
         );
     }
 }

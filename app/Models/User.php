@@ -8,12 +8,15 @@ use App\Support\Models\IProtected;
 use App\Support\Models\SanctumUser;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
  * @property string $name
  * @property string $email
+ * @property UserSocial[]|Collection $socials
  */
 class User extends SanctumUser implements MustWelcomeEmail, IProtected
 {
@@ -98,5 +101,20 @@ class User extends SanctumUser implements MustWelcomeEmail, IProtected
                 $this->attributes['created_at']
             )
         );
+    }
+
+    public function socials(): HasMany
+    {
+        return $this->hasMany(UserSocial::class, 'user_id', 'id');
+    }
+
+    public function social(string $provider): ?UserSocial
+    {
+        return $this->socials->firstWhere('provider', $provider);
+    }
+
+    public function routeNotificationForTelegram(): ?string
+    {
+        return $this->social('telegram')?->provider_id;
     }
 }
