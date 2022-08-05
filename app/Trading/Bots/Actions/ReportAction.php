@@ -23,7 +23,10 @@ class ReportAction implements IAction
     {
         ConsoleNotification::send(
             $trading->subscribers,
-            (new BotReporter($this->map, $this->default))->report($bot, collect([$indication]))
+            '._______________.' . PHP_EOL
+            . '| BOT BROADCAST |' . PHP_EOL
+            . '˙‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾˙' . PHP_EOL
+            . (new BotReporter($this->map, $this->default))->report($bot, collect([$indication]))
         );
     }
 }
