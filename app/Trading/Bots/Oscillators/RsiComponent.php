@@ -4,6 +4,7 @@ namespace App\Trading\Bots\Oscillators;
 
 use App\Trading\Bots\Indication;
 use App\Trading\Trader;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 class RsiComponent extends Component
@@ -263,10 +264,11 @@ class RsiComponent extends Component
     protected function transform(Packet $packet): Packet
     {
         $latestTime = $this->getPrices($packet)->getLatestTime();
+        $interval = $this->getPrices($packet)->getInterval();
         return $packet->set(
             'transformers.rsi',
             collect($packet->get('analyzers.rsi'))
-                ->map(function ($item) use ($latestTime) {
+                ->map(function ($item) use ($latestTime, $interval) {
                     return new Indication([
                         'value' => $value = is_null($item['rsi'])
                             ? 0
@@ -280,7 +282,10 @@ class RsiComponent extends Component
                                     ])->count() > 0 ? -1 : 0);
                             })(collect($item['signals'])),
                         'time' => $item['time'],
-                        'now' => $item['time'] == $latestTime,
+                        'action_time' => $actionTime = Carbon::parse($item['time'])
+                            ->addMinutes(Trader::INTERVAL_TO_MINUTES[$interval])
+                            ->format('Y-m-d H:i:s'),
+                        'action_now' => $actionTime == $latestTime,
                         'price' => $item['price'],
                         'meta' => $value == 0
                             ? null
