@@ -7,6 +7,8 @@ use App\Trading\Notifications\TelegramUpdateNotifiable;
 
 class PingCommand extends Command
 {
+    protected $description = 'Check if the bot is responsible (alias: /hello).';
+
     protected function handling(): int
     {
         PingNotification::send(new TelegramUpdateNotifiable($this->telegramUpdate));

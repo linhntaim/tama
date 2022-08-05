@@ -14,20 +14,13 @@ class HelpCommand extends Command
 {
     public $signature = '{command_name? : Command name (eg. help, hello, ...).}';
 
+    protected $description = 'Show the guide.';
+
     protected function handling(): int
     {
         $output = new BufferedOutput;
         if (is_null($commandName = $this->argument('command_name'))) {
-            $output->writeln('Available commands:');
-            $availableCommands = [
-                '/help' => 'Help',
-                '/ping' => 'Check if the bot is responsible (alias: /hello)',
-                '/trades' => 'Get latest possible trades',
-            ];
-            $maxNameLength = max(array_map(fn($key) => strlen($key), array_keys($availableCommands)));
-            foreach ($availableCommands as $name => $desc) {
-                $output->writeln(sprintf('  <comment>%s</comment>%s%s.', $name, str_repeat(' ', $maxNameLength - strlen($name) + 2), $desc));
-            }
+            $this->describeAvailableCommands($output);
             $output->writeln('');
             $this->describe($output, $this);
         }
@@ -36,6 +29,33 @@ class HelpCommand extends Command
         }
         ConsoleNotification::send(new TelegramUpdateNotifiable($this->telegramUpdate), $output->fetch());
         return $this->exitSuccess();
+    }
+
+    protected function describeAvailableCommands(BufferedOutput $output)
+    {
+        $output->writeln('Available commands:');
+        $commands = collect($this->getApplication()->findByNamespaces('telegram'))
+            ->map(function (Command $command) {
+                return [
+                    'name' => sprintf('/%s', substr($command->getName(), strlen('telegram:'))),
+                    'description' => $command->getDescription(),
+                ];
+            });
+        $maxNameLength = $commands
+            ->pluck('name')
+            ->map(function ($name) {
+                return strlen($name);
+            })
+            ->max();
+        foreach ($commands as $command) {
+            $output->writeln(
+                sprintf(
+                    '  <comment>%s</comment>%s%s', $command['name'],
+                    str_repeat(' ', $maxNameLength - strlen($command['name']) + 2),
+                    $command['description']
+                )
+            );
+        }
     }
 
     protected function describe(BufferedOutput $output, $command)

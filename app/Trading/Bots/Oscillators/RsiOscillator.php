@@ -2,19 +2,28 @@
 
 namespace App\Trading\Bots\Oscillators;
 
+use App\Trading\Bots\Indication;
+use Illuminate\Support\Collection;
+
 class RsiOscillator extends Oscillator
 {
-    protected function process(Packet $packet): Packet
+    public const NAME = 'rsi';
+
+    protected function createComponents()
     {
-        return (new RsiComponent($this->options))->transmit($packet);
+        $this->addComponent(new RsiComponent($this->options));
     }
 
-    protected function output(Packet $packet): array
+    protected function process(Packet $packet): Packet
     {
-        return collect($packet->get('transformers.rsi', []))
-            ->filter(function ($item) {
-                return $item['value'] != 0;
-            })
-            ->all();
+        return $this->component(RsiComponent::NAME)->transmit($packet);
+    }
+
+    protected function output(Packet $packet): Collection
+    {
+        return $packet->get('transformers.rsi', [])
+            ->filter(function (Indication $indication) {
+                return $indication->get('value') != 0;
+            });
     }
 }
