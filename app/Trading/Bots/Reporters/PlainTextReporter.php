@@ -77,7 +77,7 @@ class PlainTextReporter extends Reporter
     {
         $lines = [];
         $lines[] = $this->divide('=');
-        $lines[] = sprintf('[%s]', $indication->get('time'));
+        $lines[] = sprintf('[%s] <%s>', $indication->get('action_time'), $indication->get('action_now') ? 'NOW' : 'PAST');
         $lines[] = sprintf('%s @ %s', $indication->get('value') == -1 ? 'BUY' : 'SELL', $indication->get('price'));
         $lines[] = $this->indicationMeta($indication->get('meta'));
         return $this->lines($lines);
