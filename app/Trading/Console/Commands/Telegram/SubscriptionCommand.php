@@ -14,7 +14,7 @@ class SubscriptionCommand extends Command
 {
     protected $description = 'List all trading subscriptions.';
 
-    protected function findUser(): User
+    protected function findUser(): ?User
     {
         return (new UserProvider())
             ->notStrict()
@@ -23,12 +23,12 @@ class SubscriptionCommand extends Command
 
     protected function handling(): int
     {
-        if (!is_null($user = $this->findUser())) {
-            ConsoleNotification::send(
-                new TelegramUpdateNotifiable($this->telegramUpdate),
-                $this->printTradingsBySubscriber($user)
-            );
-        }
+        ConsoleNotification::send(
+            new TelegramUpdateNotifiable($this->telegramUpdate),
+            !is_null($user = $this->findUser())
+                ? $this->printTradingsBySubscriber($user)
+                : 'No subscriptions.'
+        );
         return $this->exitSuccess();
     }
 
