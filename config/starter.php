@@ -19,6 +19,7 @@ return [
             'logging_except' => [
                 Illuminate\Queue\Console\WorkCommand::class,
                 Illuminate\Console\Scheduling\ScheduleRunCommand::class,
+                App\Trading\Console\Commands\Orchestration\WorkCommand::class,
             ],
         ],
         'schedules' => [
