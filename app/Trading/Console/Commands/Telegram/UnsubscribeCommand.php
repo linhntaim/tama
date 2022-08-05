@@ -20,14 +20,14 @@ class UnsubscribeCommand extends Command
         return $this->argument('id');
     }
 
-    protected function findTrading(): Trading
+    protected function findTrading(): ?Trading
     {
         return (new TradingProvider())
             ->notStrict()
             ->firstByUnique($this->id());
     }
 
-    protected function findUser(): User
+    protected function findUser(): ?User
     {
         return (new UserProvider())
             ->notStrict()
