@@ -5,23 +5,31 @@ namespace App\Trading\Bots;
 use App\Support\ClassTrait;
 use App\Trading\Exchanges\BinanceConnector;
 use App\Trading\Exchanges\Connector as ExchangeConnector;
+use Illuminate\Support\Collection;
 
 abstract class Bot
 {
     use ClassTrait;
 
-    protected string $exchange;
+    public const NAME = '';
 
-    protected string $ticker;
+    private string $exchange;
 
-    protected string $interval;
+    private string $ticker;
 
-    protected int $latest;
+    private string $interval;
+
+    private int $latest;
 
     public function __construct(
         protected array $options = []
     )
     {
+    }
+
+    public final function getName(): string
+    {
+        return static::NAME;
     }
 
     public function getDisplayName(): string
@@ -31,7 +39,7 @@ abstract class Bot
 
     public function exchange()
     {
-        return $this->exchange ?? $this->exchange = $this->options['exchange'] ?? 'binance';
+        return $this->exchange ?? $this->exchange = strtolower($this->options['exchange'] ?? 'binance');
     }
 
     protected function exchangeConnector(): ExchangeConnector
@@ -46,7 +54,7 @@ abstract class Bot
 
     public function ticker()
     {
-        return $this->ticker ?? $this->ticker = $this->options['ticker'] ?? 'BTCUSDT';
+        return $this->ticker ?? $this->ticker = strtoupper($this->options['ticker'] ?? 'BTCUSDT');
     }
 
     public function interval()
@@ -54,37 +62,43 @@ abstract class Bot
         return $this->interval ?? $this->interval = $this->options['interval'] ?? '1d';
     }
 
-    public function latest()
+    public function options(): array
     {
-        return $this->latest ?? $this->latest = $this->options['latest'] ?? 0;
+        return [
+            'exchange' => $this->exchange(),
+            'ticker' => $this->ticker(),
+            'interval' => $this->interval(),
+        ];
     }
 
-    public function unlimited(): bool
+    public function asOptions(): array
     {
-        return $this->latest() == 0;
+        return [
+            'name' => $this->getName(),
+            'options' => $this->options(),
+        ];
     }
 
-    public abstract function discover(): array;
-
-    public function indicate(): array
+    public function asSlug(): string
     {
-        $data = array_reverse($this->discover());
-        return $this->latest() > 0 ? array_slice($data, 0, $this->latest()) : $data;
+        return implode('-', [
+            $this->getName(),
+            ...$this->options(),
+        ]);
     }
 
-    protected function reporterClass(): string
-    {
-        return PlainTextBotReporter::class;
-    }
+    /**
+     * @return Collection<int, Indication>
+     */
+    protected abstract function indicating(): Collection;
 
-    protected function reporter(): BotReporter
+    /**
+     * @param int $latest
+     * @return Collection<int, Indication>
+     */
+    public function indicate(int $latest = 0): Collection
     {
-        $class = $this->reporterClass();
-        return new $class($this);
-    }
-
-    public function report(): string
-    {
-        return $this->reporter()->report();
+        $indications = $this->indicating()->reverse();
+        return $latest > 0 ? $indications->slice(0, $latest) : $indications;
     }
 }

@@ -2,10 +2,12 @@
 
 namespace App\Trading\Bots;
 
+use App\Trading\Bots\Reporters\PlainTextReporter;
+
 /**
  * @property OscillatingBot $bot
  */
-class OscillatingBotReporter extends PlainTextBotReporter
+class OscillatingBotReporter extends PlainTextReporter
 {
     protected function title(): string
     {
@@ -24,7 +26,7 @@ class OscillatingBotReporter extends PlainTextBotReporter
         return $this->lines($lines);
     }
 
-    protected function indicationRsi($rsi): string
+    protected function indicationRsi(array $rsi): string
     {
         $lines = [sprintf('{RSI=%s}', $rsi['rsi'])];
         foreach ($rsi['signals'] as $signal) {
@@ -34,7 +36,7 @@ class OscillatingBotReporter extends PlainTextBotReporter
         return $this->lines($lines);
     }
 
-    protected function indicationRsiSignal($signal): string
+    protected function indicationRsiSignal(array $signal): string
     {
         $lines = [sprintf('#signal:%s:%s', $signal['type'], $signal['strength'])];
         switch ($signal['type']) {

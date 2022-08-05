@@ -10,6 +10,8 @@ class Prices
 {
     protected array $times;
 
+    protected string $latestTime;
+
     protected int $count;
 
     public function __construct(
@@ -62,43 +64,38 @@ class Prices
             default:
                 throw new InvalidArgumentException('Interval was not supported.');
         }
+        $this->times = [];
         for ($i = 0; $i < $this->count; ++$i) {
             $this->times[] = (clone $lastAt)
                 ->{$method}($intervalValue * ($this->count - $i - 1))
                 ->format('Y-m-d H:i:s');
         }
+        $this->latestTime = $this->times[$this->count - 1];
     }
 
-    /**
-     * @return string
-     */
     public function getTicker(): string
     {
         return $this->ticker;
     }
 
-    /**
-     * @return string
-     */
     public function getInterval(): string
     {
         return $this->interval;
     }
 
-    /**
-     * @return array
-     */
     public function getValues(): array
     {
         return $this->data;
     }
 
-    /**
-     * @return array
-     */
     public function getTimes(): array
     {
         return $this->times;
+    }
+
+    public function getLatestTime(): string
+    {
+        return $this->latestTime;
     }
 
     public function count(): int

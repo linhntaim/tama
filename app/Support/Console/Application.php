@@ -6,6 +6,7 @@ use App\Support\Client\Settings;
 use App\Support\Console\Commands\Command;
 use Illuminate\Console\Application as BaseApplication;
 use Illuminate\Console\BufferedConsoleOutput;
+use Illuminate\Support\Str;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Symfony\Component\Console\Input\ArgvInput;
@@ -22,6 +23,33 @@ class Application extends BaseApplication
      * @var RunningCommand[]
      */
     protected array $runningCommands = [];
+
+    public function findByNamespaces(string|array $namespaces): array
+    {
+        $namespaces = array_map(function ($namespace) {
+            return $namespace . ':';
+        }, (array)$namespaces);
+
+        $found = [];
+        foreach ($this->all() as $command) {
+            if ($command->isHidden()) {
+                continue;
+            }
+
+            if (Str::startsWith($command->getName(), $namespaces)) {
+                $found[] = $command;
+                continue;
+            }
+
+            foreach ($command->getAliases() as $alias) {
+                if (Str::startsWith($alias, $namespaces)) {
+                    $found[] = $command;
+                    break;
+                }
+            }
+        }
+        return $found;
+    }
 
     protected function addToParent(SymfonyCommand $command): SymfonyCommand
     {
