@@ -78,7 +78,7 @@ class SubscribeCommand extends Command
                 }
                 ConsoleNotification::send(
                     new TelegramUpdateNotifiable($this->telegramUpdate),
-                    sprintf('Subscription to %s trading(s) was created successfully.', $tickers->count())
+                    sprintf('Subscriptions to %s trading(s) were created successfully.', $tickers->count())
                 );
             }
             else {
