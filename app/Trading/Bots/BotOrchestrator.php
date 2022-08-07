@@ -10,24 +10,6 @@ use Illuminate\Database\Eloquent\Collection;
 class BotOrchestrator
 {
     /**
-     * @var IAction[]
-     */
-    protected array $actions = [];
-
-    /**
-     * @param IAction|IAction[] $action
-     * @return $this
-     */
-    public function registerAction(IAction|array $action): static
-    {
-        if ($action instanceof IAction) {
-            return $this->registerAction([$action]);
-        }
-        array_push($this->actions, ...$action);
-        return $this;
-    }
-
-    /**
      * @return Collection|Trading[]
      */
     protected function fetchTradings(): Collection|array
@@ -35,15 +17,22 @@ class BotOrchestrator
         return (new TradingProvider())->allByHavingSubscribers();
     }
 
-    public function proceed()
+    /**
+     * @param IAction[] $actions
+     */
+    public function broadcast(array $actions)
     {
         foreach ($this->fetchTradings() as $trading) {
-            $this->broadcastActions($trading);
+            $this->broadcastTrading($trading, $actions);
         }
     }
 
-    protected function broadcastActions(Trading $trading)
+    /**
+     * @param Trading $trading
+     * @param IAction[] $actions
+     */
+    protected function broadcastTrading(Trading $trading, array $actions)
     {
-        (new BotBroadcaster($trading, $this->actions))->broadcast();
+        (new BotBroadcaster($trading, $actions))->broadcast();
     }
 }
