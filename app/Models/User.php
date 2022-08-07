@@ -6,10 +6,12 @@ use App\Support\Contracts\Auth\MustWelcomeEmail;
 use App\Support\Models\HasProtected;
 use App\Support\Models\IProtected;
 use App\Support\Models\SanctumUser;
+use App\Trading\Models\Trading;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -116,5 +118,10 @@ class User extends SanctumUser implements MustWelcomeEmail, IProtected
     public function routeNotificationForTelegram(): ?string
     {
         return $this->social('telegram')?->provider_id;
+    }
+
+    public function tradings(): BelongsToMany
+    {
+        return $this->belongsToMany(Trading::class, 'trading_subscribers', 'user_id', 'trading_id');
     }
 }
