@@ -2,7 +2,9 @@
 
 namespace App\Trading\Bots\Reporters;
 
-use App\Trading\Bots\Indication;
+use App\Trading\Bots\Data\Indication;
+use App\Trading\Bots\Data\IndicationMetaItem;
+use App\Trading\Bots\Data\Signal;
 use Illuminate\Support\Collection;
 
 class PlainTextReporter extends Reporter
@@ -77,14 +79,38 @@ class PlainTextReporter extends Reporter
     {
         $lines = [];
         $lines[] = $this->divide('=');
-        $lines[] = sprintf('[%s] <%s>', $indication->get('action_time'), $indication->get('action_now') ? 'NOW' : 'PAST');
-        $lines[] = sprintf('%s @ %s', $indication->get('value') == -1 ? 'BUY' : 'SELL', $indication->get('price'));
-        $lines[] = $this->indicationMeta($indication->get('meta'));
+        $lines[] = sprintf('[%s] %s', $indication->getTime(), $indication->getActionNow() ? '<!>' : '');
+        $lines[] = sprintf('%s @ %s', $indication->getAction(), $indication->getPrice());
+        foreach ($indication->getMeta() as $metaItem) {
+            $lines[] = $this->headlineMetaItem($metaItem);
+            $lines[] = $this->contentMetaItem($metaItem);
+        }
+
         return $this->lines($lines);
     }
 
-    protected function indicationMeta(array $meta): string
+    protected function headlineMetaItem(IndicationMetaItem $metaItem): string
     {
-        return '[meta]';
+        return sprintf('{%s}', strtoupper($metaItem->getType()));
+    }
+
+    protected function contentMetaItem(IndicationMetaItem $metaItem): string
+    {
+        $lines = [];
+        foreach ($metaItem->getSignals() as $signal) {
+            $lines[] = $this->headlineSignal($signal);
+            $lines[] = $this->contentSignal($signal);
+        }
+        return $this->lines($lines);
+    }
+
+    protected function headlineSignal(Signal $signal): string
+    {
+        return sprintf('#%s:%s', $signal->getType(), $signal->getStrength());
+    }
+
+    protected function contentSignal(Signal $signal): string
+    {
+        return '-';
     }
 }

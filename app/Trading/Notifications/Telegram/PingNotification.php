@@ -15,8 +15,8 @@ class PingNotification extends TextNotification
 
     protected function getText(INotifiable $notifiable): string
     {
-        return $notifiable instanceof TelegramUpdateNotifiable
-            ? sprintf('%s @%s!', $this->text, $notifiable->get('message.from.username'))
+        return $notifiable instanceof TelegramUpdateNotifiable && !$notifiable->isChannel()
+            ? sprintf('%s @%s!', $this->text, $notifiable->fromUsername())
             : sprintf('%s!', $this->text);
     }
 }

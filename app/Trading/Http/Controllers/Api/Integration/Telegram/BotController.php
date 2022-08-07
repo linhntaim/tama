@@ -15,7 +15,18 @@ class BotController extends ApiController
         if (!$this->matchSecret($request)) {
             report(new InvalidArgumentException('Secret from header does not match.'));
         }
-        elseif (is_null($command = $this->parseCommandFromMessageText($request->input('message.text')))) {
+        elseif (is_null($command = $this->parseCommandFromMessageText(
+            $request->input(
+                'message.text',
+                $request->input(
+                    'channel_post.text',
+                    $request->input(
+                        'edited_message.text',
+                        $request->input('edited_channel_post.text')
+                    )
+                )
+            )
+        ))) {
             report(new InvalidArgumentException('Message is invalid.'));
         }
         else {

@@ -43,11 +43,12 @@ abstract class Component
         ]);
     }
 
-    public function transmit(Packet $packet): Packet
+    public function transmit(Packet $packet, bool|int $latest = true): Packet
     {
         return $this->transform(
             $this->analyze(
-                $this->convert($packet)
+                $this->convert($packet),
+                $latest
             )
         );
     }
@@ -59,7 +60,7 @@ abstract class Component
 
     protected abstract function convert(Packet $packet): Packet;
 
-    protected abstract function analyze(Packet $packet): Packet;
+    protected abstract function analyze(Packet $packet, bool|int $latest = true): Packet;
 
     protected abstract function transform(Packet $packet): Packet;
 }
