@@ -7,7 +7,9 @@ use App\Trading\Telegram\Update as TelegramUpdate;
 use BadMethodCallException;
 
 /**
- * @method mixed get(string $key, $default = null)
+ * @method mixed get(string $key, mixed $default = null)
+ * @method string fromUsername()
+ * @method bool isChannel()
  */
 class TelegramUpdateNotifiable extends AnonymousNotifiable
 {
