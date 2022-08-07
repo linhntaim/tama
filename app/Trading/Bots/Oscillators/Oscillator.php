@@ -2,7 +2,7 @@
 
 namespace App\Trading\Bots\Oscillators;
 
-use App\Trading\Bots\Indication;
+use App\Trading\Bots\Data\Indication;
 use App\Trading\Prices\Prices;
 use Illuminate\Support\Collection;
 use RuntimeException;
@@ -12,7 +12,7 @@ abstract class Oscillator
     public const NAME = '';
 
     /**
-     * @var array<string, Component>
+     * @var array<string, Component>|Component[]
      */
     protected array $components = [];
 
@@ -79,15 +79,17 @@ abstract class Oscillator
 
     /**
      * @param Prices $prices
+     * @param bool|int $latest
      * @return Collection<int, Indication>
      */
-    public function run(Prices $prices): Collection
+    public function run(Prices $prices, bool|int $latest = true): Collection
     {
         return $this->output(
             $this->process(
                 $this->input([
                     'prices' => $prices,
-                ])
+                ]),
+                $latest
             )
         );
     }
@@ -101,7 +103,13 @@ abstract class Oscillator
         });
     }
 
-    protected abstract function process(Packet $packet): Packet;
+    protected function process(Packet $packet, bool|int $latest = true): Packet
+    {
+        foreach ($this->components as $component) {
+            $component->transmit($packet, $latest);
+        }
+        return $packet;
+    }
 
     /**
      * @param Packet $packet

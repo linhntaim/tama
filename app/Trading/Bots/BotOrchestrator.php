@@ -32,7 +32,7 @@ class BotOrchestrator
      */
     protected function fetchTradings(): Collection|array
     {
-        return (new TradingProvider())->all();
+        return (new TradingProvider())->allByHavingSubscribers();
     }
 
     public function proceed()

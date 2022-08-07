@@ -3,9 +3,8 @@
 namespace App\Trading\Bots\Actions;
 
 use App\Trading\Bots\Bot;
-use App\Trading\Bots\Indication;
+use App\Trading\Bots\Data\Indication;
 use App\Trading\Models\Trading;
-use Illuminate\Support\Collection;
 
 interface IAction
 {

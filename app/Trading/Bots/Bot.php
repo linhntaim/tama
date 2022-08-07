@@ -3,8 +3,10 @@
 namespace App\Trading\Bots;
 
 use App\Support\ClassTrait;
+use App\Trading\Bots\Data\Indication;
 use App\Trading\Exchanges\BinanceConnector;
 use App\Trading\Exchanges\Connector as ExchangeConnector;
+use App\Trading\Prices\Prices;
 use Illuminate\Support\Collection;
 
 abstract class Bot
@@ -87,18 +89,35 @@ abstract class Bot
         ]);
     }
 
-    /**
-     * @return Collection<int, Indication>
-     */
-    protected abstract function indicating(): Collection;
+    protected function fetchPrices(?string $at = null): Prices
+    {
+        return $this->exchangeConnector()->getPrices(
+            $this->ticker(),
+            $this->interval()
+        );
+    }
 
     /**
+     * @param Prices $prices
      * @param int $latest
      * @return Collection<int, Indication>
      */
-    public function indicate(int $latest = 0): Collection
+    protected abstract function indicating(Prices $prices, int $latest = 0): Collection;
+
+    /**
+     * @param string|null $at
+     * @param int $latest
+     * @return Collection<int, Indication>
+     */
+    public function indicate(?string $at = null, int $latest = 0): Collection
     {
-        $indications = $this->indicating()->reverse();
-        return $latest > 0 ? $indications->slice(0, $latest) : $indications;
+        return $this->indicating($this->fetchPrices($at), $latest);
+    }
+
+    protected abstract function indicatingNow(Prices $prices): ?Indication;
+
+    public function indicateNow(?string $at = null): ?Indication
+    {
+        return $this->indicatingNow($this->fetchPrices($at));
     }
 }

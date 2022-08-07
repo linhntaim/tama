@@ -28,4 +28,11 @@ class TradingProvider extends ModelProvider
                 })
         );
     }
+
+    public function allByHavingSubscribers(): Collection
+    {
+        return $this->executeAll(
+            $this->whereQuery()->has('subscribers')
+        );
+    }
 }
