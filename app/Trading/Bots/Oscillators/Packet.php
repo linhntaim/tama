@@ -2,18 +2,8 @@
 
 namespace App\Trading\Bots\Oscillators;
 
-class Packet
+use App\Support\ArrayWriter;
+
+class Packet extends ArrayWriter
 {
-    protected array $values = [];
-
-    public function set(string $name, mixed $value): static
-    {
-        $this->values[$name] = $value;
-        return $this;
-    }
-
-    public function get(string $name, mixed $default = null): mixed
-    {
-        return $this->values[$name] ?? $default;
-    }
 }

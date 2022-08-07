@@ -315,9 +315,9 @@ abstract class ModelProvider
         return $this->queryLock($query)->get();
     }
 
-    protected function executePagination(Builder $query, ?int $perPage = null): LengthAwarePaginator
+    protected function executePagination(Builder $query, ?int $perPage = null, ?int $page = null): LengthAwarePaginator
     {
-        return $query->paginate($perPage ?: $this->perPage());
+        return $query->paginate($perPage ?: $this->perPage(), ['*'], 'page', $page);
     }
 
     protected function executeFirst(Builder $query): ?Model
@@ -520,9 +520,9 @@ abstract class ModelProvider
         return $collection;
     }
 
-    public function pagination(array $conditions = [], ?int $perPage = null): LengthAwarePaginator
+    public function pagination(array $conditions = [], ?int $perPage = null, ?int $page = null): LengthAwarePaginator
     {
-        return $this->executePagination($this->queryWhere($conditions), $perPage);
+        return $this->executePagination($this->queryWhere($conditions), $perPage, $page);
     }
 
     public function firstPagination(array $conditions = [], ?int $perPage = null): EloquentCollection

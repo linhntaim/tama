@@ -8,11 +8,21 @@ use App\Trading\Models\Trading;
 use App\Trading\Models\TradingProvider;
 use App\Trading\Notifications\Telegram\ConsoleNotification;
 use App\Trading\Notifications\TelegramUpdateNotifiable;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 class SubscriptionCommand extends Command
 {
+    public $signature = '{--page=1}';
+
     protected $description = 'List all trading subscriptions.';
+
+    protected function page(): int
+    {
+        return modify((int)($this->option('page') ?? 1), function ($page) {
+            return $page <= 0 ? 1 : $page;
+        });
+    }
 
     protected function findUser(): ?User
     {
@@ -34,18 +44,21 @@ class SubscriptionCommand extends Command
 
     protected function printTradingsBySubscriber(User $user): string
     {
-        return $this->printTradings((new TradingProvider())->allBySubscriber($user));
+        return $this->printTradings((new TradingProvider())->paginationBySubscriber($user, 10, $this->page()));
     }
 
-    protected function printTradings(Collection $tradings): string
+    protected function printTradings(LengthAwarePaginator $tradings): string
     {
         if ($tradings->count() == 0) {
             return 'No subscriptions.';
         }
         $lines = ['Trading subscriptions:'];
+        $lines[] = str_repeat('-', 25);
         foreach ($tradings as $trading) {
             $lines[] = $this->printTrading($trading);
         }
+        $lines[] = str_repeat('-', 25);
+        $lines[] = sprintf('Page: %s / %s', $tradings->currentPage(), $tradings->total());
         return implode(PHP_EOL, $lines);
     }
 

@@ -7,10 +7,12 @@ use App\Models\UserProvider;
 use App\Models\UserSocialProvider;
 use App\Support\Client\DateTimer;
 use App\Trading\Bots\BotFactory;
+use App\Trading\Exchanges\Connection;
 use App\Trading\Models\Trading;
 use App\Trading\Models\TradingProvider;
 use App\Trading\Notifications\Telegram\ConsoleNotification;
 use App\Trading\Notifications\TelegramUpdateNotifiable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class SubscribeCommand extends Command
@@ -44,13 +46,17 @@ class SubscribeCommand extends Command
         return not_null_or(json_decode_array($this->option('bot-options') ?? ''), []);
     }
 
-    protected function mergeBotOptions(): array
+    protected function mergeBotOptions(array $botOptions = []): array
     {
-        return array_merge([
-            'exchange' => $this->exchange(),
-            'ticker' => $this->ticker(),
-            'interval' => $this->interval(),
-        ], $this->botOptions());
+        return array_merge(
+            [
+                'exchange' => $this->exchange(),
+                'ticker' => $this->ticker(),
+                'interval' => $this->interval(),
+            ],
+            $this->botOptions(),
+            $botOptions
+        );
     }
 
     protected function handling(): int
@@ -62,18 +68,38 @@ class SubscribeCommand extends Command
             );
         }
         else {
-            $this->subscribe($user, $trading = $this->createTrading());
-            ConsoleNotification::send(
-                new TelegramUpdateNotifiable($this->telegramUpdate),
-                sprintf('Subscription to the trading {%s:%s} was created successfully.', $trading->id, $trading->slug)
-            );
+            if ($this->ticker()[0] == '*') {
+                $tickers = $this->fetchTickers();
+                foreach ($tickers as $ticker) {
+                    $this->subscribe($user, $this->createTrading([
+                        'ticker' => $ticker,
+                        'safe_ticker' => true,
+                    ]));
+                }
+                ConsoleNotification::send(
+                    new TelegramUpdateNotifiable($this->telegramUpdate),
+                    sprintf('Subscription to %s trading(s) was created successfully.', $tickers->count())
+                );
+            }
+            else {
+                $this->subscribe($user, $trading = $this->createTrading());
+                ConsoleNotification::send(
+                    new TelegramUpdateNotifiable($this->telegramUpdate),
+                    sprintf('Subscription to the trading {%s:%s} was created successfully.', $trading->id, $trading->slug)
+                );
+            }
         }
         return $this->exitSuccess();
     }
 
+    protected function fetchTickers(): Collection
+    {
+        return Connection::create($this->exchange())->availableTickers($this->ticker());
+    }
+
     protected function createUserFromTelegram(): ?User
     {
-        if (is_null($chat = $this->telegramUpdate->get('message.chat'))) {
+        if (is_null($chat = $this->telegramUpdate->getChat())) {
             return null;
         }
         return match ($chat['type']) {
@@ -127,12 +153,12 @@ class SubscribeCommand extends Command
             });
     }
 
-    protected function createTrading(): Trading
+    protected function createTrading(array $botOptions = []): Trading
     {
         return modify(
             ($tradingProvider = new TradingProvider())
                 ->notStrict()
-                ->firstBySlug($slug = ($bot = BotFactory::create($this->bot(), $this->mergeBotOptions()))->asSlug()),
+                ->firstBySlug($slug = ($bot = BotFactory::create($this->bot(), $this->mergeBotOptions($botOptions)))->asSlug()),
             function ($trading) use ($tradingProvider, $bot, $slug) {
                 return is_null($trading)
                     ? $tradingProvider->createWithAttributes([

@@ -2,9 +2,12 @@
 
 namespace App\Trading\Bots\Oscillators;
 
-use App\Trading\Bots\Indication;
+use App\Trading\Bots\Data\Analysis;
+use App\Trading\Bots\Data\Indication;
+use App\Trading\Bots\Data\IndicationMetaItem;
+use App\Trading\Bots\Data\Signal;
+use App\Trading\Bots\Data\Values;
 use App\Trading\Trader;
-use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 class RsiComponent extends Component
@@ -15,24 +18,32 @@ class RsiComponent extends Component
     protected const DEFAULT_UPPER_BAND = 70;
     protected const DEFAULT_MIDDLE_BAND = 50;
 
+    protected int $timePeriod;
+
+    protected float $lowerBand;
+
+    protected float $upperBand;
+
+    protected float $middleBand;
+
     public function timePeriod(): int
     {
-        return $this->options['time_period'] ?? self::DEFAULT_TIME_PERIOD;
+        return $this->timePeriod ?? $this->timePeriod = $this->options['time_period'] ?? self::DEFAULT_TIME_PERIOD;
     }
 
     public function lowerBand(): float
     {
-        return $this->options['lower_band'] ?? self::DEFAULT_LOWER_BAND;
+        return $this->lowerBand ?? $this->lowerBand = $this->options['lower_band'] ?? self::DEFAULT_LOWER_BAND;
     }
 
     public function middleBand(): float
     {
-        return $this->options['middle_band'] ?? self::DEFAULT_MIDDLE_BAND;
+        return $this->middleBand ?? $this->middleBand = $this->options['middle_band'] ?? self::DEFAULT_MIDDLE_BAND;
     }
 
     public function upperBand(): float
     {
-        return $this->options['upper_band'] ?? self::DEFAULT_UPPER_BAND;
+        return $this->upperBand ?? $this->upperBand = $this->options['upper_band'] ?? self::DEFAULT_UPPER_BAND;
     }
 
     public function options(): array
@@ -50,204 +61,170 @@ class RsiComponent extends Component
         return $packet->set('converters.rsi', Trader::rsi($this->getPrices($packet)->getValues(), $this->timePeriod()));
     }
 
-    protected function analyze(Packet $packet): Packet
+    protected function analyze(Packet $packet, bool|int $latest = true): Packet
     {
+        $limit = is_int($latest) ? ($latest <= 0 ? 0 : $latest) : -1;
         $data = [];
-        $rsiValues = $packet->get('converters.rsi');
-        $rsiTimePeriod = $this->timePeriod();
+        $dataCount = 0;
+        $rsiValues = new Values($packet->get('converters.rsi'));
         $prices = $this->getPrices($packet);
         $priceValues = $prices->getValues();
-        $priceTimes = $prices->getTimes();
-        $loop = $i = $this->getPrices($packet)->count();
+        $timeValues = $prices->getTimes();
+        $i = $prices->count();
         while (--$i >= 0) {
-            $index = $loop - $i - 1;
-
-            $timeValue = $priceTimes[$index];
-            $rsiValue = $rsiValues[$index] ?? null;
-
-            if (is_null($rsiValue)) {
-                $data[] = [
-                    'time' => $timeValue,
-                    'price' => $priceValues[$index],
-                    'rsi' => null,
-                ];
-                continue;
+            if ($i < $this->timePeriod() + 2) {
+                break;
             }
 
-            $start = $index == $rsiTimePeriod;
-            $end = $i == 0;
-            $prevIndex = $index - 1;
-            $prevTimeValue = $priceTimes[$prevIndex];
-
-            $data[] = [
-                'time' => $timeValue,
-                'price' => $priceValues[$index],
-                'rsi' => $rsiValue,
-                'trend' => !$start
-                    ? ($rsiValue == $rsiValues[$prevIndex]
-                        ? $data[$prevIndex]['trend']
-                        : ($rsiValue > $rsiValues[$prevIndex] ? 'up' : 'down'))
-                    : null,
-                'high' => !$start ? 'middle' : null,
-                'position' => !$start ? (!$end ? 'middle' : 'end') : 'start',
-
-                'band' => $rsiValue < $this->lowerBand()
-                    ? 'lower' : ($rsiValue < $this->middleBand()
-                        ? 'high_lower' : ($rsiValue < $this->upperBand()
-                            ? 'low_upper' : 'upper')),
-
-                'signals' => [],
-            ];
-
-            if (!$start && !$end) {
-                // top & bottom
-                if (($trend = $data[$index]['trend']) != $data[$prevIndex]['trend']) {
-                    $data[$prevIndex]['high'] = $trend == 'up' ? 'bottom' : 'top';
+            if (($signals = $this->createSignals($timeValues, $priceValues, $rsiValues, $i - 2))->count()) {
+                $data[$i] = $this->createAnalysis(
+                    $timeValues[$i],
+                    $priceValues[$i],
+                    $rsiValues->value($i),
+                    $signals
+                );
+                if (++$dataCount == $limit) {
+                    break;
                 }
-                // bullish divergence
-                switch ($data[$prevIndex]['high']) {
-                    case 'bottom':
-                        if (($d2RsiValue = $data[$prevIndex]['rsi']) < $this->middleBand()) {
-                            $d2TimeValue = $prevTimeValue;
-                            $d2PriceValue = $priceValues[$prevIndex];
-
-                            $lowestRsiValue = $d2RsiValue;
-                            $j = $prevIndex;
-                            while (--$j >= $rsiTimePeriod) {
-                                $jTimeValue = $priceTimes[$j];
-                                $jHigh = $data[$j]['high'];
-
-                                if ($jHigh == 'middle') {
-                                    continue;
-                                }
-
-                                $jRsiValue = $data[$j]['rsi'];
-                                if ($jRsiValue >= $this->middleBand()) {
-                                    break;
-                                }
-                                if ($jHigh == 'bottom') {
-                                    $jPriceValue = $priceValues[$j];
-                                    if ($jRsiValue > min($d2RsiValue, $lowestRsiValue)) {
-                                        if ($jRsiValue > $d2RsiValue && $jPriceValue < $d2PriceValue) {
-                                            $data[$index]['signals'][] = $this->createDivergenceSignal(
-                                                'bullish_divergence',
-                                                'hidden',
-                                                $jTimeValue,
-                                                $jPriceValue,
-                                                $jRsiValue,
-                                                $d2TimeValue,
-                                                $d2PriceValue,
-                                                $d2RsiValue,
-                                            );
-                                            break;
-                                        }
-                                        continue;
-                                    }
-                                    if ($jRsiValue == $d2RsiValue && $jPriceValue == $d2PriceValue) {
-                                        continue;
-                                    }
-                                    if ($jPriceValue >= $d2PriceValue) {
-                                        $data[$index]['signals'][] = $this->createDivergenceSignal(
-                                            'bullish_divergence',
-                                            $jRsiValue == $d2RsiValue
-                                                ? 'weak'
-                                                : ($jPriceValue == $d2PriceValue ? 'medium' : 'strong'),
-                                            $jTimeValue,
-                                            $jPriceValue,
-                                            $jRsiValue,
-                                            $d2TimeValue,
-                                            $d2PriceValue,
-                                            $d2RsiValue,
-                                        );
-                                        break;
-                                    }
-                                    if ($jRsiValue < $lowestRsiValue) {
-                                        $lowestRsiValue = $jRsiValue;
-                                    }
-                                }
-                            }
-                        }
-                        break;
-                    case 'top':
-                        if (($d2RsiValue = $data[$prevIndex]['rsi']) >= $this->middleBand()) {
-                            $d2TimeValue = $prevTimeValue;
-                            $d2PriceValue = $priceValues[$prevIndex];
-
-                            $highestRsiValue = $d2RsiValue;
-                            $j = $prevIndex;
-                            while (--$j >= $rsiTimePeriod) {
-                                $jTimeValue = $priceTimes[$j];
-                                $jHigh = $data[$j]['high'];
-
-                                if ($jHigh == 'middle') {
-                                    continue;
-                                }
-
-                                $jRsiValue = $data[$j]['rsi'];
-                                if ($jRsiValue <= $this->lowerBand()) {
-                                    break;
-                                }
-                                if ($jHigh == 'top') {
-                                    $jPriceValue = $priceValues[$j];
-                                    if ($jRsiValue < max($d2RsiValue, $highestRsiValue)) {
-                                        if ($jRsiValue < $d2RsiValue && $jPriceValue > $d2PriceValue) {
-                                            $data[$index]['signals'][] = $this->createDivergenceSignal(
-                                                'bearish_divergence',
-                                                'hidden',
-                                                $jTimeValue,
-                                                $jPriceValue,
-                                                $jRsiValue,
-                                                $d2TimeValue,
-                                                $d2PriceValue,
-                                                $d2RsiValue,
-                                            );
-                                            break;
-                                        }
-                                        continue;
-                                    }
-                                    if ($jRsiValue == $d2RsiValue && $jPriceValue == $d2PriceValue) {
-                                        continue;
-                                    }
-                                    if ($jPriceValue <= $d2PriceValue) {
-                                        $data[$index]['signals'][] = $this->createDivergenceSignal(
-                                            'bearish_divergence',
-                                            $jRsiValue == $d2RsiValue
-                                                ? 'weak'
-                                                : ($jPriceValue == $d2PriceValue ? 'medium' : 'strong'),
-                                            $jTimeValue,
-                                            $jPriceValue,
-                                            $jRsiValue,
-                                            $d2TimeValue,
-                                            $d2PriceValue,
-                                            $d2RsiValue,
-                                        );
-                                        break;
-                                    }
-                                    if ($jRsiValue > $highestRsiValue) {
-                                        $highestRsiValue = $jRsiValue;
-                                    }
-                                }
-                            }
-                        }
-                        break;
-                }
+            }
+            if ($latest === true) {
+                break;
             }
         }
 
-        return $packet->set('analyzers.rsi', $data);
+        return $packet->set('analyzers.rsi', collect($data));
     }
 
-    protected function createSignal($type, $strength, array $additional = []): array
+    protected function createAnalysis($timeValue, $priceValue, $rsiValue, Collection $signals): Analysis
     {
-        return array_merge([
-            'type' => $type,
-            'strength' => $strength,
-        ], $additional);
+        return new Analysis($timeValue, $priceValue, $signals, [
+            'rsi' => $rsiValue,
+            'band' => $rsiValue < $this->lowerBand()
+                ? 'lower' : ($rsiValue < $this->middleBand()
+                    ? 'high_lower' : ($rsiValue < $this->upperBand()
+                        ? 'low_upper' : 'upper')),
+        ]);
     }
 
-    protected function createDivergenceSignal($type, $strength, $time1, $price1, $rsi1, $time2, $price2, $rsi2): array
+    protected function createSignals(array $timeValues, array $priceValues, Values $rsiValues, int $index): Collection
     {
-        return $this->createSignal($type, $strength, [
+        $signals = collect([]);
+        switch (true) {
+            case $rsiValues->isTrough($index): // bottom
+                if (($d2RsiValue = $rsiValues->value($index)) < $this->middleBand()) {
+                    $d2TimeValue = $timeValues[$index];
+                    $d2PriceValue = $priceValues[$index];
+
+                    $lowestRsiValue = $d2RsiValue;
+                    $j = $index;
+                    while (--$j >= $this->timePeriod()) {
+                        $jRsiValue = $rsiValues->value($j);
+                        if ($jRsiValue >= $this->middleBand()) {
+                            break;
+                        }
+                        if ($rsiValues->isNone($j)) {
+                            continue;
+                        }
+                        if ($rsiValues->isTrough($j)) {
+                            $jTimeValue = $timeValues[$j];
+                            $jPriceValue = $priceValues[$j];
+                            if ($jRsiValue > min($d2RsiValue, $lowestRsiValue)) {
+                                if ($jRsiValue > $d2RsiValue && $jPriceValue < $d2PriceValue) {
+                                    $signals->push(
+                                        $this->createDivergenceSignal(
+                                            'bullish_divergence', 'hidden',
+                                            $jTimeValue, $jPriceValue, $jRsiValue,
+                                            $d2TimeValue, $d2PriceValue, $d2RsiValue,
+                                        )
+                                    );
+                                    break;
+                                }
+                                continue;
+                            }
+                            if ($jRsiValue == $d2RsiValue && $jPriceValue == $d2PriceValue) {
+                                continue;
+                            }
+                            if ($jPriceValue >= $d2PriceValue) {
+                                $signals->push(
+                                    $this->createDivergenceSignal(
+                                        'bullish_divergence',
+                                        $jRsiValue == $d2RsiValue
+                                            ? 'weak'
+                                            : ($jPriceValue == $d2PriceValue ? 'medium' : 'strong'),
+                                        $jTimeValue, $jPriceValue, $jRsiValue,
+                                        $d2TimeValue, $d2PriceValue, $d2RsiValue,
+                                    )
+                                );
+                                break;
+                            }
+                            if ($jRsiValue < $lowestRsiValue) {
+                                $lowestRsiValue = $jRsiValue;
+                            }
+                        }
+                    }
+                }
+                break;
+            case $rsiValues->isPeak($index): // top
+                if (($d2RsiValue = $rsiValues->value($index)) >= $this->middleBand()) {
+                    $d2TimeValue = $timeValues[$index];
+                    $d2PriceValue = $priceValues[$index];
+
+                    $highestRsiValue = $d2RsiValue;
+                    $j = $index;
+                    while (--$j >= $this->timePeriod()) {
+                        $jRsiValue = $rsiValues->value($j);
+                        if ($jRsiValue <= $this->lowerBand()) {
+                            break;
+                        }
+                        if ($rsiValues->isNone($j)) {
+                            continue;
+                        }
+                        if ($rsiValues->isPeak($j)) {
+                            $jTimeValue = $timeValues[$j];
+                            $jPriceValue = $priceValues[$j];
+                            if ($jRsiValue < max($d2RsiValue, $highestRsiValue)) {
+                                if ($jRsiValue < $d2RsiValue && $jPriceValue > $d2PriceValue) {
+                                    $signals->push(
+                                        $this->createDivergenceSignal(
+                                            'bearish_divergence', 'hidden',
+                                            $jTimeValue, $jPriceValue, $jRsiValue,
+                                            $d2TimeValue, $d2PriceValue, $d2RsiValue,
+                                        )
+                                    );
+                                    break;
+                                }
+                                continue;
+                            }
+                            if ($jRsiValue == $d2RsiValue && $jPriceValue == $d2PriceValue) {
+                                continue;
+                            }
+                            if ($jPriceValue <= $d2PriceValue) {
+                                $signals->push(
+                                    $this->createDivergenceSignal(
+                                        'bearish_divergence',
+                                        $jRsiValue == $d2RsiValue
+                                            ? 'weak'
+                                            : ($jPriceValue == $d2PriceValue ? 'medium' : 'strong'),
+                                        $jTimeValue, $jPriceValue, $jRsiValue,
+                                        $d2TimeValue, $d2PriceValue, $d2RsiValue,
+                                    )
+                                );
+                                break;
+                            }
+                            if ($jRsiValue > $highestRsiValue) {
+                                $highestRsiValue = $jRsiValue;
+                            }
+                        }
+                    }
+                }
+                break;
+        }
+        return $signals;
+    }
+
+    protected function createDivergenceSignal($type, $strength, $time1, $price1, $rsi1, $time2, $price2, $rsi2): Signal
+    {
+        return new Signal($type, $strength, [
             'divergence_1' => [
                 'time' => $time1,
                 'price' => $price1,
@@ -264,39 +241,24 @@ class RsiComponent extends Component
     protected function transform(Packet $packet): Packet
     {
         $latestTime = $this->getPrices($packet)->getLatestTime();
-        $interval = $this->getPrices($packet)->getInterval();
         return $packet->set(
             'transformers.rsi',
-            collect($packet->get('analyzers.rsi'))
-                ->map(function ($item) use ($latestTime, $interval) {
-                    return new Indication([
-                        'value' => $value = is_null($item['rsi'])
-                            ? 0
-                            : (function (Collection $signals) {
-                                return $signals->whereIn('type', [
-                                    'bearish_divergence',
-                                ])->count() > 0
-                                    ? 1
-                                    : ($signals->whereIn('type', [
-                                        'bullish_divergence',
-                                    ])->count() > 0 ? -1 : 0);
-                            })(collect($item['signals'])),
-                        'time' => $item['time'],
-                        'action_time' => $actionTime = Carbon::parse($item['time'])
-                            ->addMinutes(Trader::INTERVAL_TO_MINUTES[$interval])
-                            ->format('Y-m-d H:i:s'),
-                        'action_now' => $actionTime == $latestTime,
-                        'price' => $item['price'],
-                        'meta' => $value == 0
-                            ? null
-                            : [
-                                [
-                                    'type' => 'rsi',
-                                    'rsi' => $item['rsi'],
-                                    'signals' => $item['signals'],
-                                ],
-                            ],
-                    ]);
+            $packet->get('analyzers.rsi')
+                ->map(function (Analysis $analysis) use ($latestTime) {
+                    return new Indication(
+                        $value = $analysis->hasSignal('bearish_divergence')
+                            ? 1
+                            : ($analysis->hasSignal('bullish_divergence')
+                                ? -1 : 0),
+                        $time = $analysis->getTime(),
+                        $analysis->getPrice(),
+                        $time == $latestTime,
+                        $value != 0 ? [
+                            new IndicationMetaItem('rsi', $analysis->getSignals(), [
+                                'rsi' => $analysis->get('rsi'),
+                            ]),
+                        ] : []
+                    );
                 })
         );
     }
