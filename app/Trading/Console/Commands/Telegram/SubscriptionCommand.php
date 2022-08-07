@@ -58,7 +58,7 @@ class SubscriptionCommand extends Command
             $lines[] = $this->printTrading($trading);
         }
         $lines[] = str_repeat('-', 25);
-        $lines[] = sprintf('Page: %s / %s', $tradings->currentPage(), $tradings->total());
+        $lines[] = sprintf('Page: %s / %s', $tradings->currentPage(), $tradings->lastPage());
         return implode(PHP_EOL, $lines);
     }
 
