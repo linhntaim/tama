@@ -21,7 +21,6 @@ class BinanceConnector extends Connector
 
     public function isTickerOk(string $ticker): bool
     {
-        dd('isTickerOk');
         try {
             $symbol = $this->spot->exchangeInfo([
                 'symbol' => strtoupper($ticker),
