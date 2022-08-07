@@ -3,7 +3,7 @@
 namespace App\Trading\Bots\Reporters;
 
 use App\Trading\Bots\Bot;
-use App\Trading\Bots\Indication;
+use App\Trading\Bots\Data\Indication;
 use Illuminate\Support\Collection;
 
 abstract class Reporter implements IReport

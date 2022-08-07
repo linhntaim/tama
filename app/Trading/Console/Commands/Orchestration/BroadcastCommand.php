@@ -6,13 +6,11 @@ use App\Support\Console\Commands\Command;
 use App\Trading\Bots\Actions\ReportAction;
 use App\Trading\Bots\BotOrchestrator;
 
-class WorkCommand extends Command
+class BroadcastCommand extends Command
 {
     protected function handling(): int
     {
-        (new BotOrchestrator())
-            ->registerAction(new ReportAction())
-            ->proceed();
+        (new BotOrchestrator())->broadcast([new ReportAction()]);
         return $this->exitSuccess();
     }
 }
