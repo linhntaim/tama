@@ -2,6 +2,8 @@
 
 namespace App\Trading\Bots;
 
+use App\Trading\Bots\Data\IndicationMetaItem;
+use App\Trading\Bots\Data\Signal;
 use App\Trading\Bots\Reporters\PlainTextReporter;
 
 /**
@@ -14,36 +16,32 @@ class OscillatingBotReporter extends PlainTextReporter
         return parent::title() . sprintf(' (%s)', $this->bot->oscillatorName());
     }
 
-    protected function indicationMeta(array $meta): string
+    protected function headlineMetaItem(IndicationMetaItem $metaItem): string
+    {
+        if ($metaItem->getType() == 'rsi') {
+            return sprintf('{RSI=%s}', $metaItem->get('rsi'));
+        }
+        return parent::headlineMetaItem($metaItem);
+    }
+
+    protected function contentSignal(Signal $signal): string
     {
         $lines = [];
-        foreach ($meta as $item) {
-            $lines[] = match ($item['type']) {
-                'rsi' => $this->indicationRsi($item),
-                default => ''
-            };
-        }
-        return $this->lines($lines);
-    }
-
-    protected function indicationRsi(array $rsi): string
-    {
-        $lines = [sprintf('{RSI=%s}', $rsi['rsi'])];
-        foreach ($rsi['signals'] as $signal) {
-            $lines[] = $this->indicationRsiSignal($signal);
-        }
-
-        return $this->lines($lines);
-    }
-
-    protected function indicationRsiSignal(array $signal): string
-    {
-        $lines = [sprintf('#signal:%s:%s', $signal['type'], $signal['strength'])];
-        switch ($signal['type']) {
+        switch ($signal->getType()) {
             case 'bullish_divergence':
             case 'bearish_divergence':
-                $lines[] = sprintf('D1: [%s] (rsi=%s) (price=%s)', $signal['divergence_1']['time'], $signal['divergence_1']['rsi'], $signal['divergence_1']['price']);
-                $lines[] = sprintf('D2: [%s] (rsi=%s) (price=%s)', $signal['divergence_2']['time'], $signal['divergence_2']['rsi'], $signal['divergence_2']['price']);
+                $lines[] = sprintf(
+                    'D1: [%s] (rsi=%s) (price=%s)',
+                    $signal->get('divergence_1.time'),
+                    $signal->get('divergence_1.rsi'),
+                    $signal->get('divergence_1.price')
+                );
+                $lines[] = sprintf(
+                    'D2: [%s] (rsi=%s) (price=%s)',
+                    $signal->get('divergence_2.time'),
+                    $signal->get('divergence_2.rsi'),
+                    $signal->get('divergence_2.price')
+                );
                 break;
         }
         return $this->lines($lines);

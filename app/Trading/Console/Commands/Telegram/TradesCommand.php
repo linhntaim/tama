@@ -66,11 +66,11 @@ class TradesCommand extends Command
 
     protected function report(): string
     {
-        return $this->reportIndication(BotFactory::create($this->bot(), $this->mergeBotOptions()));
+        return $this->reportIndications(BotFactory::create($this->bot(), $this->mergeBotOptions()));
     }
 
-    protected function reportIndication(Bot $bot): string
+    protected function reportIndications(Bot $bot): string
     {
-        return (new BotReporter())->report($bot, $bot->indicate($this->latest()));
+        return (new BotReporter())->report($bot, $bot->indicate(null, $this->latest()));
     }
 }
