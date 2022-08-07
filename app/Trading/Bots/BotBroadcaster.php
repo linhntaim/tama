@@ -26,7 +26,10 @@ class BotBroadcaster
     )
     {
         $this->provider = new TradingBroadcastProvider();
-        $this->bot = BotFactory::create($trading->bot, $trading->options);
+        $this->bot = BotFactory::create($trading->bot, array_merge($trading->options, [
+            'safe_ticker' => true,
+            'safe_interval' => true,
+        ]));
     }
 
     public function broadcast()

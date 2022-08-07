@@ -6,6 +6,7 @@ use App\Trading\Bots\Actions\IAction;
 use App\Trading\Models\Trading;
 use App\Trading\Models\TradingProvider;
 use Illuminate\Database\Eloquent\Collection;
+use Throwable;
 
 class BotOrchestrator
 {
@@ -33,6 +34,11 @@ class BotOrchestrator
      */
     protected function broadcastTrading(Trading $trading, array $actions)
     {
-        (new BotBroadcaster($trading, $actions))->broadcast();
+        try {
+            (new BotBroadcaster($trading, $actions))->broadcast();
+        }
+        catch (Throwable $exception) {
+            report($exception);
+        }
     }
 }
