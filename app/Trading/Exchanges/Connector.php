@@ -2,6 +2,7 @@
 
 namespace App\Trading\Exchanges;
 
+use App\Trading\Prices\Candles;
 use App\Trading\Prices\Prices;
 use App\Trading\Trader;
 use Illuminate\Support\Collection;
@@ -15,12 +16,12 @@ abstract class Connector
         return static::NAME;
     }
 
-    public function isTickerOk(string $ticker): bool
+    public function isTickerValid(string $ticker): bool
     {
         return false;
     }
 
-    public function isIntervalOk(string $interval): bool
+    public function isIntervalValid(string $interval): bool
     {
         return in_array($interval, [
             Trader::INTERVAL_1_MINUTE,
@@ -46,5 +47,25 @@ abstract class Connector
         return collect([]);
     }
 
-    public abstract function getPrices(string $ticker, string $interval, int $limit = 1000): Prices;
+    protected abstract function getPrices(string $ticker, string $interval): array;
+
+    protected abstract function getLatestPricesFromCache(string $ticker, string $interval): ?array;
+
+    protected function createPrices(array $prices, string $ticker, string $interval): Prices
+    {
+        return new Candles(
+            $ticker,
+            $interval,
+            $prices
+        );
+    }
+
+    public function getLatestPrices(string $ticker, string $interval): Prices
+    {
+        return $this->createPrices(
+            $this->getLatestPricesFromCache($ticker, $interval) ?? $this->getPrices($ticker, $interval),
+            $ticker,
+            $interval
+        );
+    }
 }

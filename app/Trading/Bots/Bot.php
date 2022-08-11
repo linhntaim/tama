@@ -30,8 +30,8 @@ abstract class Bot
     )
     {
         $connector = $this->exchangeConnector();
-        if (!(($this->options['safe_ticker'] ?? false) || $connector->isTickerOk($this->ticker()))
-            || !(($this->options['safe_interval'] ?? false) || $connector->isIntervalOk($this->interval()))) {
+        if (!(($this->options['safe_ticker'] ?? false) || $connector->isTickerValid($this->ticker()))
+            || !(($this->options['safe_interval'] ?? false) || $connector->isIntervalValid($this->interval()))) {
             throw new RuntimeException('Ticker and interval for bot is not OK.');
         }
     }
@@ -101,7 +101,7 @@ abstract class Bot
 
     protected function fetchPrices(?string $at = null): Prices
     {
-        return $this->exchangeConnector()->getPrices(
+        return $this->exchangeConnector()->getLatestPrices(
             $this->ticker(),
             $this->interval()
         );

@@ -4,6 +4,7 @@ namespace App\Trading\Exchanges;
 
 use App\Trading\Prices\BinanceCandles;
 use App\Trading\Prices\Prices;
+use Binance\Exception\MissingArgumentException;
 use Binance\Spot as BinanceSpot;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -19,11 +20,11 @@ class BinanceConnector extends Connector
         $this->spot = new BinanceSpot();
     }
 
-    public function isTickerOk(string $ticker): bool
+    public function isTickerValid(string $ticker): bool
     {
         try {
             $symbol = $this->spot->exchangeInfo([
-                'symbol' => strtoupper($ticker),
+                'symbol' => $ticker,
             ])['symbols'][0];
 
             return $symbol['status'] === 'TRADING'
@@ -51,15 +52,23 @@ class BinanceConnector extends Connector
             ->pluck('symbol');
     }
 
-    public function getPrices(string $ticker, string $interval, int $limit = 1000): Prices
+    /**
+     * @throws MissingArgumentException
+     */
+    protected function getPrices(string $ticker, string $interval, string $lastAt = null, int $limit = 1000): array
     {
-        $ticker = strtoupper($ticker);
+        return $this->spot->klines($ticker, $interval, [
+            'limit' => $limit,
+        ]);
+    }
+
+    protected function createPrices(array $prices, string $ticker, string $interval, string $lastAt = null): Prices
+    {
         return new BinanceCandles(
             $ticker,
             $interval,
-            $this->spot->klines($ticker, $interval, [
-                'limit' => $limit,
-            ])
+            $prices,
+            $lastAt
         );
     }
 }
