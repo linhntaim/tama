@@ -27,11 +27,7 @@ class LatestPriceOrchestrator extends Orchestrator
 
     protected function priceProvider(): PriceProvider
     {
-        return PriceProviderFactory::create(
-            $this->latestPrice->getExchange(),
-            $this->latestPrice->getTicker(),
-            $this->latestPrice->getInterval()
-        );
+        return PriceProviderFactory::create($this->latestPrice->getExchange());
     }
 
     /**

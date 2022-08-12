@@ -7,6 +7,7 @@ use App\Trading\Bots\BotFactory;
 use App\Trading\Bots\BotReporter;
 use App\Trading\Notifications\Telegram\ConsoleNotification;
 use App\Trading\Notifications\TelegramUpdateNotifiable;
+use Psr\SimpleCache\InvalidArgumentException as PsrInvalidArgumentException;
 
 class TradesCommand extends Command
 {
@@ -14,24 +15,32 @@ class TradesCommand extends Command
 
     protected $description = 'Get latest possible tradings.';
 
+    protected string $bot;
+
+    protected string $exchange;
+
+    protected string $ticker;
+
+    protected string $interval;
+
     protected function bot(): string
     {
-        return $this->option('bot') ?? 'oscillating_bot';
+        return $this->bot ?? $this->bot = strtolower($this->option('bot'));
     }
 
     protected function exchange(): string
     {
-        return $this->option('exchange') ?? 'binance';
+        return $this->exchange ?? $this->exchange = strtolower($this->option('exchange'));
     }
 
     protected function ticker(): string
     {
-        return $this->option('ticker') ?? 'BTCUSDT';
+        return $this->ticker ?? $this->ticker = strtoupper($this->option('ticker'));
     }
 
     protected function interval(): string
     {
-        return $this->option('interval') ?? '1d';
+        return $this->interval ?? $this->interval = $this->option('interval');
     }
 
     protected function latest(): int
@@ -55,6 +64,9 @@ class TradesCommand extends Command
         ], $this->botOptions());
     }
 
+    /**
+     * @throws PsrInvalidArgumentException
+     */
     protected function handling(): int
     {
         ConsoleNotification::send(
@@ -64,13 +76,19 @@ class TradesCommand extends Command
         return $this->exitSuccess();
     }
 
+    /**
+     * @throws PsrInvalidArgumentException
+     */
     protected function report(): string
     {
         return $this->reportIndications(BotFactory::create($this->bot(), $this->mergeBotOptions()));
     }
 
+    /**
+     * @throws PsrInvalidArgumentException
+     */
     protected function reportIndications(Bot $bot): string
     {
-        return (new BotReporter())->report($bot, $bot->indicate(null, $this->latest()));
+        return (new BotReporter())->report($bot, $bot->indicate($this->latest()));
     }
 }

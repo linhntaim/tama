@@ -77,6 +77,68 @@ class Interval
         })->getTimestamp();
     }
 
+    public function getNextLatestTimeOf(int $latestTime): int
+    {
+        return (match ($this->getUnit()) {
+            'm' => Carbon::createFromTimestamp($latestTime)->addMinutes($this->getNumber()),
+            'h' => Carbon::createFromTimestamp($latestTime)->addHours($this->getNumber()),
+            'd' => Carbon::createFromTimestamp($latestTime)->addDays($this->getNumber()),
+            'w' => Carbon::createFromTimestamp($latestTime)->addDays($this->getNumber() * 7),
+            'M' => Carbon::createFromTimestamp($latestTime)->addMonths($this->getNumber()),
+            default => throw new InvalidArgumentException('Interval was not supported.'),
+        })->getTimestamp();
+    }
+
+    /**
+     * @param int $limit
+     * @param int $index
+     * @return int[]
+     */
+    public function getLatestTimes(int $limit = 1000, int $index = 0): array
+    {
+        $latestTime = Carbon::createFromTimestamp($this->getLatestTime($index));
+        $latestTimes = [$latestTime->getTimestamp()];
+        switch ($this->getUnit()) {
+            case 'm':
+                while (--$limit > 0) {
+                    array_unshift($latestTimes, $latestTime->subMinutes($this->getNumber())->getTimestamp());
+                }
+                break;
+            case 'h':
+                while (--$limit > 0) {
+                    array_unshift($latestTimes, $latestTime->subHours($this->getNumber())->getTimestamp());
+                }
+                break;
+            case 'd':
+                while (--$limit > 0) {
+                    array_unshift($latestTimes, $latestTime->subDays($this->getNumber())->getTimestamp());
+                }
+                break;
+            case 'w':
+                while (--$limit > 0) {
+                    array_unshift($latestTimes, $latestTime->subDays($this->getNumber() * 7)->getTimestamp());
+                }
+                break;
+            case 'M':
+                while (--$limit > 0) {
+                    array_unshift($latestTimes, $latestTime->subMonths($this->getNumber())->getTimestamp());
+                }
+                break;
+            default :
+                throw new InvalidArgumentException('Interval was not supported.');
+        }
+        return $latestTimes;
+    }
+
+    /**
+     * @param int $limit
+     * @return int[]
+     */
+    public function getPreviousLatestTimes(int $limit = 999): array
+    {
+        return $this->getLatestTimes($limit, -1);
+    }
+
     public function __toString(): string
     {
         return $this->interval;

@@ -3,38 +3,59 @@
 namespace App\Trading\Bots\Orchestrators\PriceStreams;
 
 use App\Trading\Models\Trading;
-use App\Trading\Models\TradingProvider;
 use Binance\Websocket\Spot;
+use Closure;
 use Ratchet\Client\Connector as SocketClientConnector;
-use Ratchet\RFC6455\Messaging\Message;
 use React\EventLoop\LoopInterface;
 use React\Socket\Connector as SocketConnector;
 
 class BinancePriceStream extends PriceStream
 {
+    public function __construct()
+    {
+        parent::__construct('binance');
+    }
+
     protected function getStreamNames(): array
     {
-        return (new TradingProvider())
-            ->allByHavingSubscribers($this->exchange)
+        return $this->fetchTradings()
             ->map(function (Trading $trading) {
                 return sprintf('%s@kline_%s', strtolower($trading->ticker), $trading->interval);
             })
             ->all();
     }
 
-    public function __invoke(LoopInterface $loop)
+    protected function createSocketClient(LoopInterface $loop): Spot
     {
-        $client = new Spot(['wsConnector' => new SocketClientConnector($loop, new SocketConnector($loop))]);
-        $client->combined(
-            $this->getStreamNames(),
-            [
-                'message' => function ($conn, Message $message) {
-                    $this->proceedMessage(new BinancePriceStreamMessageExtractor(), $message);
-                },
-            ]
-        );
-        $loop->addPeriodicTimer(5 * 60, function () use ($client) {
-            $client->ping();
-        });
+        return new Spot(['wsConnector' => new SocketClientConnector($loop, new SocketConnector($loop))]);
+    }
+
+    /**
+     * @param Spot $socketClient
+     * @param Closure $onMessage
+     */
+    protected function listen($socketClient, Closure $onMessage)
+    {
+        $socketClient->combined($this->getStreamNames(), [
+            'message' => $onMessage,
+        ]);
+    }
+
+    protected function priceMessageExtractor(): IPriceMessageExtract
+    {
+        return new BinancePriceStreamMessageExtractor();
+    }
+
+    protected function pingBackTimer(): int|float
+    {
+        return 5 * 60;
+    }
+
+    /**
+     * @param Spot $socketClient
+     */
+    protected function pingBack($socketClient)
+    {
+        $socketClient->ping();
     }
 }

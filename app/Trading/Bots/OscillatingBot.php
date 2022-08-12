@@ -5,7 +5,7 @@ namespace App\Trading\Bots;
 use App\Trading\Bots\Data\Indication;
 use App\Trading\Bots\Oscillators\Oscillator;
 use App\Trading\Bots\Oscillators\RsiOscillator;
-use App\Trading\Prices\Prices;
+use App\Trading\Bots\Pricing\PriceCollection;
 use Illuminate\Support\Collection;
 
 class OscillatingBot extends Bot
@@ -53,12 +53,12 @@ class OscillatingBot extends Bot
         ]);
     }
 
-    protected function indicating(Prices $prices, int $latest = 0): Collection
+    protected function indicating(PriceCollection $prices, int $latest = 0): Collection
     {
         return $this->oscillator()->run($prices, $latest);
     }
 
-    protected function indicatingNow(Prices $prices): ?Indication
+    protected function indicatingNow(PriceCollection $prices): ?Indication
     {
         return $this->oscillator()->run($prices)->first();
     }

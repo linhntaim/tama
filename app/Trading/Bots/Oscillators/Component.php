@@ -2,7 +2,7 @@
 
 namespace App\Trading\Bots\Oscillators;
 
-use App\Trading\Prices\Prices;
+use App\Trading\Bots\Pricing\PriceCollection;
 
 abstract class Component
 {
@@ -53,7 +53,7 @@ abstract class Component
         );
     }
 
-    protected function getPrices(Packet $packet): Prices
+    protected function getPrices(Packet $packet): PriceCollection
     {
         return $packet->get('inputs.prices');
     }

@@ -14,12 +14,12 @@ class LatestPriceCommand extends Command
 
     protected function exchange(): string
     {
-        return $this->argument('exchange');
+        return strtolower($this->argument('exchange'));
     }
 
     protected function ticker(): string
     {
-        return $this->argument('ticker');
+        return strtoupper($this->argument('ticker'));
     }
 
     protected function interval(): string

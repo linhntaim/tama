@@ -2,41 +2,71 @@
 
 namespace App\Trading\Bots\Pricing;
 
+use App\Trading\Trader;
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Psr\SimpleCache\InvalidArgumentException as PsrInvalidArgumentException;
 
 abstract class PriceProvider
 {
-    protected Interval $interval;
-
     protected CacheRepository $cacheStore;
-
-    protected string $recentCacheKey;
 
     public function __construct(
         protected string            $exchange,
-        protected string            $ticker,
-        Interval|string             $interval,
         CacheRepository|string|null $cache = 'redis'
     )
     {
-        $this->interval = $interval instanceof Interval ? $interval : new Interval($interval);
         $this->cacheStore = $cache instanceof CacheRepository ? $cache : Cache::store($cache);
-        $this->recentCacheKey = sprintf('%s.%s.%s', $this->exchange, $this->ticker, $this->interval);
+    }
+
+    public function isTickerValid(string $ticker): bool
+    {
+        return false;
+    }
+
+    public function isIntervalValid(Interval $interval): bool
+    {
+        return in_array((string)$interval, [
+            Trader::INTERVAL_1_MINUTE,
+            Trader::INTERVAL_3_MINUTES,
+            Trader::INTERVAL_5_MINUTES,
+            Trader::INTERVAL_15_MINUTES,
+            Trader::INTERVAL_30_MINUTES,
+            Trader::INTERVAL_1_HOUR,
+            Trader::INTERVAL_2_HOURS,
+            Trader::INTERVAL_4_HOURS,
+            Trader::INTERVAL_6_HOURS,
+            Trader::INTERVAL_8_HOURS,
+            Trader::INTERVAL_12_HOURS,
+            Trader::INTERVAL_1_DAY,
+            Trader::INTERVAL_3_DAYS,
+            Trader::INTERVAL_1_WEEK,
+            Trader::INTERVAL_1_MONTH,
+        ]);
+    }
+
+    public function availableTickers(string|array|null $pattern = null): Collection
+    {
+        return collect([]);
+    }
+
+    protected function recentCacheKey(string $ticker, Interval $interval): string
+    {
+        return sprintf('%s.%s.%s', $this->exchange, $ticker, $interval);
     }
 
     /**
      * @throws PsrInvalidArgumentException
      */
-    protected function recentFromCache(): ?array
+    protected function recentFromCache(string $ticker, Interval $interval): ?array
     {
-        return $this->cacheStore->get($this->recentCacheKey);
+        return $this->cacheStore->get($this->recentCacheKey($ticker, $interval));
     }
 
-    protected function recentToCache(int $latestTime, array $recentPrices)
+    protected function recentToCache(string $ticker, Interval $interval, int $latestTime, array $recentPrices)
     {
-        $this->cacheStore->forever($this->recentCacheKey, [
+        $this->cacheStore->forever($this->recentCacheKey($ticker, $interval), [
             'latest_time' => $latestTime,
             'recent_prices' => $recentPrices,
         ]);
@@ -45,9 +75,9 @@ abstract class PriceProvider
     /**
      * @throws PsrInvalidArgumentException
      */
-    protected function recentCached(int $matchingLatestTime, ?array &$cachedRecentPrices = []): bool
+    protected function recentCached(string $ticker, Interval $interval, int $matchingLatestTime, ?array &$cachedRecentPrices = []): bool
     {
-        if (is_null($cache = $this->recentFromCache())) {
+        if (is_null($cache = $this->recentFromCache($ticker, $interval))) {
             return false;
         }
         $cachedLatestTime = $cache['latest_time'] ?? 0;
@@ -66,33 +96,60 @@ abstract class PriceProvider
      */
     public function pushLatest(LatestPrice $latestPrice)
     {
-        if ($this->recentCached($this->interval->getPreviousLatestTimeOf($latestPrice->getTime()), $cachedRecentPrices)) {
+        if ($this->recentCached(
+            $ticker = $latestPrice->getTicker(),
+            $interval = $latestPrice->getInterval(),
+            $interval->getPreviousLatestTimeOf($latestTime = $latestPrice->getTime()),
+            $cachedRecentPrices
+        )) {
             array_shift($cachedRecentPrices);
             array_push($cachedRecentPrices, $latestPrice->getPrice());
-            $this->recentToCache($latestPrice->getTime(), $cachedRecentPrices);
+            $this->recentToCache(
+                $ticker,
+                $interval,
+                $latestTime,
+                $cachedRecentPrices
+            );
         }
     }
 
-    protected abstract function fetch(int $startTime = null, int $endTime = null, int $limit = 1000): array;
+    protected abstract function fetch(string $ticker, Interval $interval, int $startTime = null, int $endTime = null, int $limit = 1000): array;
 
-    public function get(int $startTime = null, int $endTime = null, int $limit = 1000): array
+    public function recentAt(string $ticker, Interval $interval, int $at = null, int $limit = 999): PriceCollection
     {
-        $prices = $this->fetch($startTime, $endTime, $limit);
+        $prices = $this->fetch($ticker, $interval, null, $at, $limit + 1);
         array_pop($prices);
-        return $prices;
+        return PriceCollectionFactory::create(
+            $this->exchange,
+            $ticker,
+            $interval,
+            $prices,
+            $interval->getPreviousLatestTimes($limit)
+        );
     }
 
     /**
      * @throws PsrInvalidArgumentException
      */
-    public function recent(): array
+    public function recent(string $ticker, Interval $interval): PriceCollection
     {
-        $latestTime = $this->interval->getPreviousLatestTime();
-        if ($this->recentCached($latestTime, $cachedRecentPrices)) {
-            return $cachedRecentPrices;
+        $latestTime = $interval->getPreviousLatestTime();
+        if ($this->recentCached($ticker, $interval, $latestTime, $cachedRecentPrices)) {
+            return PriceCollectionFactory::create(
+                $this->exchange,
+                $ticker,
+                $interval,
+                $cachedRecentPrices,
+                $interval->getPreviousLatestTimes(count($cachedRecentPrices))
+            );
         }
-        return take($this->get(), function ($recent) use ($latestTime) {
-            $this->recentToCache($latestTime, $recent);
+        return take($this->recentAt($ticker, $interval), function (PriceCollection $recent) use ($ticker, $interval, $latestTime) {
+            $this->recentToCache(
+                $ticker,
+                $interval,
+                $latestTime,
+                $recent->items()
+            );
         });
     }
 }

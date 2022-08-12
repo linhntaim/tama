@@ -9,13 +9,11 @@ class PriceProviderFactory
 {
     public static function create(
         string                      $exchange,
-        string                      $ticker,
-        Interval                    $interval,
         CacheRepository|string|null $cache = 'redis'
     ): PriceProvider
     {
         return match ($exchange) {
-            'binance' => new BinancePriceProvider($ticker, $interval, $cache),
+            'binance' => new BinancePriceProvider($cache),
             default => throw new InvalidArgumentException(sprintf('Price provider for the exchange "%s" does not exists.', $exchange))
         };
     }

@@ -7,7 +7,7 @@ use App\Models\UserProvider;
 use App\Models\UserSocialProvider;
 use App\Support\Client\DateTimer;
 use App\Trading\Bots\BotFactory;
-use App\Trading\Exchanges\Connection;
+use App\Trading\Bots\Pricing\PriceProviderFactory;
 use App\Trading\Models\Trading;
 use App\Trading\Models\TradingProvider;
 use App\Trading\Notifications\Telegram\ConsoleNotification;
@@ -21,24 +21,32 @@ class SubscribeCommand extends Command
 
     protected $description = 'Subscribe a trading.';
 
+    protected string $bot;
+
+    protected string $exchange;
+
+    protected string $ticker;
+
+    protected string $interval;
+
     protected function bot(): string
     {
-        return $this->option('bot') ?? 'oscillating_bot';
+        return $this->bot ?? $this->bot = strtolower($this->option('bot'));
     }
 
     protected function exchange(): string
     {
-        return $this->option('exchange') ?? 'binance';
+        return $this->exchange ?? $this->exchange = strtolower($this->option('exchange'));
     }
 
     protected function ticker(): string
     {
-        return $this->option('ticker') ?? 'BTCUSDT';
+        return $this->ticker ?? $this->ticker = strtoupper($this->option('ticker'));
     }
 
     protected function interval(): string
     {
-        return $this->option('interval') ?? '1d';
+        return $this->interval ?? $this->interval = $this->option('interval');
     }
 
     protected function botOptions(): array
@@ -94,7 +102,7 @@ class SubscribeCommand extends Command
 
     protected function fetchTickers(): Collection
     {
-        return Connection::create($this->exchange())->availableTickers($this->ticker());
+        return PriceProviderFactory::create($this->exchange())->availableTickers($this->ticker());
     }
 
     protected function createUserFromTelegram(): ?User
