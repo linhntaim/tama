@@ -9,6 +9,9 @@ class BinancePriceMessageExtractor implements IPriceMessageExtract
 {
     public function __invoke(array $messagePayload): ?LatestPrice
     {
+        if (!isset($messagePayload['e']) || $messagePayload['e'] != 'kline') {
+            return null;
+        }
         return $this->handlePricePayload($messagePayload['k']);
     }
 

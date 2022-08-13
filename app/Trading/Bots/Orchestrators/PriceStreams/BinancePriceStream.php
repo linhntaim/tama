@@ -3,59 +3,60 @@
 namespace App\Trading\Bots\Orchestrators\PriceStreams;
 
 use App\Trading\Models\Trading;
-use Binance\Websocket\Spot;
-use Closure;
-use Ratchet\Client\Connector as SocketClientConnector;
+use Illuminate\Database\Eloquent\Collection;
+use Ratchet\RFC6455\Messaging\Frame;
 use React\EventLoop\LoopInterface;
-use React\Socket\Connector as SocketConnector;
 
 class BinancePriceStream extends PriceStream
 {
-    public function __construct()
+    public function __construct(LoopInterface $loop)
     {
-        parent::__construct('binance');
+        parent::__construct($loop, 'binance', 'wss://stream.binance.com:9443/ws', 0);
     }
 
-    protected function getStreamNames(): array
-    {
-        return $this->fetchTradings()
-            ->map(function (Trading $trading) {
-                return sprintf('%s@kline_%s', strtolower($trading->ticker), $trading->interval);
-            })
-            ->all();
-    }
-
-    protected function createSocketClient(LoopInterface $loop): Spot
-    {
-        return new Spot(['wsConnector' => new SocketClientConnector($loop, new SocketConnector($loop))]);
-    }
-
-    /**
-     * @param Spot $socketClient
-     * @param Closure $onMessage
-     */
-    protected function listen($socketClient, Closure $onMessage)
-    {
-        $socketClient->combined($this->getStreamNames(), [
-            'message' => $onMessage,
-        ]);
-    }
-
-    protected function priceMessageExtractor(): IPriceMessageExtract
+    protected function createMessageExtractor(): IPriceMessageExtract
     {
         return new BinancePriceStreamMessageExtractor();
     }
 
-    protected function pingBackTimer(): int|float
+    protected function subscribe()
     {
-        return 5 * 60;
+        $this->getConnection()->send(new Frame(json_encode([
+            'method' => 'SET_PROPERTY',
+            'params' => ['combined', true],
+            'id' => $this->getId(),
+        ]), true, Frame::OP_TEXT));
+        parent::subscribe();
     }
 
-    /**
-     * @param Spot $socketClient
-     */
-    protected function pingBack($socketClient)
+    protected function subscribeTradings(Collection $tradings)
     {
-        $socketClient->ping();
+        $this->getConnection()->send(new Frame(json_encode([
+            'method' => 'SUBSCRIBE',
+            'params' => $tradings
+                ->map(function (Trading $trading) {
+                    return sprintf('%s@kline_%s', strtolower($trading->ticker), $trading->interval);
+                })
+                ->all(),
+            'id' => $this->getId(),
+        ]), true, Frame::OP_TEXT));
+    }
+
+    public function subscribeTrading(string $ticker, string $interval)
+    {
+        $this->getConnection()->send(new Frame(json_encode([
+            'method' => 'SUBSCRIBE',
+            'params' => [sprintf('%s@kline_%s', strtolower($ticker), $interval)],
+            'id' => $this->getId(),
+        ]), true, Frame::OP_TEXT));
+    }
+
+    public function unsubscribeTrading(string $ticker, string $interval)
+    {
+        $this->getConnection()->send(new Frame(json_encode([
+            'method' => 'UNSUBSCRIBE',
+            'params' => [sprintf('%s@kline_%s', strtolower($ticker), $interval)],
+            'id' => $this->getId(),
+        ]), true, Frame::OP_TEXT));
     }
 }

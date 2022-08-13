@@ -21,6 +21,7 @@ return [
                 Illuminate\Console\Scheduling\ScheduleRunCommand::class,
                 App\Trading\Console\Commands\Orchestration\OriginCommand::class,
                 App\Trading\Console\Commands\Orchestration\PriceStreamCommand::class,
+                App\Trading\Console\Commands\Orchestration\LatestPriceCommand::class,
             ],
         ],
         'schedules' => [
@@ -36,7 +37,7 @@ return [
                 //
                 [
                     'schedules' => [
-                        App\Console\Commands\Coin\IdentificationCommand::class,
+                        // App\Console\Commands\Coin\IdentificationCommand::class,
                     ],
                     'frequencies' => [
                         'monthly',
