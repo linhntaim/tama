@@ -2,6 +2,7 @@
 
 namespace App\Trading\Bots\Reporters;
 
+use App\Support\Client\DateTimer;
 use App\Trading\Bots\Data\Indication;
 use App\Trading\Bots\Data\IndicationMetaItem;
 use App\Trading\Bots\Data\Signal;
@@ -79,8 +80,16 @@ class PlainTextReporter extends Reporter
     {
         $lines = [];
         $lines[] = $this->divide('=');
-        $lines[] = sprintf('[%s] %s', $indication->getTime(), $indication->getActionNow() ? '<!>' : '');
+        $lines[] = sprintf(
+            '[%s] %s',
+            DateTimer::timeAs($indication->getActionTime(), 'Y-m-d H:i:s'),
+            $indication->getActionNow() ? '<!>' : ''
+        );
         $lines[] = sprintf('%s @ %s', $indication->getAction(), $indication->getPrice());
+        $lines[] = sprintf(
+            '{Time=%s}',
+            DateTimer::timeAs($indication->getTime(), 'Y-m-d H:i:s')
+        );
         foreach ($indication->getMeta() as $metaItem) {
             $lines[] = $this->headlineMetaItem($metaItem);
             $lines[] = $this->contentMetaItem($metaItem);

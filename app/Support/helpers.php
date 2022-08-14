@@ -380,13 +380,6 @@ if (!function_exists('name_starter')) {
     }
 }
 
-if (!function_exists('not_null_or')) {
-    function not_null_or(mixed $value, mixed $or): mixed
-    {
-        return is_null($value) ? $or : $value;
-    }
-}
-
 if (!function_exists('null_or_empty_string')) {
     function null_or_empty_string(?string $string, bool $trim = true): bool
     {

@@ -6,12 +6,19 @@ use App\Support\ArrayReader;
 
 class Indication extends ArrayReader
 {
-    public function __construct(float $value, string $time, float $price, bool $actionNow = false, array $meta = [])
+    public function __construct(
+        float $value,
+        int   $time,
+        float $actionPrice,
+        int   $actionTime,
+        bool  $actionNow = false,
+        array $meta = [])
     {
         parent::__construct([
             'value' => $value,
             'time' => $time,
-            'price' => $price,
+            'price' => $actionPrice,
+            'action_time' => $actionTime,
             'action_now' => $actionNow,
             'meta' => $meta,
         ]);
@@ -22,7 +29,7 @@ class Indication extends ArrayReader
         return $this->get('value');
     }
 
-    public function getTime(): string
+    public function getTime(): int
     {
         return $this->get('time');
     }
@@ -30,6 +37,11 @@ class Indication extends ArrayReader
     public function getPrice(): float
     {
         return $this->get('price');
+    }
+
+    public function getActionTime(): int
+    {
+        return $this->get('action_time');
     }
 
     public function getActionNow(): bool
