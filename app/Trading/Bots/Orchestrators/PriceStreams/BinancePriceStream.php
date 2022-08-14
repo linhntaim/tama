@@ -2,6 +2,7 @@
 
 namespace App\Trading\Bots\Orchestrators\PriceStreams;
 
+use App\Trading\Bots\Exchanges\Binance;
 use App\Trading\Models\Trading;
 use Illuminate\Database\Eloquent\Collection;
 use Ratchet\RFC6455\Messaging\Frame;
@@ -11,7 +12,7 @@ class BinancePriceStream extends PriceStream
 {
     public function __construct(LoopInterface $loop)
     {
-        parent::__construct($loop, 'binance', 'wss://stream.binance.com:9443/ws', 0);
+        parent::__construct($loop, Binance::NAME, 'wss://stream.binance.com:9443/ws', 0);
     }
 
     protected function createMessageExtractor(): IPriceMessageExtract

@@ -3,6 +3,7 @@
 namespace App\Trading\Bots\Orchestrators;
 
 use App\Trading\Bots\Actions\IAction;
+use App\Trading\Bots\Exchanges\Factory as ExchangeFactory;
 use App\Trading\Bots\Pricing\PriceProviderFactory;
 use App\Trading\Bots\Pricing\LatestPrice;
 use App\Trading\Bots\Pricing\PriceProvider;
@@ -47,6 +48,10 @@ class LatestPriceOrchestrator extends Orchestrator
      */
     public function proceed()
     {
+        if (ExchangeFactory::enabled($this->latestPrice->getExchange())) {
+            return;
+        }
+
         $this->priceProvider()->pushLatest($this->latestPrice);
         parent::proceed();
     }

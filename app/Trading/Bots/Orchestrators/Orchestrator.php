@@ -4,6 +4,7 @@ namespace App\Trading\Bots\Orchestrators;
 
 use App\Trading\Bots\Actions\IAction;
 use App\Trading\Bots\BotBroadcaster;
+use App\Trading\Bots\Exchanges\Factory as ExchangeFactory;
 use App\Trading\Models\Trading;
 use App\Trading\Models\TradingProvider;
 use Illuminate\Database\Eloquent\Collection;
@@ -25,7 +26,7 @@ class Orchestrator
      */
     protected function fetchTradings(): Collection
     {
-        return (new TradingProvider())->allByHavingSubscribers();
+        return (new TradingProvider())->allByHavingSubscribers(ExchangeFactory::enables());
     }
 
     public function proceed()

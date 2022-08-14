@@ -2,6 +2,7 @@
 
 namespace App\Trading\Bots\Pricing;
 
+use App\Trading\Bots\Exchanges\Binance;
 use Binance\Exception\MissingArgumentException;
 use Binance\Spot;
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
@@ -14,7 +15,7 @@ class BinancePriceProvider extends PriceProvider
 
     public function __construct(CacheRepository|string|null $cache = 'redis')
     {
-        parent::__construct('binance', $cache);
+        parent::__construct(Binance::NAME, $cache);
 
         $this->spot = new Spot();
     }

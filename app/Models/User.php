@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $name
  * @property string $email
  * @property UserSocial[]|Collection $socials
+ * @property Trading[]|Collection $tradings
  */
 class User extends SanctumUser implements MustWelcomeEmail, IProtected
 {

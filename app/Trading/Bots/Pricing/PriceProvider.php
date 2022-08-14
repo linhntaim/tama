@@ -124,7 +124,7 @@ abstract class PriceProvider
             $ticker,
             $interval,
             $prices,
-            $interval->getPreviousLatestTimes($limit)
+            $interval->getPreviousLatestTimes(count($prices))
         );
     }
 

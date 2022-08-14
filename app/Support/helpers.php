@@ -4,7 +4,6 @@ use App\Support\Client\DateTimer;
 use App\Support\Client\NumberFormatter;
 use App\Support\Exceptions\FileException;
 use App\Support\Facades\Client;
-use Carbon\Carbon;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -378,13 +377,6 @@ if (!function_exists('name_starter')) {
     function name_starter(string $name, string $separator = '_'): string
     {
         return sprintf('%s%s%s', config_starter('app.id'), $separator, $name);
-    }
-}
-
-if (!function_exists('not_null_or')) {
-    function not_null_or(mixed $value, mixed $or): mixed
-    {
-        return is_null($value) ? $or : $value;
     }
 }
 

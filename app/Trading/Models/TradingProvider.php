@@ -42,18 +42,33 @@ class TradingProvider extends ModelProvider
         );
     }
 
-    public function allByHavingSubscribers(?string $exchange = null, ?string $ticker = null, ?string $interval = null): Collection
+    public function allByHavingSubscribers(string|array|null $exchange = null, string|array|null $ticker = null, string|array|null $interval = null): Collection
     {
         return $this->executeAll(
             modify($this->whereQuery(), function ($query) use ($exchange, $ticker, $interval) {
                 if (!is_null($exchange)) {
-                    $query->where('exchange', $exchange);
+                    if (is_array($exchange)) {
+                        $query->whereIn('exchange', $exchange);
+                    }
+                    else {
+                        $query->where('exchange', $exchange);
+                    }
                 }
                 if (!is_null($ticker)) {
-                    $query->where('ticker', $ticker);
+                    if (is_array($ticker)) {
+                        $query->whereIn('ticker', $ticker);
+                    }
+                    else {
+                        $query->where('ticker', $ticker);
+                    }
                 }
                 if (!is_null($interval)) {
-                    $query->where('interval', $interval);
+                    if (is_array($interval)) {
+                        $query->whereIn('interval', $interval);
+                    }
+                    else {
+                        $query->where('interval', $interval);
+                    }
                 }
                 return $query;
             })->has('subscribers')

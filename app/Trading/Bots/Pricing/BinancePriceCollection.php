@@ -2,11 +2,13 @@
 
 namespace App\Trading\Bots\Pricing;
 
+use App\Trading\Bots\Exchanges\Binance;
+
 class BinancePriceCollection extends PriceCollection
 {
     public function __construct(string $ticker, Interval $interval, array $prices, array $times)
     {
-        parent::__construct('binance', $ticker, $interval, $prices, $times);
+        parent::__construct(Binance::NAME, $ticker, $interval, $prices, $times);
     }
 
     /**

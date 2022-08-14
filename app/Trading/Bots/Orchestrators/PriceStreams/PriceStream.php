@@ -7,7 +7,6 @@ use App\Trading\Models\Trading;
 use App\Trading\Models\TradingProvider;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Redis;
 use Ratchet\Client\Connector as ClientSocketConnector;
 use Ratchet\Client\WebSocket as ClientSocketConnection;
 use Ratchet\RFC6455\Messaging\Frame;
@@ -162,11 +161,6 @@ abstract class PriceStream
         $this->getConnection()->send(new Frame('', true, Frame::OP_PONG));
     }
 
-    protected function wait()
-    {
-        Redis::connection()->subscribe();
-    }
-
     public function __invoke(): static
     {
         $this->log('Connecting');
@@ -174,13 +168,8 @@ abstract class PriceStream
         return $this;
     }
 
-    protected int $i = 0;
-
     protected function proceedMessage(Message $message)
     {
-        $j = ++$this->i;
-        $startTime = microtime(true);
-        echo sprintf('[%s][%s] proceeding' . PHP_EOL, $j, date('Y-m-d H:i:s'));
         try {
             if (!is_null($latestPrice = ($this->messageExtract)(json_decode_array($message->getPayload())))) {
                 (new Process(
@@ -202,6 +191,5 @@ abstract class PriceStream
         catch (Throwable $throwable) {
             report($throwable);
         }
-        echo sprintf('[%s][%s] proceeded in %sms' . PHP_EOL, $j, date('Y-m-d H:i:s'), number_format((microtime(true) - $startTime) * 1000, 2));
     }
 }

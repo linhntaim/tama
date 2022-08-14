@@ -2,6 +2,7 @@
 
 namespace App\Trading\Bots\Pricing;
 
+use App\Trading\Bots\Exchanges\Binance;
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
 use InvalidArgumentException;
 
@@ -13,7 +14,7 @@ class PriceProviderFactory
     ): PriceProvider
     {
         return match ($exchange) {
-            'binance' => new BinancePriceProvider($cache),
+            Binance::NAME => new BinancePriceProvider($cache),
             default => throw new InvalidArgumentException(sprintf('Price provider for the exchange "%s" does not exists.', $exchange))
         };
     }

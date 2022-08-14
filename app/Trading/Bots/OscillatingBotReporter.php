@@ -14,7 +14,7 @@ class OscillatingBotReporter extends PlainTextReporter
 {
     protected function title(): string
     {
-        return parent::title() . sprintf(' (%s)', $this->bot->oscillatorName());
+        return parent::title() . sprintf(' (%s)', $this->bot->oscillator()->getName());
     }
 
     protected function headlineMetaItem(IndicationMetaItem $metaItem): string

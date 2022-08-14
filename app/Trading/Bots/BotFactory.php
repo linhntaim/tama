@@ -6,12 +6,11 @@ use InvalidArgumentException;
 
 class BotFactory
 {
-    public static function create(string $botName = OscillatingBot::NAME, array $botOptions = []): Bot
+    public static function create(string $name, array $options): Bot
     {
-        $botClass = match ($botName) {
-            OscillatingBot::NAME => OscillatingBot::class,
-            default => throw new InvalidArgumentException(sprintf('Bot "%s" does not exist.', $botName))
+        return match ($name) {
+            OscillatingBot::NAME => new OscillatingBot($options),
+            default => throw new InvalidArgumentException(sprintf('Bot "%s" does not exist.', $name))
         };
-        return new $botClass($botOptions);
     }
 }
