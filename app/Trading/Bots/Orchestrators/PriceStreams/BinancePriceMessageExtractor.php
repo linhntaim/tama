@@ -7,16 +7,18 @@ use App\Trading\Bots\Pricing\LatestPrice;
 
 class BinancePriceMessageExtractor implements IPriceMessageExtract
 {
-    public function __invoke(array $messagePayload): ?LatestPrice
+    public function __invoke(array $messagePayload, ?string &$ticker = null, ?string &$interval = null): ?LatestPrice
     {
         if (!isset($messagePayload['e']) || $messagePayload['e'] != 'kline') {
             return null;
         }
-        return $this->handlePricePayload($messagePayload['k']);
+        return $this->handlePricePayload($messagePayload['k'], $ticker, $interval);
     }
 
-    protected function handlePricePayload(array $pricePayload): ?LatestPrice
+    protected function handlePricePayload(array $pricePayload, ?string &$ticker = null, ?string &$interval = null): ?LatestPrice
     {
+        $ticker = $pricePayload['s'];
+        $interval = $pricePayload['i'];
         return $pricePayload['x'] // Closed?
             ? new BinanceLatestPrice(
                 $pricePayload['s'],
