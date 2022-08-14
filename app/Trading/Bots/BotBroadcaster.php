@@ -2,17 +2,17 @@
 
 namespace App\Trading\Bots;
 
+use App\Support\Client\DateTimer;
 use App\Trading\Bots\Actions\IAction;
 use App\Trading\Bots\Data\Indication;
 use App\Trading\Models\Trading;
 use App\Trading\Models\TradingBroadcastProvider;
-use Carbon\Carbon;
 
 class BotBroadcaster
 {
     public const IN_SECONDS = 120;
 
-    protected TradingBroadcastProvider $provider;
+    protected TradingBroadcastProvider $tradingBroadcastProvider;
 
     protected Bot $bot;
 
@@ -25,7 +25,7 @@ class BotBroadcaster
         protected array   $actions
     )
     {
-        $this->provider = new TradingBroadcastProvider();
+        $this->tradingBroadcastProvider = new TradingBroadcastProvider();
         $this->bot = BotFactory::create($trading->bot, array_merge($trading->options, [
             'safe_ticker' => true,
             'safe_interval' => true,
@@ -53,29 +53,30 @@ class BotBroadcaster
     protected function fineTime(Indication $indication): bool
     {
         return $indication->getActionNow()
-            && Carbon::now()->diffInSeconds($indication->getTime()) < self::IN_SECONDS;
+            && DateTimer::now()->diffInSeconds(DateTimer::timeAs($indication->getActionTime())) < self::IN_SECONDS;
     }
 
     protected function fineToCreateBroadcast(Indication $indication): bool
     {
-        $tradingBroadcast = $this->provider
+        $actionTime = DateTimer::timeAsDatabase($indication->getActionTime());
+        $tradingBroadcast = $this->tradingBroadcastProvider
             ->notStrict()
             ->pinModel()
             ->first([
                 'trading_id' => $this->trading->id,
-                'time' => $indication->getTime(),
+                'time' => $actionTime,
             ]);
         if (!is_null($tradingBroadcast) && !$tradingBroadcast->failed) {
             return false;
         }
         if (is_null($tradingBroadcast)) {
-            $this->provider->createWithAttributes([
+            $this->tradingBroadcastProvider->createWithAttributes([
                 'trading_id' => $this->trading->id,
-                'time' => $indication->getTime(),
+                'time' => $actionTime,
             ]);
         }
         else {
-            $this->provider->doing();
+            $this->tradingBroadcastProvider->doing();
         }
         return true;
     }
@@ -93,7 +94,7 @@ class BotBroadcaster
 
     protected function updateBroadcast()
     {
-        $this->provider->done();
+        $this->tradingBroadcastProvider->done();
     }
 
     protected function broadcasting(Indication $indication): static

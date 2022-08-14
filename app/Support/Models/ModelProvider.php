@@ -3,6 +3,7 @@
 namespace App\Support\Models;
 
 use App\Support\Database\DatabaseTransaction;
+use App\Support\Models\QueryConditions\GroupCondition;
 use App\Support\Models\QueryConditions\LimitCondition;
 use App\Support\Models\QueryConditions\QueryCondition;
 use App\Support\Models\QueryConditions\SelectCondition;
@@ -140,6 +141,12 @@ abstract class ModelProvider
         return $this;
     }
 
+    public function group(array|string $column, string ...$columns): static
+    {
+        $this->wheres[] = new GroupCondition(is_array($column) ? $column : func_get_args());
+        return $this;
+    }
+
     public function limit(int $limit, int $skip = 0): static
     {
         if ($limit > 0) {
@@ -154,6 +161,13 @@ abstract class ModelProvider
         if (!is_null($pivot)) {
             $this->wheres[] = new WhereCondition($by, $pivot);
         }
+        return $this;
+    }
+
+    public function condition(QueryCondition|array $condition, QueryCondition ...$conditions): static
+    {
+        array_push($this->wheres, ...(is_array($condition) ? $condition : func_get_args()));
+        $this->wheres[] = $condition;
         return $this;
     }
 

@@ -70,9 +70,8 @@ class BotController extends ApiController
         return $command . sprintf(' --telegram-update=\'%s\'', base64_encode($request->getContent()));
     }
 
-    protected function execute(Request $request, string $command): string
+    protected function execute(Request $request, string $command): void
     {
         Artisan::call($command);
-        return Artisan::output();
     }
 }

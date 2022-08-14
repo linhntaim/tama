@@ -72,12 +72,14 @@ return [
                     'weight' => 100,
                 ],
             ],
+            'prefix' => env('CACHE_MEMCACHED_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_') . '_cache'),
         ],
 
         'redis' => [
             'driver' => 'redis',
             'connection' => 'cache',
             'lock_connection' => 'default',
+            'prefix' => env('CACHE_REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_') . '_cache'),
         ],
 
         'dynamodb' => [
@@ -87,6 +89,7 @@ return [
             'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
             'table' => env('DYNAMODB_CACHE_TABLE', 'cache'),
             'endpoint' => env('DYNAMODB_ENDPOINT'),
+            'prefix' => env('CACHE_DYNAMODB_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_') . '_cache'),
         ],
 
         'octane' => [
@@ -106,6 +109,6 @@ return [
     |
     */
 
-    'prefix' => env('CACHE_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_cache_'),
+    'prefix' => env('CACHE_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_') . '_cache_'),
 
 ];
