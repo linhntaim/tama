@@ -32,17 +32,21 @@ class DateTimer extends SettingsApplier
     #region Static
     protected static ?Carbon $now = null;
 
-    public static function now(bool $reset = false): Carbon
+    public static function now(?bool $set = false): Carbon
     {
-        if (is_null(static::$now) || $reset) {
-            static::$now = Carbon::now(new CarbonTimeZone('UTC'));
+        $now = fn() => Carbon::now(new CarbonTimeZone('UTC'));
+        if (is_null($set)) {
+            return $now();
+        }
+        if (is_null(static::$now) || $set) {
+            static::$now = $now();
         }
         return clone static::$now;
     }
 
-    public static function databaseNow(bool $reset = false): string
+    public static function databaseNow(?bool $set = false): string
     {
-        return static::now($reset)->format(static::DATABASE_FORMAT);
+        return static::now($set)->format(static::DATABASE_FORMAT);
     }
 
     public static function timeAsDatabase(int|float|string $timestamp): string
