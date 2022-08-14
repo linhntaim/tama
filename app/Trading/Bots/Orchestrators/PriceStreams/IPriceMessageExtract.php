@@ -6,5 +6,5 @@ use App\Trading\Bots\Pricing\LatestPrice;
 
 interface IPriceMessageExtract
 {
-    public function __invoke(array $messagePayload): ?LatestPrice;
+    public function __invoke(array $messagePayload, ?string &$ticker = null, ?string &$interval = null): ?LatestPrice;
 }

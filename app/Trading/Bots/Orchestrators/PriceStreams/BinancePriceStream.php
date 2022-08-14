@@ -5,7 +5,6 @@ namespace App\Trading\Bots\Orchestrators\PriceStreams;
 use App\Trading\Bots\Exchanges\Binance;
 use App\Trading\Models\Trading;
 use Illuminate\Database\Eloquent\Collection;
-use Ratchet\RFC6455\Messaging\Frame;
 use React\EventLoop\LoopInterface;
 
 class BinancePriceStream extends PriceStream
@@ -20,44 +19,41 @@ class BinancePriceStream extends PriceStream
         return new BinancePriceStreamMessageExtractor();
     }
 
+    protected function call(string $method, array $params)
+    {
+        $this->send([
+            'method' => $method,
+            'params' => $params,
+            'id' => $this->getId(),
+        ]);
+    }
+
     protected function subscribe()
     {
-        $this->getConnection()->send(new Frame(json_encode([
-            'method' => 'SET_PROPERTY',
-            'params' => ['combined', true],
-            'id' => $this->getId(),
-        ]), true, Frame::OP_TEXT));
+        $this->call('SET_PROPERTY', ['combined', true]);
         parent::subscribe();
     }
 
     protected function subscribeTradings(Collection $tradings)
     {
-        $this->getConnection()->send(new Frame(json_encode([
-            'method' => 'SUBSCRIBE',
-            'params' => $tradings
+        $this->call(
+            'SUBSCRIBE',
+            $tradings
                 ->map(function (Trading $trading) {
                     return sprintf('%s@kline_%s', strtolower($trading->ticker), $trading->interval);
                 })
-                ->all(),
-            'id' => $this->getId(),
-        ]), true, Frame::OP_TEXT));
+                ->values()
+                ->all()
+        );
     }
 
     public function subscribeTrading(string $ticker, string $interval)
     {
-        $this->getConnection()->send(new Frame(json_encode([
-            'method' => 'SUBSCRIBE',
-            'params' => [sprintf('%s@kline_%s', strtolower($ticker), $interval)],
-            'id' => $this->getId(),
-        ]), true, Frame::OP_TEXT));
+        $this->call('SUBSCRIBE', [sprintf('%s@kline_%s', strtolower($ticker), $interval)]);
     }
 
     public function unsubscribeTrading(string $ticker, string $interval)
     {
-        $this->getConnection()->send(new Frame(json_encode([
-            'method' => 'UNSUBSCRIBE',
-            'params' => [sprintf('%s@kline_%s', strtolower($ticker), $interval)],
-            'id' => $this->getId(),
-        ]), true, Frame::OP_TEXT));
+        $this->call('UNSUBSCRIBE', [sprintf('%s@kline_%s', strtolower($ticker), $interval)]);
     }
 }
