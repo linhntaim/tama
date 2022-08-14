@@ -8,6 +8,7 @@ use App\Trading\Models\Trading;
 use App\Trading\Models\TradingProvider;
 use App\Trading\Notifications\Telegram\ConsoleNotification;
 use App\Trading\Notifications\TelegramUpdateNotifiable;
+use Illuminate\Support\Facades\Redis;
 
 class UnsubscribeCommand extends Command
 {
@@ -37,22 +38,24 @@ class UnsubscribeCommand extends Command
     protected function handling(): int
     {
         if (!is_null($user = $this->findUser())) {
+            $redis = Redis::connection(trading_cfg_redis_pubsub_connection());
             if (!is_null($trading = $this->findTrading())) {
-                $trading->subscribers()->detach($user->id);
+                $this->unsubscribe($user, $trading, $redis);
                 ConsoleNotification::send(
                     new TelegramUpdateNotifiable($this->telegramUpdate),
                     sprintf('Subscription to the trading {%s:%s} was removed successfully.', $trading->id, $trading->slug)
                 );
             }
             elseif ($this->option('all')) {
-                $user->tradings()->detach();
+                foreach ($user->tradings as $trading) {
+                    $this->unsubscribe($user, $trading, $redis);
+                }
                 ConsoleNotification::send(
                     new TelegramUpdateNotifiable($this->telegramUpdate),
                     'Subscriptions to all tradings were removed successfully.'
                 );
             }
             else {
-                $user->tradings()->detach();
                 ConsoleNotification::send(
                     new TelegramUpdateNotifiable($this->telegramUpdate),
                     'No subscription was removed.'
@@ -60,5 +63,17 @@ class UnsubscribeCommand extends Command
             }
         }
         return $this->exitSuccess();
+    }
+
+    protected function unsubscribe(User $user, Trading $trading, $redis)
+    {
+        $trading->subscribers()->detach($user->id);
+        if ($trading->subscribers()->count() == 0) {
+            $redis->publish('price-stream:unsubscribe', json_encode([
+                'exchange' => $trading->exchange,
+                'ticker' => $trading->ticker,
+                'interval' => $trading->interval,
+            ]));
+        }
     }
 }

@@ -3,7 +3,7 @@
 namespace App\Trading\Bots\Oscillators;
 
 use App\Trading\Bots\Data\Indication;
-use App\Trading\Prices\Prices;
+use App\Trading\Bots\Pricing\PriceCollection;
 use Illuminate\Support\Collection;
 use RuntimeException;
 
@@ -78,11 +78,11 @@ abstract class Oscillator
     }
 
     /**
-     * @param Prices $prices
+     * @param PriceCollection $prices
      * @param bool|int $latest
      * @return Collection<int, Indication>
      */
-    public function run(Prices $prices, bool|int $latest = true): Collection
+    public function run(PriceCollection $prices, bool|int $latest = true): Collection
     {
         return $this->output(
             $this->process(

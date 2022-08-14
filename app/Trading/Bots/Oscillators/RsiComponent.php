@@ -58,7 +58,7 @@ class RsiComponent extends Component
 
     protected function convert(Packet $packet): Packet
     {
-        return $packet->set('converters.rsi', Trader::rsi($this->getPrices($packet)->getValues(), $this->timePeriod()));
+        return $packet->set('converters.rsi', Trader::rsi($this->getPrices($packet)->prices(), $this->timePeriod()));
     }
 
     protected function analyze(Packet $packet, bool|int $latest = true): Packet
@@ -67,16 +67,16 @@ class RsiComponent extends Component
         $data = [];
         $dataCount = 0;
         $rsiValues = new Values($packet->get('converters.rsi'));
-        $prices = $this->getPrices($packet);
-        $priceValues = $prices->getValues();
-        $timeValues = $prices->getTimes();
-        $i = $prices->count();
+        $priceCollection = $this->getPrices($packet);
+        $priceValues = $priceCollection->prices();
+        $timeValues = $priceCollection->times();
+        $i = $priceCollection->count();
         while (--$i >= 0) {
-            if ($i < $this->timePeriod() + 2) {
+            if ($i < $this->timePeriod() + 1) {
                 break;
             }
 
-            if (($signals = $this->createSignals($timeValues, $priceValues, $rsiValues, $i - 2))->count()) {
+            if (($signals = $this->createSignals($timeValues, $priceValues, $rsiValues, $i - 1))->count()) {
                 $data[$i] = $this->createAnalysis(
                     $timeValues[$i],
                     $priceValues[$i],
@@ -95,7 +95,7 @@ class RsiComponent extends Component
         return $packet->set('analyzers.rsi', collect($data));
     }
 
-    protected function createAnalysis($timeValue, $priceValue, $rsiValue, Collection $signals): Analysis
+    protected function createAnalysis(int $timeValue, float $priceValue, float $rsiValue, Collection $signals): Analysis
     {
         return new Analysis($timeValue, $priceValue, $signals, [
             'rsi' => $rsiValue,
@@ -106,6 +106,13 @@ class RsiComponent extends Component
         ]);
     }
 
+    /**
+     * @param int[] $timeValues
+     * @param float[] $priceValues
+     * @param Values $rsiValues
+     * @param int $index
+     * @return Collection
+     */
     protected function createSignals(array $timeValues, array $priceValues, Values $rsiValues, int $index): Collection
     {
         $signals = collect([]);
@@ -222,7 +229,16 @@ class RsiComponent extends Component
         return $signals;
     }
 
-    protected function createDivergenceSignal($type, $strength, $time1, $price1, $rsi1, $time2, $price2, $rsi2): Signal
+    protected function createDivergenceSignal(
+        string $type,
+        string $strength,
+        int    $time1,
+        float  $price1,
+        float  $rsi1,
+        int    $time2,
+        float  $price2,
+        float  $rsi2
+    ): Signal
     {
         return new Signal($type, $strength, [
             'divergence_1' => [
@@ -240,11 +256,12 @@ class RsiComponent extends Component
 
     protected function transform(Packet $packet): Packet
     {
-        $latestTime = $this->getPrices($packet)->getLatestTime();
+        $priceCollection = $this->getPrices($packet);
+        $latestTime = $priceCollection->latestTime();
         return $packet->set(
             'transformers.rsi',
             $packet->get('analyzers.rsi')
-                ->map(function (Analysis $analysis) use ($latestTime) {
+                ->map(function (Analysis $analysis, $index) use ($priceCollection, $latestTime) {
                     return new Indication(
                         $value = $analysis->hasSignal('bearish_divergence')
                             ? 1
@@ -252,6 +269,7 @@ class RsiComponent extends Component
                                 ? -1 : 0),
                         $time = $analysis->getTime(),
                         $analysis->getPrice(),
+                        $priceCollection->timeAt($index + 1),
                         $time == $latestTime,
                         $value != 0 ? [
                             new IndicationMetaItem('rsi', $analysis->getSignals(), [

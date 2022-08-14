@@ -4,11 +4,12 @@ namespace App\Trading\Bots;
 
 use App\Support\ClassTrait;
 use App\Trading\Bots\Data\Indication;
-use App\Trading\Exchanges\Connection;
-use App\Trading\Exchanges\Connector;
-use App\Trading\Exchanges\Connector as ExchangeConnector;
-use App\Trading\Prices\Prices;
+use App\Trading\Bots\Pricing\Interval;
+use App\Trading\Bots\Pricing\PriceCollection;
+use App\Trading\Bots\Pricing\PriceProvider;
+use App\Trading\Bots\Pricing\PriceProviderFactory;
 use Illuminate\Support\Collection;
+use Psr\SimpleCache\InvalidArgumentException as PsrInvalidArgumentException;
 use RuntimeException;
 
 abstract class Bot
@@ -19,20 +20,20 @@ abstract class Bot
 
     private string $exchange;
 
-    private ExchangeConnector $exchangeConnector;
+    private PriceProvider $priceProvider;
 
-    private string $ticker;
+    private string $ticker; // always uppercase
 
-    private string $interval;
+    private Interval $interval;
 
     public function __construct(
         protected array $options = []
     )
     {
-        $connector = $this->exchangeConnector();
-        if (!(($this->options['safe_ticker'] ?? false) || $connector->isTickerOk($this->ticker()))
-            || !(($this->options['safe_interval'] ?? false) || $connector->isIntervalOk($this->interval()))) {
-            throw new RuntimeException('Ticker and interval for bot is not OK.');
+        $priceProvider = $this->priceProvider();
+        if (!(($this->options['safe_ticker'] ?? false) || $priceProvider->isTickerValid($this->ticker()))
+            || !(($this->options['safe_interval'] ?? false) || $priceProvider->isIntervalValid($this->interval()))) {
+            throw new RuntimeException('Ticker or interval is not valid.');
         }
     }
 
@@ -49,29 +50,24 @@ abstract class Bot
     public function exchange(): string
     {
         return $this->exchange
-            ?? $this->exchange = strtolower($this->options['exchange'] ?? 'binance');
+            ?? $this->exchange = $this->options['exchange'];
     }
 
-    public function exchangeConnector(): ExchangeConnector
+    public function priceProvider(): PriceProvider
     {
-        return $this->exchangeConnector ?? $this->exchangeConnector = take(
-                Connection::create($this->exchange()),
-                function (Connector $connector) {
-                    $this->exchange = $connector->getName();
-                }
-            );
+        return $this->priceProvider ?? $this->priceProvider = PriceProviderFactory::create($this->exchange());
     }
 
     public function ticker(): string
     {
         return $this->ticker
-            ?? $this->ticker = strtoupper($this->options['ticker'] ?? 'BTCUSDT');
+            ?? $this->ticker = $this->options['ticker'];
     }
 
-    public function interval(): string
+    public function interval(): Interval
     {
         return $this->interval
-            ?? $this->interval = $this->options['interval'] ?? '1d';
+            ?? $this->interval = new Interval($this->options['interval']);
     }
 
     public function options(): array
@@ -79,7 +75,7 @@ abstract class Bot
         return [
             'exchange' => $this->exchange(),
             'ticker' => $this->ticker(),
-            'interval' => $this->interval(),
+            'interval' => (string)$this->interval(),
         ];
     }
 
@@ -99,35 +95,41 @@ abstract class Bot
         ]);
     }
 
-    protected function fetchPrices(?string $at = null): Prices
+    /**
+     * @throws PsrInvalidArgumentException
+     */
+    protected function fetchPrices(): PriceCollection
     {
-        return $this->exchangeConnector()->getPrices(
+        return $this->priceProvider()->recent(
             $this->ticker(),
             $this->interval()
         );
     }
 
     /**
-     * @param Prices $prices
+     * @param PriceCollection $prices
      * @param int $latest
      * @return Collection<int, Indication>
      */
-    protected abstract function indicating(Prices $prices, int $latest = 0): Collection;
+    protected abstract function indicating(PriceCollection $prices, int $latest = 0): Collection;
 
     /**
-     * @param string|null $at
      * @param int $latest
      * @return Collection<int, Indication>
+     * @throws PsrInvalidArgumentException
      */
-    public function indicate(?string $at = null, int $latest = 0): Collection
+    public function indicate(int $latest = 0): Collection
     {
-        return $this->indicating($this->fetchPrices($at), $latest);
+        return $this->indicating($this->fetchPrices(), $latest);
     }
 
-    protected abstract function indicatingNow(Prices $prices): ?Indication;
+    protected abstract function indicatingNow(PriceCollection $prices): ?Indication;
 
-    public function indicateNow(?string $at = null): ?Indication
+    /**
+     * @throws PsrInvalidArgumentException
+     */
+    public function indicateNow(): ?Indication
     {
-        return $this->indicatingNow($this->fetchPrices($at));
+        return $this->indicatingNow($this->fetchPrices());
     }
 }

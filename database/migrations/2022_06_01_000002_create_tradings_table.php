@@ -22,6 +22,10 @@ return new class extends Migration {
             $table->json('options')->nullable();
             $table->timestamps();
 
+            $table->index('bot');
+            $table->index('exchange');
+            $table->index('ticker');
+            $table->index('interval');
             $table->index('created_at');
         });
 

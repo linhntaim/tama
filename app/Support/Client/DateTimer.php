@@ -45,6 +45,18 @@ class DateTimer extends SettingsApplier
         return static::now($reset)->format(static::DATABASE_FORMAT);
     }
 
+    public static function timeAsDatabase(int|float|string $timestamp): string
+    {
+        return static::timeAs($timestamp, static::DATABASE_FORMAT);
+    }
+
+    public static function timeAs(int|float|string $timestamp, ?string $format = null): Carbon|string
+    {
+        return is_null($format)
+            ? Carbon::createFromTimestamp($timestamp, new CarbonTimeZone('UTC'))
+            : Carbon::createFromTimestamp($timestamp, new CarbonTimeZone('UTC'))->format($format);
+    }
+
     public static function availableUtcOffsets(): array
     {
         return [

@@ -3,33 +3,22 @@
 namespace App\Trading\Bots;
 
 use App\Trading\Bots\Data\Indication;
+use App\Trading\Bots\Oscillators\Factory as OscillatorFactory;
 use App\Trading\Bots\Oscillators\Oscillator;
-use App\Trading\Bots\Oscillators\RsiOscillator;
-use App\Trading\Prices\Prices;
+use App\Trading\Bots\Pricing\PriceCollection;
 use Illuminate\Support\Collection;
 
 class OscillatingBot extends Bot
 {
     public const NAME = 'oscillating_bot';
 
-    protected string $oscillatorName;
-
     protected Oscillator $oscillator;
 
-    public function oscillatorName()
+    public function oscillator(): Oscillator
     {
-        return $this->oscillatorName ?? $this->oscillatorName = $this->options['oscillator']['name'] ?? 'rsi';
-    }
-
-    protected function oscillator(): Oscillator
-    {
-        return $this->oscillator ?? $this->oscillator = (fn($class, $options) => new $class($options))(
-                (fn() => match ($this->oscillatorName()) {
-                    'rsi' => RsiOscillator::class,
-                    default => take(RsiOscillator::class, function () {
-                        $this->oscillatorName = 'rsi';
-                    })
-                })(),
+        return $this->oscillator
+            ?? $this->oscillator = OscillatorFactory::create(
+                $this->options['oscillator']['name'],
                 $this->options['oscillator']['options'] ?? []
             );
     }
@@ -53,12 +42,12 @@ class OscillatingBot extends Bot
         ]);
     }
 
-    protected function indicating(Prices $prices, int $latest = 0): Collection
+    protected function indicating(PriceCollection $prices, int $latest = 0): Collection
     {
         return $this->oscillator()->run($prices, $latest);
     }
 
-    protected function indicatingNow(Prices $prices): ?Indication
+    protected function indicatingNow(PriceCollection $prices): ?Indication
     {
         return $this->oscillator()->run($prices)->first();
     }

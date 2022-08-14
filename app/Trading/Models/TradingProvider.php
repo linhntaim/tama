@@ -42,10 +42,36 @@ class TradingProvider extends ModelProvider
         );
     }
 
-    public function allByHavingSubscribers(): Collection
+    public function allByHavingSubscribers(string|array|null $exchange = null, string|array|null $ticker = null, string|array|null $interval = null): Collection
     {
         return $this->executeAll(
-            $this->whereQuery()->has('subscribers')
+            modify($this->whereQuery(), function ($query) use ($exchange, $ticker, $interval) {
+                if (!is_null($exchange)) {
+                    if (is_array($exchange)) {
+                        $query->whereIn('exchange', $exchange);
+                    }
+                    else {
+                        $query->where('exchange', $exchange);
+                    }
+                }
+                if (!is_null($ticker)) {
+                    if (is_array($ticker)) {
+                        $query->whereIn('ticker', $ticker);
+                    }
+                    else {
+                        $query->where('ticker', $ticker);
+                    }
+                }
+                if (!is_null($interval)) {
+                    if (is_array($interval)) {
+                        $query->whereIn('interval', $interval);
+                    }
+                    else {
+                        $query->where('interval', $interval);
+                    }
+                }
+                return $query;
+            })->has('subscribers')
         );
     }
 }
