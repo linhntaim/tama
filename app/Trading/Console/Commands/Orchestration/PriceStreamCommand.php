@@ -3,14 +3,13 @@
 namespace App\Trading\Console\Commands\Orchestration;
 
 use App\Support\Console\Commands\Command;
-use App\Trading\Bots\Actions\ReportAction;
-use App\Trading\Bots\BotOrchestrator;
+use App\Trading\Bots\Orchestrators\PriceStreamOrchestrator;
 
-class BroadcastCommand extends Command
+class PriceStreamCommand extends Command
 {
     protected function handling(): int
     {
-        (new BotOrchestrator())->broadcast([new ReportAction()]);
+        (new PriceStreamOrchestrator())->proceed();
         return $this->exitSuccess();
     }
 }

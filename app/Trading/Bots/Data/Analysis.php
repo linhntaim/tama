@@ -8,12 +8,12 @@ use Illuminate\Support\Collection;
 class Analysis extends ArrayReader
 {
     /**
-     * @param string $time
+     * @param int $time
      * @param float $price
      * @param Collection<int, Signal> $signals
      * @param array $additional
      */
-    public function __construct(string $time, float $price, Collection $signals, array $additional = [])
+    public function __construct(int $time, float $price, Collection $signals, array $additional = [])
     {
         parent::__construct(array_merge([
             'time' => $time,
@@ -22,7 +22,7 @@ class Analysis extends ArrayReader
         ], $additional));
     }
 
-    public function getTime(): string
+    public function getTime(): int
     {
         return $this->get('time');
     }

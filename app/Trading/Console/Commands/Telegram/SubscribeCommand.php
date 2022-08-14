@@ -7,12 +7,16 @@ use App\Models\UserProvider;
 use App\Models\UserSocialProvider;
 use App\Support\Client\DateTimer;
 use App\Trading\Bots\BotFactory;
-use App\Trading\Exchanges\Connection;
+use App\Trading\Bots\Exchanges\Factory as ExchangeFactory;
+use App\Trading\Bots\Oscillators\RsiOscillator;
+use App\Trading\Bots\Pricing\PriceProviderFactory;
 use App\Trading\Models\Trading;
 use App\Trading\Models\TradingProvider;
 use App\Trading\Notifications\Telegram\ConsoleNotification;
 use App\Trading\Notifications\TelegramUpdateNotifiable;
+use App\Trading\Trader;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
 
 class SubscribeCommand extends Command
@@ -21,29 +25,41 @@ class SubscribeCommand extends Command
 
     protected $description = 'Subscribe a trading.';
 
+    protected string $bot;
+
+    protected string $exchange;
+
+    protected string $ticker;
+
+    protected string $interval;
+
     protected function bot(): string
     {
-        return $this->option('bot') ?? 'oscillating_bot';
+        return $this->bot ?? $this->bot = strtolower($this->option('bot'));
     }
 
     protected function exchange(): string
     {
-        return $this->option('exchange') ?? 'binance';
+        return $this->exchange ?? $this->exchange = strtolower($this->option('exchange'));
     }
 
     protected function ticker(): string
     {
-        return $this->option('ticker') ?? 'BTCUSDT';
+        return $this->ticker ?? $this->ticker = strtoupper($this->option('ticker'));
     }
 
     protected function interval(): string
     {
-        return $this->option('interval') ?? '1d';
+        return $this->interval ?? $this->interval = $this->option('interval');
     }
 
     protected function botOptions(): array
     {
-        return not_null_or(json_decode_array($this->option('bot-options') ?? ''), []);
+        return json_decode_array($this->option('bot-options') ?? '') ?: [
+            'oscillator' => [
+                'name' => RsiOscillator::NAME,
+            ],
+        ];
     }
 
     protected function mergeBotOptions(array $botOptions = []): array
@@ -61,20 +77,37 @@ class SubscribeCommand extends Command
 
     protected function handling(): int
     {
-        if (is_null($user = $this->createUserFromTelegram())) {
+        if (!ExchangeFactory::enabled($this->exchange())) {
+            ConsoleNotification::send(
+                new TelegramUpdateNotifiable($this->telegramUpdate),
+                sprintf('Subscription for the exchange "%s" was not supported/enabled.', $this->exchange())
+            );
+        }
+        elseif (in_array($this->ticker(), [
+            Trader::INTERVAL_1_MINUTE,
+            Trader::INTERVAL_3_MINUTES,
+            Trader::INTERVAL_5_MINUTES,
+        ])) {
+            ConsoleNotification::send(
+                new TelegramUpdateNotifiable($this->telegramUpdate),
+                sprintf('Subscription for the interval "%s" was not supported/enabled.', $this->ticker())
+            );
+        }
+        elseif (is_null($user = $this->createUserFromTelegram())) {
             ConsoleNotification::send(
                 new TelegramUpdateNotifiable($this->telegramUpdate),
                 'Subscription was not supported.'
             );
         }
         else {
+            $redis = Redis::connection(trading_cfg_redis_pubsub_connection());
             if ($this->ticker()[0] == '*') {
                 $tickers = $this->fetchTickers();
                 foreach ($tickers as $ticker) {
                     $this->subscribe($user, $this->createTrading([
                         'ticker' => $ticker,
                         'safe_ticker' => true,
-                    ]));
+                    ]), $redis);
                 }
                 ConsoleNotification::send(
                     new TelegramUpdateNotifiable($this->telegramUpdate),
@@ -82,7 +115,7 @@ class SubscribeCommand extends Command
                 );
             }
             else {
-                $this->subscribe($user, $trading = $this->createTrading());
+                $this->subscribe($user, $trading = $this->createTrading(), $redis);
                 ConsoleNotification::send(
                     new TelegramUpdateNotifiable($this->telegramUpdate),
                     sprintf('Subscription to the trading {%s:%s} was created successfully.', $trading->id, $trading->slug)
@@ -94,7 +127,7 @@ class SubscribeCommand extends Command
 
     protected function fetchTickers(): Collection
     {
-        return Connection::create($this->exchange())->availableTickers($this->ticker());
+        return PriceProviderFactory::create($this->exchange())->availableTickers($this->ticker());
     }
 
     protected function createUserFromTelegram(): ?User
@@ -166,7 +199,7 @@ class SubscribeCommand extends Command
                         'bot' => $bot->getName(),
                         'exchange' => $bot->exchange(),
                         'ticker' => $bot->ticker(),
-                        'interval' => $bot->interval(),
+                        'interval' => (string)$bot->interval(),
                         'options' => $bot->options(),
                     ])
                     : $trading;
@@ -174,12 +207,17 @@ class SubscribeCommand extends Command
         );
     }
 
-    protected function subscribe(User $user, Trading $trading)
+    protected function subscribe(User $user, Trading $trading, $redis)
     {
         $trading->subscribers()->syncWithoutDetaching([
             $user->id => [
                 'subscribed_at' => DateTimer::databaseNow(),
             ],
         ]);
+        $redis->publish('price-stream:subscribe', json_encode([
+            'exchange' => $trading->exchange,
+            'ticker' => $trading->ticker,
+            'interval' => $trading->interval,
+        ]));
     }
 }
