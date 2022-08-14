@@ -79,7 +79,7 @@ abstract class PriceStream
     {
         $now = DateTimer::now(null);
         return
-            (clone $now)->minute(0)
+            (clone $now)->minute(0)->second(0)
                 ->addMinutes(15 * ((int)($now->minute / 15) + 1))
                 ->getTimestamp()
             - $now->getTimestamp();
