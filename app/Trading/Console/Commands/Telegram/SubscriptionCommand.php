@@ -12,9 +12,14 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class SubscriptionCommand extends Command
 {
-    public $signature = '{--page=1}';
+    public $signature = '{--q= : The keyword for searching.} {--page=1}';
 
     protected $description = 'List all trading subscriptions.';
+
+    protected function keyword(): ?string
+    {
+        return $this->option('q');
+    }
 
     protected function page(): int
     {
@@ -43,7 +48,7 @@ class SubscriptionCommand extends Command
 
     protected function printTradingsBySubscriber(User $user): string
     {
-        return $this->printTradings((new TradingProvider())->paginationBySubscriber($user, 10, $this->page()));
+        return $this->printTradings((new TradingProvider())->paginationBySubscriber($user, $this->keyword(), 10, $this->page()));
     }
 
     protected function printTradings(LengthAwarePaginator $tradings): string
