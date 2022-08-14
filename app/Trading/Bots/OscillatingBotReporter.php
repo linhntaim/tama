@@ -2,6 +2,7 @@
 
 namespace App\Trading\Bots;
 
+use App\Support\Client\DateTimer;
 use App\Trading\Bots\Data\IndicationMetaItem;
 use App\Trading\Bots\Data\Signal;
 use App\Trading\Bots\Reporters\PlainTextReporter;
@@ -13,7 +14,7 @@ class OscillatingBotReporter extends PlainTextReporter
 {
     protected function title(): string
     {
-        return parent::title() . sprintf(' (%s)', $this->bot->oscillatorName());
+        return parent::title() . sprintf(' (%s)', $this->bot->oscillator()->getName());
     }
 
     protected function headlineMetaItem(IndicationMetaItem $metaItem): string
@@ -32,13 +33,13 @@ class OscillatingBotReporter extends PlainTextReporter
             case 'bearish_divergence':
                 $lines[] = sprintf(
                     'D1: [%s] (rsi=%s) (price=%s)',
-                    $signal->get('divergence_1.time'),
+                    DateTimer::timeAs($signal->get('divergence_1.time'), 'Y-m-d H:i:s'),
                     $signal->get('divergence_1.rsi'),
                     $signal->get('divergence_1.price')
                 );
                 $lines[] = sprintf(
                     'D2: [%s] (rsi=%s) (price=%s)',
-                    $signal->get('divergence_2.time'),
+                    DateTimer::timeAs($signal->get('divergence_2.time'), 'Y-m-d H:i:s'),
                     $signal->get('divergence_2.rsi'),
                     $signal->get('divergence_2.price')
                 );

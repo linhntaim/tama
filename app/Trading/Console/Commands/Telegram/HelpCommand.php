@@ -3,10 +3,7 @@
 namespace App\Trading\Console\Commands\Telegram;
 
 use App\Trading\Notifications\Telegram\ConsoleNotification;
-use App\Trading\Notifications\Telegram\TextNotification;
 use App\Trading\Notifications\TelegramUpdateNotifiable;
-use App\Trading\Telegram\MarkdownConsole;
-use App\Trading\Telegram\MarkdownText;
 use Symfony\Component\Console\Helper\DescriptorHelper;
 use Symfony\Component\Console\Output\BufferedOutput;
 
