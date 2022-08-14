@@ -9,7 +9,7 @@ class Indication extends ArrayReader
     public function __construct(
         float $value,
         int   $time,
-        float $actionPrice,
+        float $price,
         int   $actionTime,
         bool  $actionNow = false,
         array $meta = [])
@@ -17,7 +17,7 @@ class Indication extends ArrayReader
         parent::__construct([
             'value' => $value,
             'time' => $time,
-            'price' => $actionPrice,
+            'price' => $price,
             'action_time' => $actionTime,
             'action_now' => $actionNow,
             'meta' => $meta,
