@@ -49,10 +49,8 @@ class LatestPriceOrchestrator extends Orchestrator
     public function proceed()
     {
         if (ExchangeFactory::enabled($this->latestPrice->getExchange())) {
-            return;
+            $this->priceProvider()->pushLatest($this->latestPrice);
+            parent::proceed();
         }
-
-        $this->priceProvider()->pushLatest($this->latestPrice);
-        parent::proceed();
     }
 }
