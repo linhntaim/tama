@@ -30,16 +30,16 @@ class TradingProvider extends ModelProvider
         );
     }
 
-    public function paginationBySubscriber($subscriber, ?int $perPage = null, ?int $page = null): LengthAwarePaginator
+    public function paginationBySubscriber($subscriber, ?string $keyword = null, ?int $perPage = null, ?int $page = null): LengthAwarePaginator
     {
-        return $this->executePagination(
-            $this->whereQuery()
-                ->whereHas('subscribers', function ($query) use ($subscriber) {
-                    $query->where('id', $this->retrieveKey($subscriber));
-                }),
-            $perPage,
-            $page
-        );
+        $query = $this->whereQuery()
+            ->whereHas('subscribers', function ($query) use ($subscriber) {
+                $query->where('id', $this->retrieveKey($subscriber));
+            });
+        if (!is_null($keyword)) {
+            $query->where('slug', 'like', '%' . $keyword . '%');
+        }
+        return $this->executePagination($query, $perPage, $page);
     }
 
     public function allByHavingSubscribers(string|array|null $exchange = null, string|array|null $ticker = null, string|array|null $interval = null): Collection
