@@ -8,24 +8,63 @@ use App\Trading\Models\Trading;
 use App\Trading\Models\TradingProvider;
 use App\Trading\Notifications\Telegram\ConsoleNotification;
 use App\Trading\Notifications\TelegramUpdateNotifiable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Redis;
 
 class UnsubscribeCommand extends Command
 {
-    public $signature = '{id? : The ID or slug of the trading.} {--all}';
+    public $signature = '{id? : The ID or slug of the trading.} {--bot=} {--exchange=} {--ticker=} {--interval=} {--all}';
 
-    protected $description = 'Unsubscribe a trading.';
+    protected $description = 'Unsubscribe tradings.';
 
     protected function id(): ?string
     {
         return $this->argument('id');
     }
 
+    protected function all(): bool
+    {
+        return $this->option('all');
+    }
+
+    protected function bot(): ?string
+    {
+        return $this->option('bot');
+    }
+
+    protected function exchange(): ?string
+    {
+        return $this->option('exchange');
+    }
+
+    protected function ticker(): ?string
+    {
+        return $this->option('ticker');
+    }
+
+    protected function interval(): ?string
+    {
+        return $this->option('interval');
+    }
+
     protected function findTrading(): ?Trading
     {
-        return is_null($this->id()) ? null : (new TradingProvider())
+        return is_null($id = $this->id()) ? null : (new TradingProvider())
             ->notStrict()
-            ->firstByUnique($this->id());
+            ->firstByUnique($id);
+    }
+
+    protected function findTradings($user): ?Collection
+    {
+        $conditions = array_filter([
+            'bot' => $this->bot(),
+            'exchange' => $this->exchange(),
+            'ticker' => $this->ticker(),
+            'interval' => $this->interval(),
+        ]);
+        return count($conditions)
+            ? (new TradingProvider())->all($conditions + ['subscriber' => $user])
+            : null;
     }
 
     protected function findUser(): ?User
@@ -43,10 +82,10 @@ class UnsubscribeCommand extends Command
                 $this->unsubscribe($user, $trading, $redis);
                 ConsoleNotification::send(
                     new TelegramUpdateNotifiable($this->telegramUpdate),
-                    sprintf('Subscription to the trading {%s:%s} was removed successfully.', $trading->id, $trading->slug)
+                    sprintf('Subscription to the trading {#%s:%s} was removed successfully.', $trading->id, $trading->slug)
                 );
             }
-            elseif ($this->option('all')) {
+            elseif ($this->all()) {
                 foreach ($user->tradings as $trading) {
                     $this->unsubscribe($user, $trading, $redis);
                 }
@@ -54,6 +93,24 @@ class UnsubscribeCommand extends Command
                     new TelegramUpdateNotifiable($this->telegramUpdate),
                     'Subscriptions to all tradings were removed successfully.'
                 );
+            }
+            elseif (!is_null($tradings = $this->findTradings($user)) && ($count = $tradings->count()) > 0) {
+                foreach ($tradings as $trading) {
+                    $this->unsubscribe($user, $trading, $redis);
+                }
+                if ($count == 1) {
+                    $trading = $tradings->first();
+                    ConsoleNotification::send(
+                        new TelegramUpdateNotifiable($this->telegramUpdate),
+                        sprintf('Subscription to the trading {#%s:%s} was removed successfully.', $trading->id, $trading->slug)
+                    );
+                }
+                else {
+                    ConsoleNotification::send(
+                        new TelegramUpdateNotifiable($this->telegramUpdate),
+                        sprintf('Subscriptions to %d tradings were removed successfully.', $count)
+                    );
+                }
             }
             else {
                 ConsoleNotification::send(

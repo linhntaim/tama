@@ -10,6 +10,10 @@ use App\Support\Models\QueryConditions\SelectCondition;
 use App\Support\Models\QueryConditions\SortCondition;
 use App\Support\Models\QueryConditions\WhereCondition;
 use App\Support\Models\QueryConditions\WithCondition;
+use App\Support\Models\QueryValues\DoesntHaveValue;
+use App\Support\Models\QueryValues\HasValue;
+use App\Support\Models\QueryValues\LikeValue;
+use App\Support\Models\QueryValues\NotNullValue;
 use Closure;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -56,7 +60,7 @@ abstract class ModelProvider
     protected bool $protected = true;
 
     /**
-     * @var array|QueryCondition[]
+     * @var QueryCondition[]
      */
     protected array $wheres = [];
 
@@ -164,6 +168,11 @@ abstract class ModelProvider
         return $this;
     }
 
+    /**
+     * @param QueryCondition|QueryCondition[] $condition
+     * @param QueryCondition ...$conditions
+     * @return static
+     */
     public function condition(QueryCondition|array $condition, QueryCondition ...$conditions): static
     {
         array_push($this->wheres, ...(is_array($condition) ? $condition : func_get_args()));
@@ -376,50 +385,75 @@ abstract class ModelProvider
     {
         $query = $this->whereQuery();
         foreach ($conditions as $column => $value) {
-            if ($value instanceof QueryCondition) {
-                $value($query);
-            }
-            elseif (is_callable($value)) {
-                $value($query, $value, $conditions);
-            }
-            elseif (is_int($column)) {
-                if (is_array($value) && count($value) > 0) {
-                    if (isset($value['column'])) {
-                        $query->where(function ($query) use ($value) {
-                            $query->where(
-                                $value['column'],
-                                $value['operator'] ?? '=',
-                                $value['value'] ?? null,
-                                $value['boolean'] ?? 'and',
-                            );
-                        });
+            switch (true) {
+                case is_int($column):
+                    switch (true) {
+                        case is_array($value):
+                            if (count($value) > 0) {
+                                switch (true) {
+                                    case isset($value['column']):
+                                        $query->where(function ($query) use ($value) {
+                                            $query->where(
+                                                $value['column'],
+                                                $value['operator'] ?? '=',
+                                                $value['value'] ?? null,
+                                                $value['boolean'] ?? 'and',
+                                            );
+                                        });
+                                        break;
+                                    case isset($value[0]):
+                                        $query->where(function ($query) use ($value) {
+                                            $query->where($value[0], $value[1] ?? null, $value[2] ?? null, $value[3] ?? 'and');
+                                        });
+                                        break;
+                                    default:
+                                        $query->where($value);
+                                        break;
+                                }
+                            }
+                            break;
+                        case is_callable($value):
+                            /**
+                             * @see QueryCondition
+                             */
+                            $value($query);
+                            break;
                     }
-                    elseif (isset($value[0])) {
-                        $query->where(function ($query) use ($value) {
-                            $query->where($value[0], $value[1] ?? null, $value[2] ?? null, $value[3] ?? 'and');
-                        });
+                    break;
+                case is_string($column):
+                    switch (true) {
+                        case method_exists($this, $method = 'whereBy' . Str::studly($column)):
+                            $this->{$method}($query, $value, $conditions);
+                            break;
+                        case is_null($value):
+                            $query->whereNull($column);
+                            break;
+                        case $value instanceof NotNullValue:
+                            $query->whereNotNull($column);
+                            break;
+                        case $value instanceof LikeValue:
+                            $query->where($column, 'like', (string)$value);
+                            break;
+                        case $value instanceof HasValue:
+                            $query->has($column);
+                            break;
+                        case $value instanceof DoesntHaveValue:
+                            $query->doesntHave($column);
+                            break;
+                        case is_array($value):
+                            $query->whereIn($column, $value);
+                            break;
+                        case is_callable($value):
+                            $query->whereHas($column, $value);
+                            break;
+                        default:
+                            $query->where($column, $value);
+                            break;
                     }
-                    else {
-                        $query->where($value);
-                    }
-                }
-            }
-            elseif (method_exists($this, $method = 'whereBy' . Str::studly($column))) {
-                $this->{$method}($query, $value, $conditions);
-            }
-            elseif (is_array($value)) {
-                $query->whereIn($column, $value);
-            }
-            else {
-                $query->where($column, $value);
+                    break;
             }
         }
         return $query;
-    }
-
-    protected function whereLike(Builder $query, $column, $value): Builder
-    {
-        return $query->where($column, 'like', '%' . $value . '%');
     }
 
     public function all(array $conditions = []): EloquentCollection

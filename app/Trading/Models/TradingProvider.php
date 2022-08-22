@@ -3,13 +3,17 @@
 namespace App\Trading\Models;
 
 use App\Support\Models\ModelProvider;
+use App\Support\Models\QueryValues\HasValue;
+use App\Support\Models\QueryValues\LikeValue;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
  * @method Trading createWithAttributes(array $attributes = [])
  * @method Trading|null first(array $conditions = [])
  * @method Trading|null firstByUnique(int|string $unique)
+ * @method Collection all(array $conditions = [])
  */
 class TradingProvider extends ModelProvider
 {
@@ -20,58 +24,28 @@ class TradingProvider extends ModelProvider
         return $this->first(['slug' => $slug]);
     }
 
-    public function allBySubscriber($subscriber): Collection
+    protected function whereBySubscriber(Builder $query, $subscriber)
     {
-        return $this->executeAll(
-            $this->whereQuery()
-                ->whereHas('subscribers', function ($query) use ($subscriber) {
-                    $query->where('id', $this->retrieveKey($subscriber));
-                })
-        );
+        $query->whereHas('subscribers', function ($query) use ($subscriber) {
+            $query->where('id', $this->retrieveKey($subscriber));
+        });
     }
 
     public function paginationBySubscriber($subscriber, ?string $keyword = null, ?int $perPage = null, ?int $page = null): LengthAwarePaginator
     {
-        $query = $this->whereQuery()
-            ->whereHas('subscribers', function ($query) use ($subscriber) {
-                $query->where('id', $this->retrieveKey($subscriber));
-            });
-        if (!is_null($keyword)) {
-            $query->where('slug', 'like', '%' . $keyword . '%');
-        }
-        return $this->executePagination($query, $perPage, $page);
+        return $this->pagination(array_filter([
+            'subscriber' => $subscriber,
+            'slug' => is_null($keyword) ? null : LikeValue::create($keyword),
+        ]), $perPage, $page);
     }
 
     public function allByHavingSubscribers(string|array|null $exchange = null, string|array|null $ticker = null, string|array|null $interval = null): Collection
     {
-        return $this->executeAll(
-            modify($this->whereQuery(), function ($query) use ($exchange, $ticker, $interval) {
-                if (!is_null($exchange)) {
-                    if (is_array($exchange)) {
-                        $query->whereIn('exchange', $exchange);
-                    }
-                    else {
-                        $query->where('exchange', $exchange);
-                    }
-                }
-                if (!is_null($ticker)) {
-                    if (is_array($ticker)) {
-                        $query->whereIn('ticker', $ticker);
-                    }
-                    else {
-                        $query->where('ticker', $ticker);
-                    }
-                }
-                if (!is_null($interval)) {
-                    if (is_array($interval)) {
-                        $query->whereIn('interval', $interval);
-                    }
-                    else {
-                        $query->where('interval', $interval);
-                    }
-                }
-                return $query;
-            })->has('subscribers')
-        );
+        return $this->all(array_filter([
+            'exchange' => $exchange,
+            'ticker' => $ticker,
+            'interval' => $interval,
+            'subscribers' => HasValue::create(),
+        ]));
     }
 }
