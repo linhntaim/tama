@@ -39,27 +39,27 @@ Route::get('file/{id}', [FileController::class, 'show'])->name('file.show');
 Route::get('data-export/{id}', [DataExportController::class, 'show'])->name('data-export.show');
 
 //
-Route::group([
-    'prefix' => 'trial',
-], function () {
-    Route::post('job', [TrialJobController::class, 'store']);
-    Route::post('event', [TrialEventController::class, 'store']);
-    Route::group([
-        'prefix' => 'file',
-    ], function () {
-        Route::post('/', [TrialFileController::class, 'store']);
-        Route::get('{id}', [TrialFileController::class, 'show']);
-    });
-    Route::group([
-        'prefix' => 'user',
-    ], function () {
-        Route::get('/', [TrialUserController::class, 'index']);
-        Route::post('/', [TrialUserController::class, 'store']);
-        Route::get('{id}', [TrialUserController::class, 'show']);
-        Route::post('{id}', [TrialUserController::class, 'update']);
-        Route::delete('{id}', [TrialUserController::class, 'destroy']);
-    });
-});
+// Route::group([
+//     'prefix' => 'trial',
+// ], function () {
+//     Route::post('job', [TrialJobController::class, 'store']);
+//     Route::post('event', [TrialEventController::class, 'store']);
+//     Route::group([
+//         'prefix' => 'file',
+//     ], function () {
+//         Route::post('/', [TrialFileController::class, 'store']);
+//         Route::get('{id}', [TrialFileController::class, 'show']);
+//     });
+//     Route::group([
+//         'prefix' => 'user',
+//     ], function () {
+//         Route::get('/', [TrialUserController::class, 'index']);
+//         Route::post('/', [TrialUserController::class, 'store']);
+//         Route::get('{id}', [TrialUserController::class, 'show']);
+//         Route::post('{id}', [TrialUserController::class, 'update']);
+//         Route::delete('{id}', [TrialUserController::class, 'destroy']);
+//     });
+// });
 
 Route::group([
     'prefix' => 'auth',

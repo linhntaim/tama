@@ -83,14 +83,14 @@ class SubscribeCommand extends Command
                 sprintf('Subscription for the exchange "%s" was not supported/enabled.', $this->exchange())
             );
         }
-        elseif (in_array($this->ticker(), [
+        elseif (in_array($this->interval(), [
             Trader::INTERVAL_1_MINUTE,
             Trader::INTERVAL_3_MINUTES,
             Trader::INTERVAL_5_MINUTES,
         ])) {
             ConsoleNotification::send(
                 new TelegramUpdateNotifiable($this->telegramUpdate),
-                sprintf('Subscription for the interval "%s" was not supported/enabled.', $this->ticker())
+                sprintf('Subscription for the interval "%s" was not supported/enabled.', $this->interval())
             );
         }
         elseif (is_null($user = $this->createUserFromTelegram())) {
@@ -118,7 +118,7 @@ class SubscribeCommand extends Command
                 $this->subscribe($user, $trading = $this->createTrading(), $redis);
                 ConsoleNotification::send(
                     new TelegramUpdateNotifiable($this->telegramUpdate),
-                    sprintf('Subscription to the trading {%s:%s} was created successfully.', $trading->id, $trading->slug)
+                    sprintf('Subscription to the trading {#%s:%s} was created successfully.', $trading->id, $trading->slug)
                 );
             }
         }
