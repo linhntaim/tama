@@ -65,7 +65,7 @@ abstract class Command extends BaseCommand
                         array_push($names, ...array_filter([$l2, $l1]));
                     }
                     return $names;
-                })(explode('\\', rtrim(preg_replace('/^App\\\\Console\\\\Commands\\\\|Command$/', '', $this->className()), '\\')))
+                })(explode('\\', rtrim(preg_replace('/^App(\\\\\w+)*\\\\Commands\\\\|Command$/', '', $this->className()), '\\')))
             )
         );
     }

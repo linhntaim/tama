@@ -28,7 +28,7 @@ class DefaultUsersSeeder extends Seeder
             'email' => $email = ($attributes['email'] ?? Str::snake($defaultName) . '@' . parse_url(config('app.url'), PHP_URL_HOST)),
         ], [
             'name' => $name = ($attributes['name'] ?? Str::ucfirst($defaultName)),
-            'password' => $password = ($attributes['password'] ?? (App::runningInProduction() ? $this->randomPassword() : $this->defaultPassword)),
+            'password' => $password = ($attributes['password'] ?? (App::isProduction() ? $this->randomPassword() : $this->defaultPassword)),
             'email_verified_at' => DateTimer::databaseNow(),
         ]);
         $this->command->line(sprintf('<comment>%s</comment>: %s / %s', $name, $email, $password));

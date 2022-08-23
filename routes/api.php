@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\Trial\FileController as TrialFileController;
 use App\Http\Controllers\Api\Trial\JobController as TrialJobController;
 use App\Http\Controllers\Api\Trial\UserController as TrialUserController;
 use App\Http\Controllers\Api\WelcomeController;
+use App\Support\Http\Middleware\DisableInProduction;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -34,8 +35,11 @@ Route::get('file/{id}', [FileController::class, 'show'])->name('file.show');
 Route::get('data-export/{id}', [DataExportController::class, 'show'])->name('data-export.show');
 
 //
+
+// Should be commented while developing a true application
 Route::group([
     'prefix' => 'trial',
+    'middleware' => DisableInProduction::class,
 ], function () {
     Route::post('job', [TrialJobController::class, 'store']);
     Route::post('event', [TrialEventController::class, 'store']);
@@ -63,6 +67,7 @@ Route::group([
     Route::post('register', [RegisteredUserController::class, 'store']);
     Route::post('forgot-password', [PasswordResetLinkController::class, 'store']);
     Route::post('reset-password', [NewPasswordController::class, 'store']);
+    //
 });
 
 Route::group([
@@ -78,8 +83,11 @@ Route::group([
         'prefix' => 'account',
     ], function () {
         Route::get('current', [AccountController::class, 'current']);
+        //
     });
 });
+
+//
 
 Route::any('{path?}', [WelcomeController::class, 'index'])
     ->where('path', '.*');

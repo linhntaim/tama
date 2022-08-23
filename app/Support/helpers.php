@@ -401,6 +401,16 @@ if (!function_exists('number_formatter')) {
     }
 }
 
+if (!function_exists('numcmp')) {
+    function numcmp(float|int $num1, float|int $num2): int
+    {
+        if ($num1 == $num2) {
+            return 0;
+        }
+        return $num1 > $num2 ? 1 : -1;
+    }
+}
+
 if (!function_exists('readable_filesize')) {
     function readable_filesize(float|int $size, string $unit = 'byte'): array
     {
