@@ -1,10 +1,8 @@
 <?php
 
-namespace App\Models;
+namespace App\Support\Models;
 
 use App\Support\Filesystem\Filers\Filer;
-use App\Support\Models\Model;
-use App\Support\Models\ModelProvider;
 
 /**
  * @property File|null $model

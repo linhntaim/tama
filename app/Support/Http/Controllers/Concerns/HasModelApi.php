@@ -2,22 +2,22 @@
 
 namespace App\Support\Http\Controllers\Concerns;
 
-use App\Jobs\DataExportJob;
-use App\Jobs\DataImportJob;
-use App\Jobs\QueueableDataExportJob;
-use App\Jobs\QueueableDataImportJob;
-use App\Models\DataExport;
-use App\Models\DataExportProvider;
-use App\Models\DataImport;
-use App\Models\DataImportProvider;
-use App\Models\File;
-use App\Models\FileProvider;
 use App\Support\Database\Concerns\DatabaseTransaction;
 use App\Support\Exports\Export;
 use App\Support\Exports\ModelCsvExport;
 use App\Support\Filesystem\Filers\Filer;
 use App\Support\Http\Resources\ModelResource;
 use App\Support\Imports\Import;
+use App\Support\Jobs\DataExportJob;
+use App\Support\Jobs\DataImportJob;
+use App\Support\Jobs\QueueableDataExportJob;
+use App\Support\Jobs\QueueableDataImportJob;
+use App\Support\Models\DataExport;
+use App\Support\Models\DataExportProvider;
+use App\Support\Models\DataImport;
+use App\Support\Models\DataImportProvider;
+use App\Support\Models\File;
+use App\Support\Models\FileProvider;
 use App\Support\Models\ModelProvider;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -368,6 +368,7 @@ trait HasModelApi
         $this->transactionComplete();
         return $this->responseModel($request, $model, $this->modelResourceClass);
     }
+
     #endregion
 
     protected function model(Request $request, $id)

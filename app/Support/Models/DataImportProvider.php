@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Models;
+namespace App\Support\Models;
 
-use App\Jobs\DataImportJob;
-use App\Jobs\QueueableDataImportJob;
 use App\Support\Client\DateTimer;
 use App\Support\Imports\Import;
-use App\Support\Models\ModelProvider;
+use App\Support\Jobs\DataImportJob;
+use App\Support\Jobs\QueueableDataImportJob;
 use InvalidArgumentException;
 use Throwable;
 

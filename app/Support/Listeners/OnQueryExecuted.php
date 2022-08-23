@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Listeners;
+namespace App\Support\Listeners;
 
 use App\Support\Facades\App;
 use Illuminate\Database\Events\QueryExecuted;

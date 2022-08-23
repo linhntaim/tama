@@ -2,10 +2,10 @@
 
 namespace App\Support\Console\Commands;
 
-use App\Models\FileProvider;
 use App\Support\Filesystem\Filers\Filer;
 use App\Support\Imports\BatchModelCsvImport;
 use App\Support\Imports\Import;
+use App\Support\Models\FileProvider;
 
 abstract class ImportCommand extends Command
 {

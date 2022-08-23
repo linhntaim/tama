@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\DataExport;
-use App\Models\DataExportProvider;
 use App\Support\Http\Controllers\ModelApiController;
+use App\Support\Models\DataExport;
+use App\Support\Models\DataExportProvider;
 use Illuminate\Http\Request;
 
 /**

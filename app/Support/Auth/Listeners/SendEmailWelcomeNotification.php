@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Listeners;
+namespace App\Support\Auth\Listeners;
 
 use App\Support\Auth\Contracts\MustWelcomeEmail;
 use Illuminate\Auth\Events\Registered;

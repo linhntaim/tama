@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Support\Jobs;
 
-use App\Models\DataImport;
-use App\Models\DataImportProvider;
-use App\Models\File;
-use App\Models\FileProvider;
 use App\Support\Filesystem\Filers\Filer;
 use App\Support\Imports\Import;
+use App\Support\Models\DataImport;
+use App\Support\Models\DataImportProvider;
+use App\Support\Models\File;
+use App\Support\Models\FileProvider;
 use Throwable;
 
 trait BaseDataImportJob

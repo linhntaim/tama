@@ -1,9 +1,8 @@
 <?php
 
-namespace App\Models;
+namespace App\Support\Models;
 
 use App\Support\Exports\Export;
-use App\Support\Models\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 

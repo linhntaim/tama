@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Support\Jobs;
 
-use App\Models\DataExport;
-use App\Models\DataExportProvider;
-use App\Models\File;
-use App\Models\FileProvider;
 use App\Support\Exports\Export;
+use App\Support\Models\DataExport;
+use App\Support\Models\DataExportProvider;
+use App\Support\Models\File;
+use App\Support\Models\FileProvider;
 use Throwable;
 
 trait BaseDataExportJob

@@ -1,8 +1,6 @@
 <?php
 
-namespace App\Jobs;
-
-use App\Support\Jobs\Job;
+namespace App\Support\Jobs;
 
 class DataImportJob extends Job
 {

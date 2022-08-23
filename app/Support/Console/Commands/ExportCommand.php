@@ -2,10 +2,10 @@
 
 namespace App\Support\Console\Commands;
 
-use App\Models\FileProvider;
 use App\Support\Exports\Export;
 use App\Support\Exports\ModelCsvExport;
 use App\Support\Http\Resources\Concerns\ResourceTransformer;
+use App\Support\Models\FileProvider;
 
 abstract class ExportCommand extends Command
 {

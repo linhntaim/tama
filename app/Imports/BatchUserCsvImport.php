@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Imports\Trial;
+namespace App\Imports;
 
 use App\Models\User;
 use App\Models\UserProvider;
@@ -11,7 +11,7 @@ use App\Support\Imports\BatchModelCsvImport;
 
 class BatchUserCsvImport extends BatchModelCsvImport
 {
-    public const NAME = 'trial_users';
+    public const NAME = 'users';
 
     public static function sample(): Export
     {

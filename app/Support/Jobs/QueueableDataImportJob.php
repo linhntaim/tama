@@ -1,8 +1,6 @@
 <?php
 
-namespace App\Jobs;
-
-use App\Support\Jobs\QueueableJob;
+namespace App\Support\Jobs;
 
 class QueueableDataImportJob extends QueueableJob
 {

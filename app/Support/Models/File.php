@@ -1,9 +1,8 @@
 <?php
 
-namespace App\Models;
+namespace App\Support\Models;
 
 use App\Support\Filesystem\Filers\Filer;
-use App\Support\Models\Model;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Symfony\Component\HttpFoundation\BinaryFileResponse as SymfonyBinaryFileResponse;

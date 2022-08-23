@@ -2,7 +2,6 @@
 
 namespace App\Support\Filesystem\Filers;
 
-use App\Models\File;
 use App\Support\Exceptions\FileException;
 use App\Support\Filesystem\Storages\AwsS3Storage;
 use App\Support\Filesystem\Storages\AzureBlobStorage;
@@ -16,6 +15,7 @@ use App\Support\Filesystem\Storages\PrivateStorage;
 use App\Support\Filesystem\Storages\PublicStorage;
 use App\Support\Filesystem\Storages\Storage;
 use App\Support\Filesystem\Storages\StorageFactory;
+use App\Support\Models\File;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Http\UploadedFile;
 use SplFileInfo;

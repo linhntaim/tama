@@ -1,10 +1,11 @@
 <?php
 
-namespace Database\Seeders;
+namespace Database\Seeders\Trial;
 
 use App\Models\User;
+use Database\Seeders\Seeder;
 
-class TrialUserSeeder extends Seeder
+class UserSeeder extends Seeder
 {
     public function run()
     {
