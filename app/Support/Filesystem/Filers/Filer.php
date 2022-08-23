@@ -3,6 +3,7 @@
 namespace App\Support\Filesystem\Filers;
 
 use App\Support\Exceptions\FileException;
+use App\Support\Exceptions\FileNotFoundException;
 use App\Support\Filesystem\Storages\AwsS3Storage;
 use App\Support\Filesystem\Storages\AzureBlobStorage;
 use App\Support\Filesystem\Storages\Contracts\DirectEditableStorage as DirectEditableStorageContract;
@@ -74,9 +75,15 @@ class Filer
             });
         }
         if ($file instanceof UploadedFile) {
-            return take(new static(), function (Filer $filer) use ($file) {
-                $filer->storage = (new PrivateStorage())->fromFile($file);
-            });
+            return take(
+                new static(),
+                /**
+                 * @throws FileNotFoundException
+                 */
+                function (Filer $filer) use ($file) {
+                    $filer->storage = (new PrivateStorage())->fromFile($file);
+                }
+            );
         }
         foreach (is_url($file) ? [
             PublicStorage::class,

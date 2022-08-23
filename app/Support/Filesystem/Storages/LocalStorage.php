@@ -3,6 +3,7 @@
 namespace App\Support\Filesystem\Storages;
 
 use App\Support\Exceptions\FileException;
+use App\Support\Exceptions\FileNotFoundException;
 use App\Support\Filesystem\Filers\Filer;
 use App\Support\Filesystem\Storages\Contracts\DirectEditableStorage as DirectEditableStorageContract;
 use App\Support\Http\File;
@@ -22,6 +23,9 @@ class LocalStorage extends DiskStorage implements DirectEditableStorageContract
         $this->rootPath = $this->dirPath($this->disk->path(''), false);
     }
 
+    /**
+     * @throws FileNotFoundException
+     */
     public function setFile(string|SplFileInfo $file): static
     {
         if (($f = File::from($file, false)) instanceof File

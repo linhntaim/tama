@@ -3,6 +3,7 @@
 namespace App\Support\Http\Resources\Concerns;
 
 use App\Support\Http\Resources\Contracts\WrappedResource;
+use App\Support\Http\Resources\Resource;
 
 /**
  * @property WrappedResource $resource

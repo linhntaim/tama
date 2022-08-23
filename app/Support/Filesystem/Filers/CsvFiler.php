@@ -3,8 +3,6 @@
 namespace App\Support\Filesystem\Filers;
 
 use App\Support\Exceptions\FileException;
-use RuntimeException;
-use SplFileObject;
 
 /**
  * @method static writeAll(array $data, bool $close = true)
