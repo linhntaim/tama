@@ -6,7 +6,7 @@ use App\Support\Contracts\Auth\MustWelcomeEmail;
 use App\Support\Models\HasProtected;
 use App\Support\Models\IProtected;
 use App\Support\Models\SanctumUser;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
