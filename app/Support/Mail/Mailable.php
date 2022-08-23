@@ -2,19 +2,20 @@
 
 namespace App\Support\Mail;
 
-use App\Support\ClassTrait;
-use App\Support\Client\InternalSettings;
+use App\Support\Client\Concerns\InternalSettings;
+use App\Support\Concerns\ClassHelper;
 use App\Support\Exceptions\Exception;
 use App\Support\Facades\App;
 use App\Support\Facades\Artisan;
 use App\Support\Facades\Client;
-use App\Support\Notifications\INotifiable;
+use App\Support\Mail\Contracts\ProvidesEmailAddress;
+use App\Support\Notifications\Contracts\Notifiable as NotifiableContract;
 use Illuminate\Mail\Mailable as BaseMailable;
 use Illuminate\Support\Facades\Log;
 
 abstract class Mailable extends BaseMailable
 {
-    use ClassTrait, InternalSettings;
+    use ClassHelper, InternalSettings;
 
     protected string $baseTemplate = 'emails.';
 
@@ -64,10 +65,10 @@ abstract class Mailable extends BaseMailable
                 'name' => $recipient[1] ?? null,
             ];
         }
-        if ($recipient instanceof INotifiable) {
+        if ($recipient instanceof NotifiableContract) {
             return $this->normalizeRecipient($recipient->routeNotificationFor('mail'));
         }
-        if ($recipient instanceof IEmailAddress) {
+        if ($recipient instanceof ProvidesEmailAddress) {
             return (object)[
                 'email' => $recipient->getEmailAddress(),
                 'name' => $recipient->getEmailName(),

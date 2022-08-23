@@ -2,7 +2,9 @@
 
 namespace App\Support\Mail;
 
-class SimpleEmailAddress implements IEmailAddress
+use App\Support\Mail\Contracts\ProvidesEmailAddress;
+
+class SimpleEmailAddress implements ProvidesEmailAddress
 {
     public string $email;
 

@@ -2,7 +2,7 @@
 
 namespace App\Support\Http\Middleware;
 
-use App\Support\Http\Responses;
+use App\Support\Http\Concerns\Responses;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;

@@ -2,8 +2,8 @@
 
 namespace App\Support\Http\Responses;
 
-use App\Support\Http\Requests;
-use App\Support\Http\Responses;
+use App\Support\Http\Concerns\Requests;
+use App\Support\Http\Concerns\Responses;
 use Laravel\Fortify\Fortify;
 use Laravel\Fortify\Http\Responses\LogoutResponse as BaseLogoutResponse;
 

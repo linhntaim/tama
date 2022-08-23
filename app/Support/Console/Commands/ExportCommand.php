@@ -5,7 +5,7 @@ namespace App\Support\Console\Commands;
 use App\Models\FileProvider;
 use App\Support\Exports\Export;
 use App\Support\Exports\ModelCsvExport;
-use App\Support\Http\Resources\ResourceTransformer;
+use App\Support\Http\Resources\Concerns\ResourceTransformer;
 
 abstract class ExportCommand extends Command
 {

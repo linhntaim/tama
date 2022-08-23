@@ -2,7 +2,7 @@
 
 namespace App\Support\Events;
 
-use App\Support\Client\InternalSettings;
+use App\Support\Client\Concerns\InternalSettings;
 use App\Support\Facades\App;
 use App\Support\Facades\Artisan;
 use Illuminate\Broadcasting\InteractsWithSockets;

@@ -6,11 +6,10 @@ use App\Models\File;
 use App\Support\Exceptions\FileException;
 use App\Support\Filesystem\Storages\AwsS3Storage;
 use App\Support\Filesystem\Storages\AzureBlobStorage;
+use App\Support\Filesystem\Storages\Contracts\DirectEditableStorage as DirectEditableStorageContract;
+use App\Support\Filesystem\Storages\Contracts\HasInternalStorage as HasInternalStorageContract;
+use App\Support\Filesystem\Storages\Contracts\HasUrlStorage as HasUrlStorageContract;
 use App\Support\Filesystem\Storages\ExternalStorage;
-use App\Support\Filesystem\Storages\IDirectEditableStorage;
-use App\Support\Filesystem\Storages\IHasExternalStorage;
-use App\Support\Filesystem\Storages\IHasInternalStorage;
-use App\Support\Filesystem\Storages\IHasUrlStorage;
 use App\Support\Filesystem\Storages\InlineStorage;
 use App\Support\Filesystem\Storages\InternalStorage;
 use App\Support\Filesystem\Storages\PrivateStorage;
@@ -144,12 +143,12 @@ class Filer
 
     public function getRealPath(): ?string
     {
-        return $this->storage instanceof IHasInternalStorage ? $this->storage->getRealPath() : null;
+        return $this->internal() ? $this->storage->getRealPath() : null;
     }
 
     public function getUrl(): ?string
     {
-        return $this->storage instanceof IHasUrlStorage ? $this->storage->getUrl() : null;
+        return $this->storage instanceof HasUrlStorageContract ? $this->storage->getUrl() : null;
     }
 
     public function getStorage(): string
@@ -169,7 +168,7 @@ class Filer
 
     public function internal(): bool
     {
-        return $this->storage instanceof IHasInternalStorage;
+        return $this->storage instanceof HasInternalStorageContract;
     }
 
     protected function moveToStorage(Storage $toStorage, ?string $in = null, bool $duplicate = false): static
@@ -231,7 +230,7 @@ class Filer
         if (!is_null($this->openingFile)) {
             throw new FileException('File is opening.');
         }
-        if (!($this->storage instanceof IDirectEditableStorage)) {
+        if (!($this->storage instanceof DirectEditableStorageContract)) {
             throw new FileException('File could not open from the storage.');
         }
         try {

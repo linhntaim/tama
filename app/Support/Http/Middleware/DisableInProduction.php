@@ -2,8 +2,8 @@
 
 namespace App\Support\Http\Middleware;
 
-use App\Support\Abort;
 use App\Support\Facades\App;
+use App\Support\Http\Concerns\Abort;
 use Closure;
 use Illuminate\Http\Request;
 

@@ -3,12 +3,15 @@
 namespace App\Support\Filesystem\Storages;
 
 use App\Support\Exceptions\FileNotFoundException;
+use App\Support\Filesystem\Storages\Contracts\PrivatePublishableStorage as PrivatePublishableStorageContract;
+use App\Support\Filesystem\Storages\Contracts\PublicPublishableStorage as PublicPublishableStorageContract;
 use App\Support\Http\File;
 use BadMethodCallException;
 use Illuminate\Http\UploadedFile;
 use SplFileInfo;
 
-class InlineStorage extends Storage implements IPublicPublishableStorage, IPrivatePublishableStorage
+class InlineStorage extends Storage implements PrivatePublishableStorageContract,
+                                               PublicPublishableStorageContract
 {
     public const NAME = 'inline';
 

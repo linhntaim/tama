@@ -2,11 +2,11 @@
 
 namespace App\Support\Exceptions;
 
-use App\Support\Database\DatabaseTransaction;
+use App\Support\Database\Concerns\DatabaseTransaction;
 use App\Support\Facades\App;
 use App\Support\Facades\Artisan;
-use App\Support\Http\Requests;
-use App\Support\Http\Responses;
+use App\Support\Http\Concerns\Requests;
+use App\Support\Http\Concerns\Responses;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;

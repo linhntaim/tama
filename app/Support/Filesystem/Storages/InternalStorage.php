@@ -2,6 +2,7 @@
 
 namespace App\Support\Filesystem\Storages;
 
+use App\Support\Filesystem\Storages\Contracts\DirectEditableStorage as DirectEditableStorageContract;
 use App\Support\Http\File;
 use BadMethodCallException;
 use Illuminate\Http\UploadedFile;
@@ -13,7 +14,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse as SymfonyStreamedResponse
 /**
  * @property File|UploadedFile|null $file
  */
-class InternalStorage extends Storage implements IDirectEditableStorage
+class InternalStorage extends Storage implements DirectEditableStorageContract
 {
     public const NAME = 'internal';
 

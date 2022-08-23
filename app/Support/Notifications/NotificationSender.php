@@ -2,7 +2,7 @@
 
 namespace App\Support\Notifications;
 
-use App\Support\Client\IHasSettings;
+use App\Support\Client\Contracts\HasSettings;
 use App\Support\Facades\App;
 use App\Support\Facades\Artisan;
 use App\Support\Facades\Client;
@@ -43,7 +43,7 @@ class NotificationSender extends BaseNotificationSender
 
             $this->withLocale($this->preferredLocale($notifiable, $notification), function () use ($viaChannels, $notifiable, $original) {
                 Client::settingsTemporary(
-                    $notifiable instanceof IHasSettings ? $notifiable->getSettings() : null,
+                    $notifiable instanceof HasSettings ? $notifiable->getSettings() : null,
                     function () use ($viaChannels, $notifiable, $original) {
                         $notificationId = $this->generateNotificationId();
 

@@ -2,7 +2,7 @@
 
 namespace App\Listeners;
 
-use App\Support\Contracts\Auth\MustWelcomeEmail;
+use App\Support\Auth\Contracts\MustWelcomeEmail;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 

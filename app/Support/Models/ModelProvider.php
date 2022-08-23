@@ -2,7 +2,8 @@
 
 namespace App\Support\Models;
 
-use App\Support\Database\DatabaseTransaction;
+use App\Support\Database\Concerns\DatabaseTransaction;
+use App\Support\Models\Contracts\HasProtected as HasProtectedContract;
 use App\Support\Models\QueryConditions\GroupCondition;
 use App\Support\Models\QueryConditions\LimitCondition;
 use App\Support\Models\QueryConditions\QueryCondition;
@@ -309,7 +310,7 @@ abstract class ModelProvider
 
     protected function catchProtectedModel($model, string $message = 'Cannot modify protected model.'): ?Model
     {
-        if ($model instanceof IProtected
+        if ($model instanceof HasProtectedContract
             && $model->isProtected()
             && $this->protected(true)) {
             throw new RuntimeException($message);
@@ -366,7 +367,7 @@ abstract class ModelProvider
         $old = $this->pinned;
         $model = $this->newModel();
         $this->pinned = $old;
-        if ($model instanceof IProtected && $this->protected(true)) {
+        if ($model instanceof HasProtectedContract && $this->protected(true)) {
             return $this->query()->whereNotIn($model->getProtectedKey(), $model->getProtectedValues());
         }
         return $this->query();

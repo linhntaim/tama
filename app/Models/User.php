@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use App\Support\Contracts\Auth\MustWelcomeEmail;
-use App\Support\Models\HasProtected;
-use App\Support\Models\IProtected;
+use App\Support\Auth\Contracts\MustWelcomeEmail;
+use App\Support\Models\Concerns\HasProtected;
+use App\Support\Models\Contracts\HasProtected as HasProtectedContract;
 use App\Support\Models\SanctumUser;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property string $name
  * @property string $email
  */
-class User extends SanctumUser implements MustWelcomeEmail, IProtected
+class User extends SanctumUser implements MustWelcomeEmail, HasProtectedContract
 {
     use HasFactory, HasProtected;
 

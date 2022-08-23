@@ -2,11 +2,15 @@
 
 namespace App\Support\Filesystem\Storages;
 
+use App\Support\Filesystem\Storages\Concerns\HasUrlDiskStorage;
+use App\Support\Filesystem\Storages\Contracts\HasUrlDiskStorage as HasUrlDiskStorageContract;
+use App\Support\Filesystem\Storages\Contracts\PublicPublishableStorage as PublicPublishableStorageContract;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Str;
 use SplFileInfo;
 
-class PublicStorage extends LocalStorage implements IHasUrlDiskStorage, IPublicPublishableStorage
+class PublicStorage extends LocalStorage implements HasUrlDiskStorageContract,
+                                                    PublicPublishableStorageContract
 {
     use HasUrlDiskStorage;
 

@@ -6,7 +6,7 @@ use App\Support\Client\Manager;
 use App\Support\Client\Settings;
 use App\Support\Configuration;
 use App\Support\Facades\Client;
-use App\Support\Http\Requests;
+use App\Support\Http\Concerns\Requests;
 use Closure;
 use Illuminate\Http\Request;
 

@@ -4,7 +4,7 @@ namespace App\Support\Log;
 
 use App\Support\Console\RunningCommand;
 use App\Support\Exceptions\ShellException;
-use App\Support\Http\Requests;
+use App\Support\Http\Concerns\Requests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Monolog\Formatter\LineFormatter as BaseLineFormatter;

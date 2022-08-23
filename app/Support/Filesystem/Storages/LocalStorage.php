@@ -4,12 +4,13 @@ namespace App\Support\Filesystem\Storages;
 
 use App\Support\Exceptions\FileException;
 use App\Support\Filesystem\Filers\Filer;
+use App\Support\Filesystem\Storages\Contracts\DirectEditableStorage as DirectEditableStorageContract;
 use App\Support\Http\File;
 use Illuminate\Support\Str;
 use RuntimeException;
 use SplFileInfo;
 
-class LocalStorage extends DiskStorage implements IDirectEditableStorage
+class LocalStorage extends DiskStorage implements DirectEditableStorageContract
 {
     public const NAME = 'local';
 

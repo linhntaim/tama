@@ -3,6 +3,7 @@
 namespace App\Support\Http\Resources;
 
 use App\Support\Exceptions\Exception;
+use App\Support\Http\Resources\Contracts\ArrayResponsibleResource;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\JsonResponse;
@@ -253,7 +254,7 @@ class ResponseResource extends Resource
 
     public function toArray($request): array|Arrayable|JsonSerializable
     {
-        if ($this->resource instanceof IArrayResponsibleResource) {
+        if ($this->resource instanceof ArrayResponsibleResource) {
             return $this->resource->toArrayResponse($request);
         }
         return parent::toArray($request);

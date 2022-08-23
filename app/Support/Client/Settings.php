@@ -2,6 +2,7 @@
 
 namespace App\Support\Client;
 
+use App\Support\Client\Contracts\ProvidesSettings;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Support\Str;
@@ -19,7 +20,7 @@ use Illuminate\Support\Str;
  * @property int $longTimeFormat
  * @property int $shortTimeFormat
  */
-class Settings implements ISettings, Arrayable, Jsonable
+class Settings implements ProvidesSettings, Arrayable, Jsonable
 {
     public static function config(?string $client = null, ?array $default = []): array
     {

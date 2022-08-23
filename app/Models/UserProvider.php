@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Support\Models\IUserProvider;
+use App\Support\Models\Contracts\UserProvider as UserProviderContract;
 use App\Support\Models\Model;
 use App\Support\Models\ModelProvider;
 use Illuminate\Database\Eloquent\Builder;
@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
  * @method  User|null firstByKey(int|string $key)
  * @method  User createWithAttributes(array $attributes = [])
  */
-class UserProvider extends ModelProvider implements IUserProvider
+class UserProvider extends ModelProvider implements UserProviderContract
 {
     public string $modelClass = User::class;
 
