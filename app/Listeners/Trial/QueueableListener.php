@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 class QueueableListener extends BaseQueueableListener
 {
     /**
-     * @param Event $event
+     * @param TrialEvent $event
      * @return void
      */
     protected function handling(Event $event): void
