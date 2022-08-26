@@ -2,7 +2,7 @@
 
 namespace App\Support\Facades;
 
-use App\Console\Kernel;
+use App\Support\Console\Kernel;
 use App\Support\Console\RunningCommand;
 use Illuminate\Support\Facades\Artisan as BaseArtisan;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;

@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use App\Support\Contracts\Auth\MustWelcomeEmail;
-use App\Support\Models\HasProtected;
-use App\Support\Models\IProtected;
+use App\Support\Auth\Contracts\MustWelcomeEmail;
+use App\Support\Models\Concerns\HasProtected;
+use App\Support\Models\Contracts\HasProtected as HasProtectedContract;
 use App\Support\Models\SanctumUser;
 use App\Trading\Models\Trading;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -21,7 +21,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property UserSocial[]|Collection $socials
  * @property Trading[]|Collection $tradings
  */
-class User extends SanctumUser implements MustWelcomeEmail, IProtected
+class User extends SanctumUser implements MustWelcomeEmail, HasProtectedContract
 {
     use HasFactory, HasProtected;
 

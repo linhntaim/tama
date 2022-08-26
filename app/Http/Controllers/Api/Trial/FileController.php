@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api\Trial;
 
 use App\Http\Controllers\Api\FileController as BaseFileController;
-use App\Models\File;
 use App\Support\Filesystem\Filers\Filer;
+use App\Support\Models\File;
 use Illuminate\Http\Request;
 
 class FileController extends BaseFileController

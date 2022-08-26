@@ -10,6 +10,8 @@ use App\Support\Imports\ModelCsvImport;
 
 class UserCsvImport extends ModelCsvImport
 {
+    public const NAME = 'users';
+
     public static function sample(): Export
     {
         return new SimpleCsvExport(

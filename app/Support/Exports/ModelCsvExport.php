@@ -2,7 +2,7 @@
 
 namespace App\Support\Exports;
 
-use App\Support\Http\Resources\ResourceTransformer;
+use App\Support\Http\Resources\Concerns\ResourceTransformer;
 use App\Support\Models\ModelProvider;
 use Illuminate\Database\Eloquent\Collection;
 

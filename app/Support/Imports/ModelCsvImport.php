@@ -2,7 +2,7 @@
 
 namespace App\Support\Imports;
 
-use App\Support\Database\DatabaseTransaction;
+use App\Support\Database\Concerns\DatabaseTransaction;
 use App\Support\Exceptions\FileException;
 use App\Support\Models\ModelProvider;
 use Throwable;

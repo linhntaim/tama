@@ -2,8 +2,8 @@
 
 namespace App\Support\Jobs;
 
-use App\Support\ClassTrait;
-use App\Support\Client\InternalSettings;
+use App\Support\Client\Concerns\InternalSettings;
+use App\Support\Concerns\ClassHelper;
 use App\Support\Facades\App;
 use App\Support\Facades\Artisan;
 use App\Support\Foundation\Bus\Dispatchable;
@@ -12,7 +12,7 @@ use Throwable;
 
 abstract class Job
 {
-    use ClassTrait, Dispatchable, InternalSettings;
+    use ClassHelper, Dispatchable, InternalSettings;
 
     public function __construct()
     {

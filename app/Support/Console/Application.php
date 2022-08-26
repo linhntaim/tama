@@ -4,6 +4,7 @@ namespace App\Support\Console;
 
 use App\Support\Client\Settings;
 use App\Support\Console\Commands\Command;
+use App\Support\Console\Concerns\ExecutionWrap;
 use Illuminate\Console\Application as BaseApplication;
 use Illuminate\Console\BufferedConsoleOutput;
 use Illuminate\Support\Str;

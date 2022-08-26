@@ -2,7 +2,7 @@
 
 namespace App\Support\Listeners;
 
-use App\Support\ClassTrait;
+use App\Support\Concerns\ClassHelper;
 use App\Support\Events\Event;
 use App\Support\Facades\App;
 use App\Support\Facades\Artisan;
@@ -11,7 +11,7 @@ use Throwable;
 
 abstract class Listener
 {
-    use ClassTrait;
+    use ClassHelper;
 
     /**
      * @param Event $event

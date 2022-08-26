@@ -2,20 +2,25 @@
 
 namespace App\Support\Notifications;
 
-use App\Support\ClassTrait;
-use App\Support\Client\InternalSettings;
+use App\Support\Client\Concerns\InternalSettings;
+use App\Support\Concerns\ClassHelper;
 use App\Support\Facades\App;
 use App\Support\Facades\Artisan;
 use App\Support\Mail\Mailable;
+use App\Support\Notifications\Contracts\Notifiable as NotifiableContract;
+use App\Support\Notifications\Contracts\Notifier as NotifierContract;
+use App\Support\Notifications\Contracts\ViaBroadcast;
+use App\Support\Notifications\Contracts\ViaDatabase;
+use App\Support\Notifications\Contracts\ViaMail;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification as BaseNotification;
 use Illuminate\Support\Facades\Notification as NotificationFacade;
 use RuntimeException;
 
-class Notification extends BaseNotification
+abstract class Notification extends BaseNotification
 {
-    use ClassTrait, InternalSettings;
+    use ClassHelper, InternalSettings;
 
     public static function sendOnDemand(array|AnonymousNotifiable $routes, mixed ...$args)
     {
@@ -36,9 +41,9 @@ class Notification extends BaseNotification
         NotificationFacade::send($notifiables, new static(...$args));
     }
 
-    protected ?INotifier $notifier = null;
+    protected ?NotifierContract $notifier = null;
 
-    public function __construct(?INotifier $notifier = null)
+    public function __construct(?NotifierContract $notifier = null)
     {
         $this->captureCurrentSettings();
         if (App::runningSolelyInConsole()) {
@@ -49,7 +54,7 @@ class Notification extends BaseNotification
         $this->notifier = $notifier;
     }
 
-    public function via(INotifiable $notifiable): array|string
+    public function via(NotifiableContract $notifiable): array|string
     {
         $via = [];
         if ($this instanceof ViaDatabase) {
@@ -67,22 +72,22 @@ class Notification extends BaseNotification
         return $via;
     }
 
-    public function shouldSend(INotifiable $notifiable, string $channel): bool
+    public function shouldSend(NotifiableContract $notifiable, string $channel): bool
     {
         return true;
     }
 
-    public function toDatabase(INotifiable $notifiable): array
+    public function toDatabase(NotifiableContract $notifiable): array
     {
         return ['payload' => serialize(clone $this)] + $this->dataDatabase($notifiable);
     }
 
-    protected function dataDatabase(INotifiable $notifiable): array
+    protected function dataDatabase(NotifiableContract $notifiable): array
     {
         return [];
     }
 
-    public function toBroadcast(INotifiable $notifiable): BroadcastMessage
+    public function toBroadcast(NotifiableContract $notifiable): BroadcastMessage
     {
         return new BroadcastMessage([
                 'notifier' => $this->notifier ? [
@@ -91,17 +96,17 @@ class Notification extends BaseNotification
             ] + $this->dataBroadcast($notifiable));
     }
 
-    protected function dataBroadcast(INotifiable $notifiable): array
+    protected function dataBroadcast(NotifiableContract $notifiable): array
     {
         return [];
     }
 
-    public function toMail(INotifiable $notifiable): Mailable|MailMessage|null
+    public function toMail(NotifiableContract $notifiable): Mailable|MailMessage|null
     {
         return $this->dataMailable($notifiable);
     }
 
-    public function dataMailable(INotifiable $notifiable): Mailable|MailMessage|null
+    public function dataMailable(NotifiableContract $notifiable): Mailable|MailMessage|null
     {
         return null;
     }

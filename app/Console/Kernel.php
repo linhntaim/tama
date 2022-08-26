@@ -28,6 +28,7 @@ class Kernel extends ConsoleKernel
     {
         $this->load([
             __DIR__ . '/Commands',
+            //
             app_path('Trading/Console/Commands'),
         ]);
 

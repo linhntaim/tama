@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api\Account;
 use App\Models\HoldingAsset;
 use App\Models\HoldingAssetProvider;
 use App\Support\Http\Controllers\ModelApiController;
-use App\Support\Http\Resources\ResourceTransformer;
+use App\Support\Http\Resources\Concerns\ResourceTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;

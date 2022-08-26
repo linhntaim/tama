@@ -2,10 +2,10 @@
 
 namespace App\Support\Exports;
 
-use App\Models\File;
+use App\Support\Concerns\UnlimitedResource;
 use App\Support\Exceptions\FileException;
 use App\Support\Filesystem\Filers\Filer;
-use App\Support\UnlimitedResource;
+use App\Support\Models\File;
 use InvalidArgumentException;
 
 abstract class Export

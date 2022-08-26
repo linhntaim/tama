@@ -2,7 +2,7 @@
 
 namespace App\Trading\Bots;
 
-use App\Support\ClassTrait;
+use App\Support\Concerns\ClassHelper;
 use App\Trading\Bots\Data\Indication;
 use App\Trading\Bots\Pricing\Interval;
 use App\Trading\Bots\Pricing\PriceCollection;
@@ -14,7 +14,7 @@ use RuntimeException;
 
 abstract class Bot
 {
-    use ClassTrait;
+    use ClassHelper;
 
     public const NAME = '';
 

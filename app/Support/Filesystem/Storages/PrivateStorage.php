@@ -2,7 +2,9 @@
 
 namespace App\Support\Filesystem\Storages;
 
-class PrivateStorage extends LocalStorage implements IPrivatePublishableStorage
+use App\Support\Filesystem\Storages\Contracts\PrivatePublishableStorage as PrivatePublishableStorageContract;
+
+class PrivateStorage extends LocalStorage implements PrivatePublishableStorageContract
 {
     public const NAME = 'private';
 

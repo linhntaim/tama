@@ -3,7 +3,7 @@
 namespace App\Support\Http\Controllers\Api\Auth;
 
 use App\Support\Auth\Notifications\WelcomeEmail;
-use App\Support\Database\DatabaseTransaction;
+use App\Support\Database\Concerns\DatabaseTransaction;
 use App\Support\Http\Controllers\ApiController;
 use Closure;
 use Illuminate\Auth\Events\Registered;

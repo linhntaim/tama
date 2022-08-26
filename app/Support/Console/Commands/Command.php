@@ -2,10 +2,10 @@
 
 namespace App\Support\Console\Commands;
 
-use App\Support\ClassTrait;
-use App\Support\Client\InternalSettings;
+use App\Support\Client\Concerns\InternalSettings;
+use App\Support\Concerns\ClassHelper;
 use App\Support\Console\Application;
-use App\Support\Console\ExecutionWrap;
+use App\Support\Console\Concerns\ExecutionWrap;
 use App\Support\Console\Sheller;
 use App\Support\Exceptions\ShellException;
 use App\Support\Facades\Shell;
@@ -21,7 +21,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 abstract class Command extends BaseCommand
 {
-    use ClassTrait, ExecutionWrap, InternalSettings;
+    use ClassHelper, ExecutionWrap, InternalSettings;
 
     public const OPTION_DEBUG = 'x-debug';
     public const PARAMETER_DEBUG = '--' . self::OPTION_DEBUG;

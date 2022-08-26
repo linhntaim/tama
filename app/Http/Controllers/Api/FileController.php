@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\File;
-use App\Models\FileProvider;
 use App\Support\Http\Controllers\ModelApiController;
+use App\Support\Models\File;
+use App\Support\Models\FileProvider;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Http\Request;
 
