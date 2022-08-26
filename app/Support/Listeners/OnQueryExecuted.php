@@ -5,17 +5,12 @@ namespace App\Support\Listeners;
 use App\Support\Facades\App;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Facades\Log;
-use JsonException;
 
 class OnQueryExecuted
 {
-    /**
-     * @param QueryExecuted $event
-     * @throws JsonException
-     */
-    public function handle($event): void
+    public function handle(QueryExecuted $event): void
     {
-        if(App::runningInDebug()) {
+        if (App::runningInDebug()) {
             Log::info(
                 sprintf(
                     'Time: %sms. SQL: %s. Bindings: %s. Connection: %s.',

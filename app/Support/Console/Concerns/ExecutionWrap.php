@@ -11,7 +11,6 @@ use Closure;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use JsonException;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -86,9 +85,6 @@ trait ExecutionWrap
         return $exitCode;
     }
 
-    /**
-     * @throws JsonException
-     */
     protected function wrapException(?SymfonyCommand $command, ?InputInterface $input, OutputInterface $output, Throwable $e): void
     {
         $output->writeln(sprintf('<error> ERROR </error> <caution>%s</caution>', $e->getMessage()), OutputInterface::VERBOSITY_QUIET);

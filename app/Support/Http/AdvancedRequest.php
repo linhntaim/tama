@@ -3,7 +3,6 @@
 namespace App\Support\Http;
 
 use Illuminate\Http\Request;
-use JsonException;
 
 /**
  * @mixin Request
@@ -78,9 +77,6 @@ class AdvancedRequest
         return $this->has($key) && (!$strict || !is_null($input));
     }
 
-    /**
-     * @throws JsonException
-     */
     public function headerJson(string $key, ?array $default = null): ?array
     {
         if (is_null($header = $this->header($key))
@@ -90,9 +86,6 @@ class AdvancedRequest
         return $header;
     }
 
-    /**
-     * @throws JsonException
-     */
     public function cookieJson(string $key, ?array $default = null): ?array
     {
         if (is_null($cookie = $this->cookie($key))
