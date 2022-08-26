@@ -255,7 +255,7 @@ abstract class PriceStream
 
     protected function transformMessage(Message $message): array
     {
-        return json_decode_array($message->getPayload());
+        return json_decode_array($message->getPayload()) ?: [];
     }
 
     protected function proceedMessageWhileSubscribing(Message $message): void

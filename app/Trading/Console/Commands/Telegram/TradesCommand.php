@@ -54,7 +54,7 @@ class TradesCommand extends Command
 
     protected function botOptions(): array
     {
-        return json_decode_array($this->option('bot-options') ?? '') ?: [
+        return json_decode_array($this->option('bot-options')) ?: [
             'oscillator' => [
                 'name' => RsiOscillator::NAME,
             ],
