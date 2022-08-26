@@ -312,32 +312,23 @@ if (!function_exists('is_url')) {
 }
 
 if (!function_exists('json_encode_pretty')) {
-    /**
-     * @throws JsonException
-     */
     function json_encode_pretty(mixed $value, int $flags = 0, int $depth = 512): string|false
     {
-        return json_encode($value, $flags | JSON_PRETTY | JSON_THROW_ON_ERROR, $depth);
+        return json_encode($value, $flags | JSON_PRETTY, $depth);
     }
 }
 
 if (!function_exists('json_encode_readable')) {
-    /**
-     * @throws JsonException
-     */
     function json_encode_readable(mixed $value, int $flags = 0, int $depth = 512): string|false
     {
-        return json_encode($value, $flags | JSON_READABLE | JSON_THROW_ON_ERROR, $depth);
+        return json_encode($value, $flags | JSON_READABLE, $depth);
     }
 }
 
 if (!function_exists('json_decode_array')) {
-    /**
-     * @throws JsonException
-     */
     function json_decode_array(string $json, int $depth = 512, int $flags = 0): ?array
     {
-        return is_array($array = json_decode($json, true, $depth, $flags | JSON_THROW_ON_ERROR)) ? $array : null;
+        return is_array($array = json_decode($json, true, $depth, $flags)) ? $array : null;
     }
 }
 

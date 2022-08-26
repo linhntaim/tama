@@ -6,7 +6,6 @@ use App\Support\Client\Contracts\ProvidesSettings;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Support\Str;
-use JsonException;
 
 /**
  * Class Settings
@@ -258,9 +257,6 @@ class Settings implements ProvidesSettings, Arrayable, Jsonable
         return $this->settings;
     }
 
-    /**
-     * @throws JsonException
-     */
     public function toJson($options = 0): bool|string
     {
         return json_encode_readable($this->toArray(), $options);

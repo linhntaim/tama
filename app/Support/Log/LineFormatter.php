@@ -7,7 +7,6 @@ use App\Support\Exceptions\ShellException;
 use App\Support\Http\Concerns\Requests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use JsonException;
 use Monolog\Formatter\LineFormatter as BaseLineFormatter;
 use Throwable;
 
@@ -47,9 +46,6 @@ class LineFormatter extends BaseLineFormatter
         return implode(PHP_EOL, $normalized);
     }
 
-    /**
-     * @throws JsonException
-     */
     protected function normalizeException(Throwable $e, int $depth = 0): string
     {
         $normalized = [''];

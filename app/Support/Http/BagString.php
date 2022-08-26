@@ -2,8 +2,6 @@
 
 namespace App\Support\Http;
 
-use JsonException;
-
 class BagString
 {
     public static function create($bag): ?static
@@ -48,9 +46,6 @@ class BagString
         return $this;
     }
 
-    /**
-     * @throws JsonException
-     */
     protected function stringifyItem(string $name, $item): string|array
     {
         return sprintf('%s %s', $this->stringifyName($name), is_scalar($item) ? $item : json_encode_readable($item));
@@ -66,9 +61,6 @@ class BagString
         return implode(PHP_EOL, $stringifiedItems);
     }
 
-    /**
-     * @throws JsonException
-     */
     protected function pushToStringifiedItems(array &$stringifiedItems, string $name, $item): void
     {
         $stringifiedItem = $this->stringifyItem($name, $item);
@@ -80,9 +72,6 @@ class BagString
         }
     }
 
-    /**
-     * @throws JsonException
-     */
     public function __toString(): string
     {
         $stringifiedItems = [];
