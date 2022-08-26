@@ -5,7 +5,6 @@ namespace App\Trading\Telegram;
 use Exception;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
-use JsonException;
 use NotificationChannels\Telegram\Exceptions\CouldNotSendNotification;
 use NotificationChannels\Telegram\Telegram;
 use Psr\Http\Message\ResponseInterface;
@@ -29,7 +28,6 @@ class Client extends Telegram
     /**
      * @throws CouldNotSendNotification
      * @throws GuzzleException
-     * @throws JsonException
      */
     protected function sendRequest(string $endpoint, array $params, bool $multipart = false): ?ResponseInterface
     {

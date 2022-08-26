@@ -2,7 +2,6 @@
 
 namespace App\Trading\Console\Commands\Telegram;
 
-use JsonException;
 use Symfony\Component\Console\Descriptor\DescriptorInterface;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Formatter\OutputFormatter;
@@ -23,9 +22,6 @@ class TextDescriptor implements DescriptorInterface
 {
     protected OutputInterface $output;
 
-    /**
-     * @throws JsonException
-     */
     public function describe(OutputInterface $output, object $object, array $options = []): void
     {
         $this->output = $output;
@@ -47,9 +43,6 @@ class TextDescriptor implements DescriptorInterface
         $this->output->write($content, false, $decorated ? OutputInterface::OUTPUT_NORMAL : OutputInterface::OUTPUT_RAW);
     }
 
-    /**
-     * @throws JsonException
-     */
     protected function describeInputArgument(InputArgument $argument, array $options = []): void
     {
         if (null !== $argument->getDefault() && (!is_array($argument->getDefault()) || count($argument->getDefault()))) {
@@ -71,9 +64,6 @@ class TextDescriptor implements DescriptorInterface
         ), $options);
     }
 
-    /**
-     * @throws JsonException
-     */
     protected function describeInputOption(InputOption $option, array $options = []): void
     {
         if ($option->acceptValue() && null !== $option->getDefault() && (!is_array($option->getDefault()) || count($option->getDefault()))) {
@@ -110,9 +100,6 @@ class TextDescriptor implements DescriptorInterface
         ), $options);
     }
 
-    /**
-     * @throws JsonException
-     */
     protected function describeInputDefinition(InputDefinition $definition, array $options = []): void
     {
         $totalWidth = $this->calculateTotalWidthForOptions($definition->getOptions());
@@ -152,9 +139,6 @@ class TextDescriptor implements DescriptorInterface
         }
     }
 
-    /**
-     * @throws JsonException
-     */
     protected function describeCommand(Command $command, array $options = []): void
     {
         if ($description = $command->getDescription()) {
@@ -198,7 +182,6 @@ class TextDescriptor implements DescriptorInterface
 
     /**
      * Formats input option/argument default value.
-     * @throws JsonException
      */
     private function formatDefaultValue(mixed $default): string
     {

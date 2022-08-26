@@ -7,7 +7,6 @@ use App\Support\Console\Commands\Command;
 use App\Trading\Models\Trading;
 use App\Trading\Models\TradingProvider;
 use Illuminate\Database\Eloquent\Collection;
-use JsonException;
 use Ratchet\Client\Connector as ClientSocketConnector;
 use Ratchet\Client\WebSocket as ClientSocketConnection;
 use Ratchet\RFC6455\Messaging\Frame;
@@ -135,9 +134,6 @@ abstract class PriceStream
             ->on('error', fn(Throwable $e) => $this->onError($e));
     }
 
-    /**
-     * @throws JsonException
-     */
     protected function onMessage(Message $message): void
     {
         switch ($this->subscriptionStatus) {
@@ -153,9 +149,6 @@ abstract class PriceStream
         }
     }
 
-    /**
-     * @throws JsonException
-     */
     protected function onPing(): void
     {
         $this->log('Ping received');
@@ -234,9 +227,6 @@ abstract class PriceStream
         }
     }
 
-    /**
-     * @throws JsonException
-     */
     protected function send(string|array $payload, int $opcode = Frame::OP_TEXT, bool $final = true): void
     {
         $this->getConnection()?->send(
@@ -244,18 +234,12 @@ abstract class PriceStream
         );
     }
 
-    /**
-     * @throws JsonException
-     */
     protected function ping(): void
     {
         $this->send('', Frame::OP_PING);
         $this->log('Ping sent');
     }
 
-    /**
-     * @throws JsonException
-     */
     protected function pong(): void
     {
         $this->send('', Frame::OP_PONG);
@@ -269,17 +253,11 @@ abstract class PriceStream
         return $this;
     }
 
-    /**
-     * @throws JsonException
-     */
     protected function transformMessage(Message $message): array
     {
         return json_decode_array($message->getPayload());
     }
 
-    /**
-     * @throws JsonException
-     */
     protected function proceedMessageWhileSubscribing(Message $message): void
     {
         $ticker = $interval = null;

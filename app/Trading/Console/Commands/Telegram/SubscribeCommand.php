@@ -18,7 +18,6 @@ use App\Trading\Trader;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
-use JsonException;
 
 class SubscribeCommand extends Command
 {
@@ -54,9 +53,6 @@ class SubscribeCommand extends Command
         return $this->interval ?? $this->interval = $this->option('interval');
     }
 
-    /**
-     * @throws JsonException
-     */
     protected function botOptions(): array
     {
         return json_decode_array($this->option('bot-options') ?? '') ?: [
@@ -66,9 +62,6 @@ class SubscribeCommand extends Command
         ];
     }
 
-    /**
-     * @throws JsonException
-     */
     protected function mergeBotOptions(array $botOptions = []): array
     {
         return array_merge(
@@ -82,9 +75,6 @@ class SubscribeCommand extends Command
         );
     }
 
-    /**
-     * @throws JsonException
-     */
     protected function handling(): int
     {
         if (!ExchangeFactory::enabled($this->exchange())) {
@@ -196,9 +186,6 @@ class SubscribeCommand extends Command
             });
     }
 
-    /**
-     * @throws JsonException
-     */
     protected function createTrading(array $botOptions = []): Trading
     {
         return modify(
@@ -220,9 +207,6 @@ class SubscribeCommand extends Command
         );
     }
 
-    /**
-     * @throws JsonException
-     */
     protected function subscribe(User $user, Trading $trading, $redis): void
     {
         $trading->subscribers()->syncWithoutDetaching([

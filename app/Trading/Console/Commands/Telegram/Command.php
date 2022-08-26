@@ -5,7 +5,6 @@ namespace App\Trading\Console\Commands\Telegram;
 use App\Support\Console\Commands\Command as BaseCommand;
 use App\Trading\Telegram\Update as TelegramUpdate;
 use InvalidArgumentException;
-use JsonException;
 use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputOption;
 
@@ -24,9 +23,6 @@ abstract class Command extends BaseCommand
         ];
     }
 
-    /**
-     * @throws JsonException
-     */
     protected function handleBefore(): void
     {
         if (is_null($telegram = $this->option('telegram-update'))) {

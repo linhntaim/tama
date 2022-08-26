@@ -10,7 +10,6 @@ use App\Trading\Notifications\Telegram\ConsoleNotification;
 use App\Trading\Notifications\TelegramUpdateNotifiable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Redis;
-use JsonException;
 
 class UnsubscribeCommand extends Command
 {
@@ -75,9 +74,6 @@ class UnsubscribeCommand extends Command
             ->firstByProvider('telegram', $this->telegramUpdate->chatId());
     }
 
-    /**
-     * @throws JsonException
-     */
     protected function handling(): int
     {
         if (!is_null($user = $this->findUser())) {
@@ -126,9 +122,6 @@ class UnsubscribeCommand extends Command
         return $this->exitSuccess();
     }
 
-    /**
-     * @throws JsonException
-     */
     protected function unsubscribe(User $user, Trading $trading, $redis): void
     {
         $trading->subscribers()->detach($user->id);
