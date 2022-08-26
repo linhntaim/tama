@@ -5,13 +5,9 @@ namespace App\Console\Commands\Setup;
 use App\Support\Console\Commands\ForceCommand;
 use App\Support\EnvironmentFile;
 use Illuminate\Support\Str;
-use JsonException;
 
 class EnvCommand extends ForceCommand
 {
-    /**
-     * @throws JsonException
-     */
     protected function handling(): int
     {
         if (!$this->forced() && file_exists($this->laravel->environmentFilePath())) {
@@ -32,9 +28,6 @@ class EnvCommand extends ForceCommand
         return copy($this->laravel->basePath('.env.example'), $this->laravel->environmentFilePath()) === true;
     }
 
-    /**
-     * @throws JsonException
-     */
     protected function applyConfiguration(): void
     {
         $this->saveConfiguration(
@@ -65,9 +58,6 @@ class EnvCommand extends ForceCommand
         $this->info('The [.env] file was configured.');
     }
 
-    /**
-     * @throws JsonException
-     */
     protected function saveConfiguration(array $envs): void
     {
         (new EnvironmentFile($this->laravel->environmentFilePath()))

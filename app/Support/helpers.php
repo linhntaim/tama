@@ -326,7 +326,7 @@ if (!function_exists('json_encode_readable')) {
 }
 
 if (!function_exists('json_decode_array')) {
-    function json_decode_array(string $json, int $depth = 512, int $flags = 0): ?array
+    function json_decode_array(string|bool|null $json, int $depth = 512, int $flags = 0): ?array
     {
         return is_array($array = json_decode($json, true, $depth, $flags)) ? $array : null;
     }

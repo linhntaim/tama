@@ -4,13 +4,9 @@ namespace App\Console\Commands\MailHog;
 
 use App\Support\EnvironmentFile;
 use App\Support\Exceptions\ShellException;
-use JsonException;
 
 class StartCommand extends Command
 {
-    /**
-     * @throws JsonException
-     */
     protected function handling(): int
     {
         if (!is_file($this->binFile)) {

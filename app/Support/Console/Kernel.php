@@ -7,7 +7,6 @@ use App\Support\Console\Commands\Command;
 use App\Support\Console\Scheduling\Scheduler;
 use Illuminate\Console\Scheduling\Schedule as ConsoleSchedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
-use JsonException;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
 use Throwable;
 
@@ -69,9 +68,6 @@ class Kernel extends ConsoleKernel
         return $this->getArtisan()->lastRunningCommand();
     }
 
-    /**
-     * @throws JsonException
-     */
     public function renderThrowable(Throwable $e, $output): void
     {
         $this->getArtisan()->renderThrowable($e, $output);
