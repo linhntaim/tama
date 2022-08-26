@@ -6,6 +6,7 @@ use App\Support\Console\Commands\Command;
 use App\Trading\Bots\Actions\ReportAction;
 use App\Trading\Bots\Orchestrators\LatestPriceOrchestrator;
 use App\Trading\Bots\Pricing\LatestPriceFactory;
+use JsonException;
 use Psr\SimpleCache\InvalidArgumentException as PsrInvalidArgumentException;
 
 class LatestPriceCommand extends Command
@@ -27,6 +28,9 @@ class LatestPriceCommand extends Command
         return $this->argument('interval');
     }
 
+    /**
+     * @throws JsonException
+     */
     protected function price(): array
     {
         return json_decode_array(base64_decode($this->argument('price')));
@@ -34,6 +38,7 @@ class LatestPriceCommand extends Command
 
     /**
      * @throws PsrInvalidArgumentException
+     * @throws JsonException
      */
     protected function handling(): int
     {

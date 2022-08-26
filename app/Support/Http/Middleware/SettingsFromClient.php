@@ -9,11 +9,15 @@ use App\Support\Facades\Client;
 use App\Support\Http\Concerns\Requests;
 use Closure;
 use Illuminate\Http\Request;
+use JsonException;
 
 class SettingsFromClient
 {
     use Requests;
 
+    /**
+     * @throws JsonException
+     */
     public function handle(Request $request, Closure $next, ?string $source = null)
     {
         foreach ([
@@ -31,6 +35,9 @@ class SettingsFromClient
         return $this->storeCookie($request, $next($request));
     }
 
+    /**
+     * @throws JsonException
+     */
     protected function viaHeader(Request $request, ?string $source = null): Manager|bool
     {
         $manager = null;
@@ -45,6 +52,9 @@ class SettingsFromClient
         return $manager ?: false;
     }
 
+    /**
+     * @throws JsonException
+     */
     protected function viaCookie(Request $request, ?string $source = null): Manager|bool
     {
         if (is_null($source) || $source === 'cookie') {
@@ -91,12 +101,13 @@ class SettingsFromClient
         return Client::settingsApply();
     }
 
+    /**
+     * @throws JsonException
+     */
     protected function storeCookie(Request $request, $response)
     {
-        if (Client::settingsChanged()) {
-            if (EncryptCookies::ran()) {
-                return $response->cookie(name_starter('settings'), Client::settings()->toJson(JSON_READABLE), Configuration::COOKIE_FOREVER_EXPIRE);
-            }
+        if (Client::settingsChanged() && EncryptCookies::ran()) {
+            return $response->cookie(name_starter('settings'), Client::settings()->toJson(), Configuration::COOKIE_FOREVER_EXPIRE);
         }
         return $response;
     }

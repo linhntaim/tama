@@ -39,8 +39,6 @@ abstract class ModelProvider
     private const LOCK_NONE = 0;
     private const LOCK_UPDATE = 1;
     private const LOCK_SHARED = 2;
-    public const SORT_ASC = 'asc';
-    public const SORT_DESC = 'desc';
 
     public string $modelClass;
 
@@ -82,7 +80,7 @@ abstract class ModelProvider
     public function __construct(Model|callable|int|string $model = null)
     {
         if (!is_a($this->modelClass, Model::class, true)) {
-            throw new RuntimeException("Class [{$this->modelClass}] is not a model class.");
+            throw new RuntimeException("Class [$this->modelClass] is not a model class.");
         }
 
         $this->model($model);
@@ -198,7 +196,7 @@ abstract class ModelProvider
             ?? ($this->useSoftDeletes = class_use($this->modelClass, SoftDeletes::class));
     }
 
-    public function perPage(): bool
+    public function perPage(): int
     {
         return $this->perPage ?? ($this->perPage = $this->newModel()->getPerPage());
     }
@@ -521,7 +519,6 @@ abstract class ModelProvider
     protected function writeRestart(): static
     {
         $this->write = 0;
-        $this->writes = null;
         $this->writes = [];
         return $this;
     }
@@ -540,7 +537,7 @@ abstract class ModelProvider
     {
         ++$this->write;
         $this->writes[] = $attributes;
-        if ($this->write == $this->perWrite) {
+        if ($this->write === $this->perWrite) {
             return $this->writeMany()->writeRestart();
         }
         return $this;
@@ -649,10 +646,10 @@ abstract class ModelProvider
         if (is_null($length)) {
             $callback = method_exists($this, $method = 'makeUnique' . Str::studly($column))
                 ? fn() => $this->{$method}()
-                : fn() => Str::random(40);
+                : static fn() => Str::random(40);
         }
         elseif (is_int($length)) {
-            $callback = fn() => Str::random($length);
+            $callback = static fn() => Str::random($length);
         }
         else {
             $callback = $length;

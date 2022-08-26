@@ -5,12 +5,16 @@ namespace App\Console\Commands\Setup;
 use App\Support\Console\Commands\ForceCommand;
 use App\Support\EnvironmentFile;
 use Illuminate\Support\Str;
+use JsonException;
 
 class EnvCommand extends ForceCommand
 {
+    /**
+     * @throws JsonException
+     */
     protected function handling(): int
     {
-        if (file_exists($this->laravel->environmentFilePath()) && !$this->forced()) {
+        if (!$this->forced() && file_exists($this->laravel->environmentFilePath())) {
             $this->error('The [.env] file already exists.');
             return $this->exitFailure();
         }
@@ -28,13 +32,16 @@ class EnvCommand extends ForceCommand
         return copy($this->laravel->basePath('.env.example'), $this->laravel->environmentFilePath()) === true;
     }
 
-    protected function applyConfiguration()
+    /**
+     * @throws JsonException
+     */
+    protected function applyConfiguration(): void
     {
         $this->saveConfiguration(
             (($appEnv = $this->choice('Environment?', [
                 'Local',
                 'Production',
-            ], 1)) == 'Production' // prod
+            ], 1)) === 'Production' // prod
                 ? [
                     'APP_ENV' => 'production',
                     'APP_DEBUG' => false,
@@ -46,7 +53,7 @@ class EnvCommand extends ForceCommand
             + [
                 'APP_NAME' => ($appName = $this->ask('App name?', 'Starter')),
                 'APP_ID' => ($appId = $this->ask('App ID?', Str::snake($appName))),
-                'APP_URL' => ($appUrl = $this->ask('App URL?', 'http://localhost')),
+                'APP_URL' => ($appUrl = $this->ask('App URL?', 'http://127.0.0.1:8000')),
 
                 'DB_HOST' => ($dbHost = $this->ask('Database host?', '127.0.0.1')),
                 'DB_PORT' => ($dbPort = $this->ask('Database port?', '3306')),
@@ -58,7 +65,10 @@ class EnvCommand extends ForceCommand
         $this->info('The [.env] file was configured.');
     }
 
-    protected function saveConfiguration(array $envs)
+    /**
+     * @throws JsonException
+     */
+    protected function saveConfiguration(array $envs): void
     {
         (new EnvironmentFile($this->laravel->environmentFilePath()))
             ->fill($envs)

@@ -16,10 +16,8 @@ abstract class Event
     public function __construct()
     {
         $this->captureCurrentSettings();
-        if (App::runningSolelyInConsole()) {
-            if ($runningCommand = Artisan::lastRunningCommand()) {
-                $this->setForcedInternalSettings($runningCommand->settings());
-            }
+        if (App::runningSolelyInConsole() && !is_null($runningCommand = Artisan::lastRunningCommand())) {
+            $this->setForcedInternalSettings($runningCommand->settings());
         }
     }
 }

@@ -6,5 +6,5 @@ use Illuminate\Database\Seeder as BaseSeeder;
 
 abstract class Seeder extends BaseSeeder
 {
-    public abstract function run();
+    abstract public function run(...$parameters): void;
 }

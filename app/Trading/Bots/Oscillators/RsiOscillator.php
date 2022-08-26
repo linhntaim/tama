@@ -9,7 +9,7 @@ class RsiOscillator extends Oscillator
 {
     public const NAME = 'rsi';
 
-    protected function createComponents()
+    protected function createComponents(): void
     {
         $this->addComponent(new RsiComponent($this->options));
     }
@@ -18,7 +18,7 @@ class RsiOscillator extends Oscillator
     {
         return $packet->get('transformers.rsi', [])
             ->filter(function (Indication $indication) {
-                return $indication->getValue() != 0;
+                return $indication->getValue() !== 0.0;
             });
     }
 }

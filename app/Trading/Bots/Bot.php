@@ -37,7 +37,7 @@ abstract class Bot
         }
     }
 
-    public final function getName(): string
+    final public function getName(): string
     {
         return static::NAME;
     }
@@ -111,7 +111,7 @@ abstract class Bot
      * @param int $latest
      * @return Collection<int, Indication>
      */
-    protected abstract function indicating(PriceCollection $prices, int $latest = 0): Collection;
+    abstract protected function indicating(PriceCollection $prices, int $latest = 0): Collection;
 
     /**
      * @param int $latest
@@ -123,7 +123,7 @@ abstract class Bot
         return $this->indicating($this->fetchPrices(), $latest);
     }
 
-    protected abstract function indicatingNow(PriceCollection $prices): ?Indication;
+    abstract protected function indicatingNow(PriceCollection $prices): ?Indication;
 
     /**
      * @throws PsrInvalidArgumentException

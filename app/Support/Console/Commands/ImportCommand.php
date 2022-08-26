@@ -26,7 +26,7 @@ abstract class ImportCommand extends Command
         return [];
     }
 
-    protected abstract function importClass(): string;
+    abstract protected function importClass(): string;
 
     protected function import(): Import
     {

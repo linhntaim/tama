@@ -66,7 +66,7 @@ class Handler extends ExceptionHandler
         return $this->responseResource(request(), $exception);
     }
 
-    public function renderForConsole($output, Throwable $e)
+    public function renderForConsole($output, Throwable $e): void
     {
         $this->transactionAbort(true);
         Artisan::renderThrowable($e, $output);

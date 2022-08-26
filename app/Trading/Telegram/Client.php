@@ -4,6 +4,8 @@ namespace App\Trading\Telegram;
 
 use Exception;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\GuzzleException;
+use JsonException;
 use NotificationChannels\Telegram\Exceptions\CouldNotSendNotification;
 use NotificationChannels\Telegram\Telegram;
 use Psr\Http\Message\ResponseInterface;
@@ -14,7 +16,7 @@ class Client extends Telegram
 
     protected int $retryCount = 0;
 
-    protected function retryReset()
+    protected function retryReset(): void
     {
         $this->retryCount = 0;
     }
@@ -24,6 +26,11 @@ class Client extends Telegram
         return ++$this->retryCount < $this->retryMax;
     }
 
+    /**
+     * @throws CouldNotSendNotification
+     * @throws GuzzleException
+     * @throws JsonException
+     */
     protected function sendRequest(string $endpoint, array $params, bool $multipart = false): ?ResponseInterface
     {
         if (blank($this->token)) {
@@ -41,13 +48,13 @@ class Client extends Telegram
             );
         }
         catch (ClientException $exception) {
-            if (($response = $exception->getResponse())->getStatusCode() == 429 // too many requests
+            if (($response = $exception->getResponse())->getStatusCode() === 429 // too many requests
                 && $this->retried()) {
                 // wait
                 sleep(
                     1
                     + data_get(
-                        json_decode($response->getBody()->getContents(), true),
+                        json_decode_array($response->getBody()->getContents()),
                         'parameters.retry_after',
                         0
                     )

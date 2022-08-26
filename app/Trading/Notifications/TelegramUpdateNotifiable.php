@@ -27,7 +27,7 @@ class TelegramUpdateNotifiable extends AnonymousNotifiable
 
     public function routeNotificationFor($driver, $notification = null)
     {
-        if ($driver == 'telegram') {
+        if ($driver === 'telegram') {
             return $this->telegramUpdate->chatId($this->private);
         }
         return parent::routeNotificationFor($driver, $notification);

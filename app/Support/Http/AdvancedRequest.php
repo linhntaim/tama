@@ -3,6 +3,7 @@
 namespace App\Support\Http;
 
 use Illuminate\Http\Request;
+use JsonException;
 
 /**
  * @mixin Request
@@ -31,6 +32,11 @@ class AdvancedRequest
         return isset($this->request->{$name});
     }
 
+    public function __set(string $name, $value): void
+    {
+        $this->request->offsetSet($name, $value);
+    }
+
     public function __get(string $name)
     {
         return $this->request->{$name};
@@ -56,7 +62,7 @@ class AdvancedRequest
     public function sortBy(string $default, array $allowed = []): ?string
     {
         if ($this->if('sort_by', $by, true)) {
-            return !count($allowed) || in_array($by, $allowed) ? $by : null;
+            return !count($allowed) || in_array($by, $allowed, true) ? $by : null;
         }
         return $default;
     }
@@ -72,6 +78,9 @@ class AdvancedRequest
         return $this->has($key) && (!$strict || !is_null($input));
     }
 
+    /**
+     * @throws JsonException
+     */
     public function headerJson(string $key, ?array $default = null): ?array
     {
         if (is_null($header = $this->header($key))
@@ -81,6 +90,9 @@ class AdvancedRequest
         return $header;
     }
 
+    /**
+     * @throws JsonException
+     */
     public function cookieJson(string $key, ?array $default = null): ?array
     {
         if (is_null($cookie = $this->cookie($key))
@@ -109,9 +121,7 @@ class AdvancedRequest
 
             public function __toString(): string
             {
-                $nameLength = max(array_map(function (BagString $bagString) {
-                    return $bagString->getNameLength();
-                }, $this->bagStrings));
+                $nameLength = max(array_map(static fn(BagString $bagString) => $bagString->getNameLength(), $this->bagStrings));
                 $stringified = [];
                 foreach ($this->bagStrings as $group => $bagString) {
                     $stringified[] = sprintf('[%s]', $group);

@@ -27,6 +27,6 @@ class Factory
 
     public static function enabled(string $exchange): bool
     {
-        return in_array($exchange, static::enables());
+        return in_array($exchange, static::enables(), true);
     }
 }

@@ -17,7 +17,7 @@ class HoldingProvider extends ModelProvider
 
     public function firstByUser(User|int $user): ?Holding
     {
-        return $this->first(['user_id', $this->retrieveKey($user)]);
+        return $this->first(['user_id' => $this->retrieveKey($user)]);
     }
 
     /**
@@ -38,14 +38,14 @@ class HoldingProvider extends ModelProvider
                     take(new HoldingAssetProvider(), function (HoldingAssetProvider $holdingAssetProvider) use ($assets) {
                         $ids = [];
                         foreach ($assets as $index => $asset) {
-                            array_push($ids, $holdingAssetProvider->updateOrCreateWithAttributes([
+                            $ids[] = $holdingAssetProvider->updateOrCreateWithAttributes([
                                 'user_id' => $this->model->user_id,
                                 'exchange' => $asset['exchange'],
                                 'symbol' => $asset['symbol'],
                             ], [
                                 'amount' => $asset['amount'],
                                 'order' => $index,
-                            ])->id);
+                            ])->id;
                         }
                         $holdingAssetProvider->deleteAll([
                             'user_id' => $this->model->user_id,

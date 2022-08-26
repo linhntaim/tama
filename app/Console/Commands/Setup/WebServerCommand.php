@@ -9,6 +9,7 @@ class WebServerCommand extends ForceCommand
     protected function handling(): int
     {
         $forced = $this->forced();
+        $this->comment('Configuring web server ...');
         switch (($this->choice('Web server?', [
             'Apache',
             'NGINX',
@@ -25,6 +26,9 @@ class WebServerCommand extends ForceCommand
                         return $this->exitFailure();
                     }
                 }
+                break;
+            case 'IIS':
+                // TODO:
                 break;
         }
         if ($forced || !file_exists(public_path('robots.txt'))) {

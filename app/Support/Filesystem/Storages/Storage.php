@@ -25,7 +25,7 @@ abstract class Storage
         'visibility' => Filesystem::VISIBILITY_PRIVATE,
     ];
 
-    public abstract function fromFile(string|SplFileInfo|Storage $file): static;
+    abstract public function fromFile(string|SplFileInfo|Storage $file): static;
 
     public function setFile(string|SplFileInfo $file): static
     {
@@ -38,12 +38,12 @@ abstract class Storage
         return $this->file;
     }
 
-    public abstract function getContent(): string;
+    abstract public function getContent(): string;
 
     /**
      * @return resource
      */
-    public abstract function getStream();
+    abstract public function getStream();
 
     public function has(): bool
     {

@@ -34,7 +34,7 @@ class DateTimer extends SettingsApplier
 
     public static function now(?bool $set = false): Carbon
     {
-        $now = fn() => Carbon::now(new CarbonTimeZone('UTC'));
+        $now = static fn() => Carbon::now(new CarbonTimeZone('UTC'));
         if (is_null($set)) {
             return $now();
         }
@@ -61,6 +61,9 @@ class DateTimer extends SettingsApplier
             : Carbon::createFromTimestamp($timestamp, new CarbonTimeZone('UTC'))->format($format);
     }
 
+    /**
+     * @return float[]
+     */
     public static function availableUtcOffsets(): array
     {
         return [
@@ -69,6 +72,9 @@ class DateTimer extends SettingsApplier
         ];
     }
 
+    /**
+     * @return string[]
+     */
     public static function availableTimezones(): array
     {
         // UTC
@@ -86,35 +92,50 @@ class DateTimer extends SettingsApplier
 
     public static function timeOffsetByTimezone(string $timezone): int
     {
-        if ($timezone == 'UTC') {
+        if ($timezone === 'UTC') {
             return 0;
         }
         if (Str::startsWith($timezone, 'UTC')) {
-            return (int)(floatval(Str::substr($timezone, 3)) * 3600);
+            return (int)((float)Str::substr($timezone, 3) * 3600);
         }
         return (new CarbonTimeZone($timezone))->getOffset(new Carbon());
     }
 
+    /**
+     * @return int[]
+     */
     public static function availableDaysOfWeek(): array
     {
         return range(1, 7);
     }
 
+    /**
+     * @return int[]
+     */
     public static function availableLongDateFormats(): array
     {
         return range(0, 3);
     }
 
+    /**
+     * @return int[]
+     */
     public static function availableShortDateFormats(): array
     {
         return range(0, 3);
     }
 
+    /**
+     * @return int[]
+     */
     public static function availableLongTimeFormats(): array
     {
         return range(0, 4);
     }
 
+    /**
+     * @return int[]
+     */
     public static function availableShortTimeFormats(): array
     {
         return range(0, 4);
@@ -147,7 +168,7 @@ class DateTimer extends SettingsApplier
         $this->transShortMonth = 'date_timer.formats.short_month_' . $settings->shortDateFormat;
         $this->transLongTime = 'date_timer.formats.long_time_' . $settings->longTimeFormat;
         $this->transShortTime = 'date_timer.formats.short_time_' . $settings->shortTimeFormat;
-        $this->timeOffset = $this->timeOffsetByTimezone($settings->timezone);
+        $this->timeOffset = self::timeOffsetByTimezone($settings->timezone);
         return $this;
     }
 
@@ -158,7 +179,7 @@ class DateTimer extends SettingsApplier
 
     protected function buildTransTerms(): ?array
     {
-        if ($this->locale == self::DEFAULT_LOCALE) {
+        if ($this->locale === self::DEFAULT_LOCALE) {
             return null;
         }
 
@@ -228,11 +249,11 @@ class DateTimer extends SettingsApplier
             $zonePart = explode('/', $zone);
             $continent = $zonePart[0];
 
-            if ($continent == 'UTC') {
+            if ($continent === 'UTC') {
                 continue;
             }
 
-            if (!empty($currentContinent) && $continent != $currentContinent) {
+            if (!empty($currentContinent) && $continent !== $currentContinent) {
                 $timezones[] = [
                     'name' => $currentContinent,
                     'timezones' => $unixTimezones,

@@ -36,5 +36,5 @@ abstract class LatestPrice extends ArrayReader
         return $this->get('price');
     }
 
-    public abstract function getTime(): int; // timestamp seconds
+    abstract public function getTime(): int; // timestamp seconds
 }

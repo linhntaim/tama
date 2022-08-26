@@ -18,6 +18,7 @@ use App\Trading\Trader;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
+use JsonException;
 
 class SubscribeCommand extends Command
 {
@@ -53,6 +54,9 @@ class SubscribeCommand extends Command
         return $this->interval ?? $this->interval = $this->option('interval');
     }
 
+    /**
+     * @throws JsonException
+     */
     protected function botOptions(): array
     {
         return json_decode_array($this->option('bot-options') ?? '') ?: [
@@ -62,6 +66,9 @@ class SubscribeCommand extends Command
         ];
     }
 
+    /**
+     * @throws JsonException
+     */
     protected function mergeBotOptions(array $botOptions = []): array
     {
         return array_merge(
@@ -75,6 +82,9 @@ class SubscribeCommand extends Command
         );
     }
 
+    /**
+     * @throws JsonException
+     */
     protected function handling(): int
     {
         if (!ExchangeFactory::enabled($this->exchange())) {
@@ -87,7 +97,7 @@ class SubscribeCommand extends Command
             Trader::INTERVAL_1_MINUTE,
             Trader::INTERVAL_3_MINUTES,
             Trader::INTERVAL_5_MINUTES,
-        ])) {
+        ], true)) {
             ConsoleNotification::send(
                 new TelegramUpdateNotifiable($this->telegramUpdate),
                 sprintf('Subscription for the interval "%s" was not supported/enabled.', $this->interval())
@@ -101,7 +111,7 @@ class SubscribeCommand extends Command
         }
         else {
             $redis = Redis::connection(trading_cfg_redis_pubsub_connection());
-            if ($this->ticker()[0] == '*') {
+            if ($this->ticker()[0] === '*') {
                 $tickers = $this->fetchTickers();
                 foreach ($tickers as $ticker) {
                     $this->subscribe($user, $this->createTrading([
@@ -166,7 +176,7 @@ class SubscribeCommand extends Command
             ($userProvider = new UserProvider())
                 ->notStrict()
                 ->firstByEmail($email),
-            function ($user) use ($userProvider, $name, $email, $providerId) {
+            static function ($user) use ($userProvider, $name, $email, $providerId) {
                 return take(
                     is_null($user) ? $userProvider->createWithAttributes([
                         'email' => $email,
@@ -174,7 +184,7 @@ class SubscribeCommand extends Command
                         'password' => Str::random(40),
                         'email_verified_at' => DateTimer::databaseNow(),
                     ]) : $user,
-                    function (User $user) use ($providerId) {
+                    static function (User $user) use ($providerId) {
                         (new UserSocialProvider())->firstOrCreateWithAttributes([
                             'user_id' => $user->id,
                             'provider' => 'telegram',
@@ -186,13 +196,16 @@ class SubscribeCommand extends Command
             });
     }
 
+    /**
+     * @throws JsonException
+     */
     protected function createTrading(array $botOptions = []): Trading
     {
         return modify(
             ($tradingProvider = new TradingProvider())
                 ->notStrict()
                 ->firstBySlug($slug = ($bot = BotFactory::create($this->bot(), $this->mergeBotOptions($botOptions)))->asSlug()),
-            function ($trading) use ($tradingProvider, $bot, $slug) {
+            static function ($trading) use ($tradingProvider, $bot, $slug) {
                 return is_null($trading)
                     ? $tradingProvider->createWithAttributes([
                         'slug' => $slug,
@@ -207,14 +220,17 @@ class SubscribeCommand extends Command
         );
     }
 
-    protected function subscribe(User $user, Trading $trading, $redis)
+    /**
+     * @throws JsonException
+     */
+    protected function subscribe(User $user, Trading $trading, $redis): void
     {
         $trading->subscribers()->syncWithoutDetaching([
             $user->id => [
                 'subscribed_at' => DateTimer::databaseNow(),
             ],
         ]);
-        $redis->publish('price-stream:subscribe', json_encode([
+        $redis->publish('price-stream:subscribe', json_encode_readable([
             'exchange' => $trading->exchange,
             'ticker' => $trading->ticker,
             'interval' => $trading->interval,

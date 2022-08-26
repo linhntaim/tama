@@ -19,7 +19,7 @@ class CoinMarketCapIdentificationJob extends CoinIdentificationJob
         return [];
     }
 
-    protected function handleBatchItem($item)
+    protected function handleBatchItem($item): void
     {
         $this->dispatchEvent(
             $item['symbol'],

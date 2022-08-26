@@ -11,7 +11,7 @@ abstract class ForceCommand extends Command
     protected function forced(): bool
     {
         return is_null($this->forced)
-            ? ($this->forced = !$this->hasOption('force') || $this->option('force'))
+            ? ($this->forced = (!$this->hasOption('force') || $this->option('force')))
             : $this->forced;
     }
 
@@ -22,7 +22,7 @@ abstract class ForceCommand extends Command
         $this->forced() && $this->whenForced();
     }
 
-    protected function whenForced()
+    protected function whenForced(): void
     {
     }
 

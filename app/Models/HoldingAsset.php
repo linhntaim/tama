@@ -24,16 +24,18 @@ class HoldingAsset extends Model
         'order',
     ];
 
-    protected $casts = [
-        'amount' => 'float',
-        'order' => 'integer',
-    ];
-
     protected $visible = [
         'id',
         'exchange',
         'symbol',
         'amount',
         'order',
+    ];
+
+    protected $casts = [
+        'id' => 'integer',
+        'user_id' => 'integer',
+        'amount' => 'float',
+        'order' => 'integer',
     ];
 }

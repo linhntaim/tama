@@ -20,7 +20,7 @@ class HoldingAssetProvider extends ModelProvider
 
     /**
      * @param Holding|int $holding
-     * @return Collection|HoldingAsset[]
+     * @return Collection<int, HoldingAsset>
      */
     public function allByHolding(Holding|int $holding): Collection
     {
@@ -58,7 +58,7 @@ class HoldingAssetProvider extends ModelProvider
 
     public function belongsTo(User|int $user): bool
     {
-        return $this->model->user_id == $this->retrieveKey($user);
+        return $this->model->user_id === $this->retrieveKey($user);
     }
 
     public function updateAmount(float $amount): HoldingAsset

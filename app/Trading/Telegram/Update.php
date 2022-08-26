@@ -8,7 +8,7 @@ class Update extends ArrayReader
 {
     public function isPrivate(): bool
     {
-        return $this->get('message.chat.type') == 'private';
+        return $this->get('message.chat.type') === 'private';
     }
 
     public function isChannel(): bool

@@ -13,7 +13,7 @@ abstract class CoinIdentificationJob extends ContinuousBatchJob
         float  $circulatingSupply,
         ?float $totalSupply,
         ?float $maxSupply,
-    )
+    ): void
     {
         CoinIdentificationEvent::dispatch(
             $symbol,

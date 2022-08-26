@@ -25,7 +25,7 @@ class WelcomeEmail extends Notification implements ViaMail
         return url(route('login', [], false));
     }
 
-    public function dataMailable(NotifiableContract $notifiable): Mailable|MailMessage|null
+    public function dataMail(NotifiableContract $notifiable): Mailable|MailMessage|null
     {
         if (static::$toMailCallback) {
             return call_user_func(static::$toMailCallback, $notifiable);

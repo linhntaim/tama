@@ -29,7 +29,7 @@ abstract class PriceCollection
     /**
      * @return float[]
      */
-    protected abstract function createPrices(): array;
+    abstract protected function createPrices(): array;
 
     public function items(): array
     {
@@ -59,7 +59,7 @@ abstract class PriceCollection
 
     public function timeAt(int $index): int
     {
-        return $index == $this->count
+        return $index === $this->count
             ? $this->interval->getNextLatestTimeOf($this->latestTime())
             : $this->times()[$index];
     }

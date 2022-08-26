@@ -8,6 +8,7 @@ class BinancePriceStreamMessageExtractor implements IPriceMessageExtract
 {
     public function __invoke(array $messagePayload, ?string &$ticker = null, ?string &$interval = null): ?LatestPrice
     {
+        $ticker = $interval = null;
         if (!isset($messagePayload['stream'])) {
             return null;
         }

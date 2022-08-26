@@ -33,7 +33,7 @@ class ExternalStorage extends Storage implements HasExternalStorageContract
                         ->setName(basename($file))
                         ->setMimeType(trim(explode(';', $response->header('content-type'))[0]))
                         ->setExtension(
-                            ($extension = pathinfo(parse_url($file)['path'] ?? '', PATHINFO_EXTENSION)) == ''
+                            ($extension = pathinfo(parse_url($file)['path'] ?? '', PATHINFO_EXTENSION)) === ''
                                 ? guess_extension($this->mimeType) : $extension
                         )
                         ->setSize((int)$response->header('content-length'));

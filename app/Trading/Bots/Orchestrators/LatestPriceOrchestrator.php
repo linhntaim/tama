@@ -46,7 +46,7 @@ class LatestPriceOrchestrator extends Orchestrator
     /**
      * @throws PsrInvalidArgumentException
      */
-    public function proceed()
+    public function proceed(): void
     {
         if (ExchangeFactory::enabled($this->latestPrice->getExchange())) {
             $this->priceProvider()->pushLatest($this->latestPrice);

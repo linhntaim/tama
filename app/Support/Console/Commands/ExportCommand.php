@@ -23,7 +23,7 @@ abstract class ExportCommand extends Command
         return [];
     }
 
-    protected abstract function exportClass(): string;
+    abstract protected function exportClass(): string;
 
     protected function export(): Export
     {
@@ -42,10 +42,9 @@ abstract class ExportCommand extends Command
         $this->warn('Export started.');
         $export = $this->export();
         do {
-            $doesntHaveFile = !isset($file);
-            $filer = $doesntHaveFile ? $export() : $export($file);
+            $filer = !isset($file) ? $export() : $export($file);
             $completed = $export->chunkEnded();
-            $file = $doesntHaveFile
+            $file = !isset($file)
                 ? (new FileProvider())
                     ->enablePublish($completed)
                     ->createWithFiler($filer)

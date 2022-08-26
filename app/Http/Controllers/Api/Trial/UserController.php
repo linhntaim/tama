@@ -26,28 +26,18 @@ class UserController extends ModelApiController
             'email' => fn($input) => LikeValue::create($input),
             'name' => fn($input) => LikeValue::create($input),
             'created_from' => function ($input) use ($dateTimer) {
-                try {
-                    return $dateTimer->fromFormatToDatabaseFormat(
-                        $dateTimer->compoundFormat('shortDate', ' ', 'shortTime'),
-                        $input,
-                        DateTimer::DAY_TYPE_MINUTE_START
-                    );
-                }
-                finally {
-                    return null;
-                }
+                return $dateTimer->fromFormatToDatabaseFormat(
+                    $dateTimer->compoundFormat('shortDate', ' ', 'shortTime'),
+                    $input,
+                    DateTimer::DAY_TYPE_MINUTE_START
+                );
             },
             'created_to' => function ($input) use ($dateTimer) {
-                try {
-                    return $dateTimer->fromFormatToDatabaseFormat(
-                        $dateTimer->compoundFormat('shortDate', ' ', 'shortTime'),
-                        $input,
-                        DateTimer::DAY_TYPE_MINUTE_END
-                    );
-                }
-                finally {
-                    return null;
-                }
+                return $dateTimer->fromFormatToDatabaseFormat(
+                    $dateTimer->compoundFormat('shortDate', ' ', 'shortTime'),
+                    $input,
+                    DateTimer::DAY_TYPE_MINUTE_END
+                );
             },
         ];
     }

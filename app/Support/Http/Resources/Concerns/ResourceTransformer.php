@@ -51,17 +51,13 @@ trait ResourceTransformer
                 }
             }
         }
-        else {
-            if ($resource instanceof Model) {
-                if (!is_a($resourceClass, ModelResource::class, true)) {
-                    return new ModelResource($resource);
-                }
+        elseif ($resource instanceof Model) {
+            if (!is_a($resourceClass, ModelResource::class, true)) {
+                return new ModelResource($resource);
             }
-            else {
-                if (!is_a($resourceClass, Resource::class, true)) {
-                    return new Resource($resource);
-                }
-            }
+        }
+        elseif (!is_a($resourceClass, Resource::class, true)) {
+            return new Resource($resource);
         }
 
         return new $resourceClass($resource);
@@ -71,7 +67,7 @@ trait ResourceTransformer
     {
         return modify(
             $this->resourceFrom($resource, $resourceClass),
-            function (ArrayResponsibleResource|WrappedResource|null $resource) use ($request, $wrap) {
+            static function (ArrayResponsibleResource|WrappedResource|null $resource) use ($request, $wrap) {
                 return is_null($resource) ? null : $resource->setWrapped($wrap)->toArrayResponse($request);
             }
         );

@@ -2,11 +2,8 @@
 
 namespace App\Trading\Models;
 
-use App\Models\User;
 use App\Support\Models\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * @property int $status
@@ -29,21 +26,23 @@ class TradingBroadcast extends Model
     ];
 
     protected $casts = [
+        'id' => 'integer',
+        'trading_id' => 'integer',
         'status' => 'integer',
     ];
 
     public function done(): Attribute
     {
-        return Attribute::get(fn() => $this->status == self::STATUS_DONE);
+        return Attribute::get(fn() => $this->status === self::STATUS_DONE);
     }
 
     public function doing(): Attribute
     {
-        return Attribute::get(fn() => $this->status == self::STATUS_DOING);
+        return Attribute::get(fn() => $this->status === self::STATUS_DOING);
     }
 
     public function failed(): Attribute
     {
-        return Attribute::get(fn() => $this->status == self::STATUS_FAILED);
+        return Attribute::get(fn() => $this->status === self::STATUS_FAILED);
     }
 }

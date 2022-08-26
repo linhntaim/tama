@@ -26,7 +26,7 @@ class Values
         $this->spikes = [];
     }
 
-    public function has($key)
+    public function has($key): bool
     {
         return isset($this->values[$key]);
     }
@@ -53,23 +53,23 @@ class Values
 
     public function isTrough($key): bool
     {
-        return $this->spike($key) == self::SPIKE_TROUGH;
+        return $this->spike($key) === self::SPIKE_TROUGH;
     }
 
     public function isPeak($key): bool
     {
-        return $this->spike($key) == self::SPIKE_PEAK;
+        return $this->spike($key) === self::SPIKE_PEAK;
     }
 
     public function isNone($key): bool
     {
-        return $this->spike($key) == self::SPIKE_NONE;
+        return $this->spike($key) === self::SPIKE_NONE;
     }
 
-    protected function determine($key)
+    protected function determine($key): void
     {
         $value = $this->value($key);
-        $i = array_search($key, $this->keys);
+        $i = array_search($key, $this->keys, true);
 
         $nextKey = $this->keys[$i + 1];
         if ($this->has($nextKey)) {
@@ -82,7 +82,7 @@ class Values
                     $hasPrevValue = false;
                     while ($prev >= 0
                         && ($hasPrevValue = $this->has($prevKey = $this->keys[$prev]))
-                        && (($prevValue = $this->value($prevKey)) == $value)) {
+                        && (($prevValue = $this->value($prevKey)) === $value)) {
                         $this->spikes[$prevKey] = self::SPIKE_NONE;
                         --$prev;
                     }
@@ -97,7 +97,7 @@ class Values
                 && (function ($prev) use ($value) {
                     $prevValue = $value;
                     while (($hasPrevValue = $this->has($prevKey = $this->keys[$prev]))
-                        && (($prevValue = $this->value($prevKey)) == $value)) {
+                        && (($prevValue = $this->value($prevKey)) === $value)) {
                         $this->spikes[$prevKey] = self::SPIKE_NONE;
                         --$prev;
                     }

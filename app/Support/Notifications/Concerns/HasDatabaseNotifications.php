@@ -13,7 +13,7 @@ trait HasDatabaseNotifications
      *
      * @return MorphMany
      */
-    public function notifications()
+    public function notifications(): MorphMany
     {
         return $this->morphMany(DatabaseNotification::class, 'notifiable')->latest();
     }
@@ -23,7 +23,7 @@ trait HasDatabaseNotifications
      *
      * @return Builder
      */
-    public function readNotifications()
+    public function readNotifications(): Builder
     {
         return $this->notifications()->read();
     }
@@ -33,7 +33,7 @@ trait HasDatabaseNotifications
      *
      * @return Builder
      */
-    public function unreadNotifications()
+    public function unreadNotifications(): Builder
     {
         return $this->notifications()->unread();
     }

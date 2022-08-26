@@ -22,10 +22,10 @@ class PubSubManager
         }
 
         if (isset($config['clusters'][$name])) {
-            throw new InvalidArgumentException("Redis cluster connection [{$name}] not supported.");
+            throw new InvalidArgumentException("Redis cluster connection [$name] not supported.");
         }
 
-        throw new InvalidArgumentException("Redis connection [{$name}] not configured.");
+        throw new InvalidArgumentException("Redis connection [$name] not configured.");
     }
 
     protected function mergeConfig($client, array $config, array $options): array

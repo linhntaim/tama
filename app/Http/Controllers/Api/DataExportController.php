@@ -27,7 +27,7 @@ class DataExportController extends ModelApiController
 
     protected function showFile(Request $request, $id)
     {
-        return with($this->modelProvider()->model($id), function (DataExport $dataExport) {
+        return with($this->modelProvider()->model($id), static function (DataExport $dataExport) {
             // TODO: Permission by {$dataExport->name}
             return $dataExport->file->responseFile();
         });
@@ -35,7 +35,7 @@ class DataExportController extends ModelApiController
 
     protected function showDownload(Request $request, $id)
     {
-        return with($this->modelProvider()->model($id), function (DataExport $dataExport) {
+        return with($this->modelProvider()->model($id), static function (DataExport $dataExport) {
             // TODO: Permission by {$dataExport->name}
             return $dataExport->file->responseDownload();
         });

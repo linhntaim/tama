@@ -44,7 +44,7 @@ abstract class User extends Model implements AuthenticatableContract,
     protected function password(): Attribute
     {
         return Attribute::make(
-            set: fn($value) => static::hashPassword($value),
+            set: static fn($value) => static::hashPassword($value),
         );
     }
 

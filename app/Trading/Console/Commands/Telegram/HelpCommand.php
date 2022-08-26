@@ -28,7 +28,7 @@ class HelpCommand extends Command
         return $this->exitSuccess();
     }
 
-    protected function describeAvailableCommands(BufferedOutput $output)
+    protected function describeAvailableCommands(BufferedOutput $output): void
     {
         $output->writeln('Available commands:');
         $commands = collect($this->getApplication()->findByNamespaces('telegram'))
@@ -55,7 +55,7 @@ class HelpCommand extends Command
         }
     }
 
-    protected function describe(BufferedOutput $output, $command)
+    protected function describe(BufferedOutput $output, $command): void
     {
         $helper = (new DescriptorHelper())->register('telegram_txt', new TextDescriptor());
         $helper->describe($output, $command, [

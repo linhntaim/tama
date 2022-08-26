@@ -24,13 +24,14 @@ class Holding extends Model
         'initial',
     ];
 
-    protected $casts = [
-        'initial' => 'float',
-    ];
-
     protected $visible = [
         'user_id',
         'initial',
+    ];
+
+    protected $casts = [
+        'user_id' => 'integer',
+        'initial' => 'float',
     ];
 
     public function assets(): HasMany

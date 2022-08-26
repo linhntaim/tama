@@ -19,15 +19,15 @@ class PasswordResetLinkController extends ApiController
     protected function createUrlCallback(Request $request): ?Closure
     {
         return match (true) {
-            $request->filled('reset_uri') => fn($notifiable, $token) => url(uri(rawurldecode($request->input('reset_uri')), [
+            $request->filled('reset_uri') => static fn($notifiable, $token) => url(uri(rawurldecode($request->input('reset_uri')), [
                 'token' => $token,
                 'email' => $notifiable->getEmailForPasswordReset(),
             ], false)),
-            $request->filled('reset_url') => fn($notifiable, $token) => uri(rawurldecode($request->input('reset_url')), [
+            $request->filled('reset_url') => static fn($notifiable, $token) => uri(rawurldecode($request->input('reset_url')), [
                 'token' => $token,
                 'email' => $notifiable->getEmailForPasswordReset(),
             ]),
-            !Route::has('password.reset') => fn($notifiable, $token) => url(uri('auth/reset-password/{token}', [
+            !Route::has('password.reset') => static fn($notifiable, $token) => url(uri('auth/reset-password/{token}', [
                 'token' => $token,
                 'email' => $notifiable->getEmailForPasswordReset(),
             ], false)),
@@ -51,7 +51,7 @@ class PasswordResetLinkController extends ApiController
             $request->only(Fortify::email())
         );
 
-        return $status == Password::RESET_LINK_SENT
+        return $status === Password::RESET_LINK_SENT
             ? app(SuccessfulPasswordResetLinkRequestResponse::class, ['status' => $status])
             : app(FailedPasswordResetLinkRequestResponse::class, ['status' => $status]);
     }

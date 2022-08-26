@@ -69,6 +69,7 @@ class User extends SanctumUser implements MustWelcomeEmail, HasProtectedContract
      * @var array<string, string>
      */
     protected $casts = [
+        'id' => 'integer',
         'email_verified_at' => 'datetime',
     ];
 
@@ -83,13 +84,13 @@ class User extends SanctumUser implements MustWelcomeEmail, HasProtectedContract
     protected function sdStEmailVerifiedAt(): Attribute
     {
         return Attribute::make(
-            get: fn() => is_null($this->attributes['email_verified_at'] ?? null)
+            get: static fn($value, $attributes) => is_null($attributes['email_verified_at'] ?? null)
                 ? null
                 : date_timer()->compound(
                     'shortDate',
                     ' ',
                     'shortTime',
-                    $this->attributes['email_verified_at']
+                    $attributes['email_verified_at']
                 ),
         );
     }
@@ -97,11 +98,11 @@ class User extends SanctumUser implements MustWelcomeEmail, HasProtectedContract
     protected function sdStCreatedAt(): Attribute
     {
         return Attribute::make(
-            get: fn() => date_timer()->compound(
+            get: static fn($_, $attributes) => date_timer()->compound(
                 'shortDate',
                 ' ',
                 'shortTime',
-                $this->attributes['created_at']
+                $attributes['created_at']
             )
         );
     }

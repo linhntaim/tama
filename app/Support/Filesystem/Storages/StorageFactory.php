@@ -10,7 +10,7 @@ class StorageFactory
 {
     public static function privatePublishStorage(): Storage|PrivatePublishableStorageContract
     {
-        return take(static::create(config_starter('filesystems.storages.publish.private')), function (?Storage $storage) {
+        return take(static::create(config_starter('filesystems.storages.publish.private')), static function (?Storage $storage) {
             if (is_null($storage)) {
                 throw new RuntimeException('Private publish storage was not set');
             }
@@ -23,7 +23,7 @@ class StorageFactory
 
     public static function publicPublishStorage(): Storage|PublicPublishableStorageContract
     {
-        return take(static::create(config_starter('filesystems.storages.publish.public')), function (?Storage $storage) {
+        return take(static::create(config_starter('filesystems.storages.publish.public')), static function (?Storage $storage) {
             if (is_null($storage)) {
                 throw new RuntimeException('Public publish storage was not set');
             }
@@ -36,7 +36,7 @@ class StorageFactory
 
     public static function localStorage(): LocalStorage
     {
-        return take(static::create(config_starter('filesystems.storages.local')), function (?Storage $storage) {
+        return take(static::create(config_starter('filesystems.storages.local')), static function (?Storage $storage) {
             if (is_null($storage)) {
                 throw new RuntimeException('Local storage was not set');
             }

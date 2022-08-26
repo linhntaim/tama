@@ -7,6 +7,7 @@ use App\Support\Console\Commands\Command;
 use App\Trading\Models\Trading;
 use App\Trading\Models\TradingProvider;
 use Illuminate\Database\Eloquent\Collection;
+use JsonException;
 use Ratchet\Client\Connector as ClientSocketConnector;
 use Ratchet\Client\WebSocket as ClientSocketConnection;
 use Ratchet\RFC6455\Messaging\Frame;
@@ -44,9 +45,9 @@ abstract class PriceStream
         $this->messageExtract = $this->createMessageExtractor();
     }
 
-    protected abstract function createMessageExtractor(): IPriceMessageExtract;
+    abstract protected function createMessageExtractor(): IPriceMessageExtract;
 
-    protected final function getId(): int
+    final protected function getId(): int
     {
         return ++$this->id;
     }
@@ -70,7 +71,7 @@ abstract class PriceStream
         return $this->connection;
     }
 
-    protected function log(string $message)
+    protected function log(string $message): void
     {
         echo sprintf('[%s] Price stream "%s": %s.' . PHP_EOL, date('Y-m-d H:i:s'), $this->exchange, $message);
     }
@@ -85,7 +86,7 @@ abstract class PriceStream
             - $now->getTimestamp();
     }
 
-    protected function connect()
+    protected function connect(): void
     {
         // should be connect at every quarter of an hour plus 1 sec
         $this->loop->addTimer($this->nowQuarterOfHourUntil() + 1, function () {
@@ -98,7 +99,7 @@ abstract class PriceStream
         });
     }
 
-    protected function reconnect()
+    protected function reconnect(): void
     {
         $this->log('Reconnecting');
 
@@ -110,13 +111,13 @@ abstract class PriceStream
         $this->connect();
     }
 
-    protected function onFailed(Throwable $e)
+    protected function onFailed(Throwable $e): void
     {
         $this->log(sprintf('ERR Failed to connect: %s', $e->getMessage()));
         report($e);
     }
 
-    protected function onConnected()
+    protected function onConnected(): void
     {
         $this->log('Connected');
         $this->listen();
@@ -124,17 +125,20 @@ abstract class PriceStream
         $this->setPingInterval();
     }
 
-    protected function listen()
+    protected function listen(): void
     {
         $this->getConnection()
-            ->on('message', fn(Message $message) => $this->onMessage($message))
+            ?->on('message', fn(Message $message) => $this->onMessage($message))
             ->on('ping', fn() => $this->onPing())
             ->on('pong', fn() => $this->onPong())
             ->on('close', fn(?int $code, ?string $reason) => $this->onClose($code, $reason))
             ->on('error', fn(Throwable $e) => $this->onError($e));
     }
 
-    protected function onMessage(Message $message)
+    /**
+     * @throws JsonException
+     */
+    protected function onMessage(Message $message): void
     {
         switch ($this->subscriptionStatus) {
             case self::SUBSCRIPTION_STATUS_ENDED:
@@ -149,36 +153,39 @@ abstract class PriceStream
         }
     }
 
-    protected function onPing()
+    /**
+     * @throws JsonException
+     */
+    protected function onPing(): void
     {
         $this->log('Ping received');
         $this->pong();
     }
 
-    protected function onPong()
+    protected function onPong(): void
     {
         $this->log('Pong received');
     }
 
-    protected function onClose(?int $code, ?string $reason)
+    protected function onClose(?int $code, ?string $reason): void
     {
         $this->log(sprintf('Closed (%s - %s)', $code ?: 0, $reason ?: 'Unknown'));
         $this->reconnect();
     }
 
-    protected function onError(Throwable $e)
+    protected function onError(Throwable $e): void
     {
         $this->log(sprintf('ERR Caught: %s', $e->getMessage()));
         report($e);
     }
 
-    protected function endSubscribing()
+    protected function endSubscribing(): void
     {
         $this->subscriptionTradingChunks = null;
         $this->subscriptionCurrentKey = null;
     }
 
-    protected function subscribe()
+    protected function subscribe(): void
     {
         $this->subscriptionTradingChunks = $this->fetchTradings()->chunk(50);
         $this->subscriptionStatus = self::SUBSCRIPTION_STATUS_STARTED;
@@ -187,7 +194,7 @@ abstract class PriceStream
         $this->subscribeTradingChunks();
     }
 
-    protected function subscribeTradingChunks()
+    protected function subscribeTradingChunks(): void
     {
         $tradings = $this->subscriptionTradingChunks->shift();
         if (!is_null($tradings) && $tradings->count()) {
@@ -211,13 +218,13 @@ abstract class PriceStream
      * @param Collection<int, Trading> $tradings
      * @return void
      */
-    protected abstract function subscribeTradings(Collection $tradings);
+    abstract protected function subscribeTradings(Collection $tradings): void;
 
-    public abstract function subscribeTrading(string $ticker, string $interval);
+    abstract public function subscribeTrading(string $ticker, string $interval): void;
 
-    public abstract function unsubscribeTrading(string $ticker, string $interval);
+    abstract public function unsubscribeTrading(string $ticker, string $interval): void;
 
-    protected function setPingInterval()
+    protected function setPingInterval(): void
     {
         if ($this->pingInterval > 0) {
             $this->loop->addPeriodicTimer(
@@ -227,20 +234,29 @@ abstract class PriceStream
         }
     }
 
-    protected function send(string|array $payload, int $opcode = Frame::OP_TEXT, bool $final = true)
+    /**
+     * @throws JsonException
+     */
+    protected function send(string|array $payload, int $opcode = Frame::OP_TEXT, bool $final = true): void
     {
         $this->getConnection()?->send(
-            new Frame(is_array($payload) ? json_encode($payload) : $payload, $final, $opcode)
+            new Frame(is_array($payload) ? json_encode_readable($payload) : $payload, $final, $opcode)
         );
     }
 
-    protected function ping()
+    /**
+     * @throws JsonException
+     */
+    protected function ping(): void
     {
         $this->send('', Frame::OP_PING);
         $this->log('Ping sent');
     }
 
-    protected function pong()
+    /**
+     * @throws JsonException
+     */
+    protected function pong(): void
     {
         $this->send('', Frame::OP_PONG);
         $this->log('Pong sent');
@@ -253,24 +269,30 @@ abstract class PriceStream
         return $this;
     }
 
+    /**
+     * @throws JsonException
+     */
     protected function transformMessage(Message $message): array
     {
         return json_decode_array($message->getPayload());
     }
 
-    protected function proceedMessageWhileSubscribing(Message $message)
+    /**
+     * @throws JsonException
+     */
+    protected function proceedMessageWhileSubscribing(Message $message): void
     {
         $ticker = $interval = null;
         ($this->messageExtract)($this->transformMessage($message), $ticker, $interval);
         if (!is_null($ticker) && !is_null($interval)
-            && $this->subscriptionCurrentKey == ($key = $this->createSubscriptionKey($ticker, $interval))) {
+            && $this->subscriptionCurrentKey === ($key = $this->createSubscriptionKey($ticker, $interval))) {
             $this->subscriptionCurrentKey = null;
             $this->log(sprintf('Chunk subscribed from:  %s', $key));
             $this->subscribeTradingChunks(); // keep subscribing
         }
     }
 
-    protected function proceedMessage(Message $message)
+    protected function proceedMessage(Message $message): void
     {
         try {
             if (!is_null($latestPrice = ($this->messageExtract)($this->transformMessage($message)))) {
@@ -281,7 +303,7 @@ abstract class PriceStream
                         $latestPrice->getExchange(),
                         $latestPrice->getTicker(),
                         $latestPrice->getInterval(),
-                        base64_encode(json_encode($latestPrice->getPrice())),
+                        base64_encode(json_encode_readable($latestPrice->getPrice())),
                         Command::PARAMETER_OFF_SHOUT_OUT
                     ),
                     null,

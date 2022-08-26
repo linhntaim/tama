@@ -8,7 +8,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 class SendEmailWelcomeNotification
 {
-    public function handle(Registered $event)
+    public function handle(Registered $event): void
     {
         if (!$event->user instanceof MustVerifyEmail && $event->user instanceof MustWelcomeEmail) {
             $event->user->sendEmailWelcomeNotification();

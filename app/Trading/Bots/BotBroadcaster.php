@@ -7,6 +7,7 @@ use App\Trading\Bots\Actions\IAction;
 use App\Trading\Bots\Data\Indication;
 use App\Trading\Models\Trading;
 use App\Trading\Models\TradingBroadcastProvider;
+use Psr\SimpleCache\InvalidArgumentException as PsrInvalidArgumentException;
 
 class BotBroadcaster
 {
@@ -32,7 +33,10 @@ class BotBroadcaster
         ]));
     }
 
-    public function broadcast()
+    /**
+     * @throws PsrInvalidArgumentException
+     */
+    public function broadcast(): void
     {
         if (is_null($indication = $this->bot->indicateNow())
             || !$this->canBroadcast($indication)) {
@@ -92,7 +96,7 @@ class BotBroadcaster
         return $this;
     }
 
-    protected function updateBroadcast()
+    protected function updateBroadcast(): void
     {
         $this->tradingBroadcastProvider->done();
     }

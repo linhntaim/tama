@@ -16,4 +16,8 @@ class UserSocial extends Model
         'provider',
         'provider_id',
     ];
+
+    protected $casts = [
+        'user_id' => 'integer',
+    ];
 }

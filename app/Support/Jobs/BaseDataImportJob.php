@@ -38,7 +38,7 @@ trait BaseDataImportJob
         return $this->import ?? $this->setImport($this->dataImport->import)->import;
     }
 
-    protected function handling()
+    protected function handling(): void
     {
         if (!isset($this->file)) {
             $this->file = $this->dataImport->file;
@@ -70,7 +70,7 @@ trait BaseDataImportJob
         }
     }
 
-    public function failed(?Throwable $e = null)
+    public function failed(?Throwable $e = null): void
     {
         (new DataImportProvider())
             ->withModel($this->dataImport)

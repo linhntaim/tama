@@ -2,6 +2,7 @@
 
 namespace App\Trading\Console\Commands\Telegram;
 
+use JsonException;
 use Symfony\Component\Console\Descriptor\DescriptorInterface;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Formatter\OutputFormatter;
@@ -22,7 +23,10 @@ class TextDescriptor implements DescriptorInterface
 {
     protected OutputInterface $output;
 
-    public function describe(OutputInterface $output, object $object, array $options = [])
+    /**
+     * @throws JsonException
+     */
+    public function describe(OutputInterface $output, object $object, array $options = []): void
     {
         $this->output = $output;
 
@@ -38,14 +42,17 @@ class TextDescriptor implements DescriptorInterface
     /**
      * Writes content to output.
      */
-    protected function write(string $content, bool $decorated = false)
+    protected function write(string $content, bool $decorated = false): void
     {
         $this->output->write($content, false, $decorated ? OutputInterface::OUTPUT_NORMAL : OutputInterface::OUTPUT_RAW);
     }
 
-    protected function describeInputArgument(InputArgument $argument, array $options = [])
+    /**
+     * @throws JsonException
+     */
+    protected function describeInputArgument(InputArgument $argument, array $options = []): void
     {
-        if (null !== $argument->getDefault() && (!\is_array($argument->getDefault()) || \count($argument->getDefault()))) {
+        if (null !== $argument->getDefault() && (!is_array($argument->getDefault()) || count($argument->getDefault()))) {
             $default = sprintf('<comment> [default: %s]</comment>', $this->formatDefaultValue($argument->getDefault()));
         }
         else {
@@ -53,7 +60,7 @@ class TextDescriptor implements DescriptorInterface
         }
 
         $totalWidth = $options['total_width'] ?? Helper::width($argument->getName());
-        $spacingWidth = $totalWidth - \strlen($argument->getName());
+        $spacingWidth = $totalWidth - strlen($argument->getName());
 
         $this->writeText(sprintf('  <info>%s</info>  %s%s%s',
             $argument->getName(),
@@ -64,9 +71,12 @@ class TextDescriptor implements DescriptorInterface
         ), $options);
     }
 
-    protected function describeInputOption(InputOption $option, array $options = [])
+    /**
+     * @throws JsonException
+     */
+    protected function describeInputOption(InputOption $option, array $options = []): void
     {
-        if ($option->acceptValue() && null !== $option->getDefault() && (!\is_array($option->getDefault()) || \count($option->getDefault()))) {
+        if ($option->acceptValue() && null !== $option->getDefault() && (!is_array($option->getDefault()) || count($option->getDefault()))) {
             $default = sprintf('<comment> [default: %s]</comment>', $this->formatDefaultValue($option->getDefault()));
         }
         else {
@@ -100,7 +110,10 @@ class TextDescriptor implements DescriptorInterface
         ), $options);
     }
 
-    protected function describeInputDefinition(InputDefinition $definition, array $options = [])
+    /**
+     * @throws JsonException
+     */
+    protected function describeInputDefinition(InputDefinition $definition, array $options = []): void
     {
         $totalWidth = $this->calculateTotalWidthForOptions($definition->getOptions());
         foreach ($definition->getArguments() as $argument) {
@@ -125,7 +138,7 @@ class TextDescriptor implements DescriptorInterface
 
             $this->writeText('<comment>Options:</comment>', $options);
             foreach ($definition->getOptions() as $option) {
-                if (\strlen($option->getShortcut() ?? '') > 1) {
+                if (strlen($option->getShortcut() ?? '') > 1) {
                     $laterOptions[] = $option;
                     continue;
                 }
@@ -139,7 +152,10 @@ class TextDescriptor implements DescriptorInterface
         }
     }
 
-    protected function describeCommand(Command $command, array $options = [])
+    /**
+     * @throws JsonException
+     */
+    protected function describeCommand(Command $command, array $options = []): void
     {
         if ($description = $command->getDescription()) {
             $this->writeText('<comment>Description:</comment>', $options);
@@ -172,7 +188,7 @@ class TextDescriptor implements DescriptorInterface
         }
     }
 
-    private function writeText(string $content, array $options = [])
+    private function writeText(string $content, array $options = []): void
     {
         $this->write(
             isset($options['raw_text']) && $options['raw_text'] ? strip_tags($content) : $content,
@@ -182,25 +198,26 @@ class TextDescriptor implements DescriptorInterface
 
     /**
      * Formats input option/argument default value.
+     * @throws JsonException
      */
     private function formatDefaultValue(mixed $default): string
     {
-        if (\INF === $default) {
+        if (INF === $default) {
             return 'INF';
         }
 
-        if (\is_string($default)) {
+        if (is_string($default)) {
             $default = OutputFormatter::escape($default);
         }
-        elseif (\is_array($default)) {
+        elseif (is_array($default)) {
             foreach ($default as $key => $value) {
-                if (\is_string($value)) {
+                if (is_string($value)) {
                     $default[$key] = OutputFormatter::escape($value);
                 }
             }
         }
 
-        return str_replace('\\\\', '\\', json_encode($default, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE));
+        return str_replace('\\\\', '\\', json_encode_readable($default));
     }
 
     /**

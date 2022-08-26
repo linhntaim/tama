@@ -9,6 +9,7 @@ use App\Trading\Bots\Exchanges\Factory as ExchangeFactory;
 use App\Trading\Bots\Oscillators\RsiOscillator;
 use App\Trading\Notifications\Telegram\ConsoleNotification;
 use App\Trading\Notifications\TelegramUpdateNotifiable;
+use JsonException;
 use Psr\SimpleCache\InvalidArgumentException as PsrInvalidArgumentException;
 
 class TradesCommand extends Command
@@ -47,11 +48,14 @@ class TradesCommand extends Command
 
     protected function latest(): int
     {
-        return modify((int)($this->option('latest') ?? 1), function (int $latest) {
+        return modify((int)($this->option('latest') ?? 1), static function (int $latest) {
             return $latest > 0 && $latest <= 5 ? $latest : 1;
         });
     }
 
+    /**
+     * @throws JsonException
+     */
     protected function botOptions(): array
     {
         return json_decode_array($this->option('bot-options') ?? '') ?: [
@@ -61,6 +65,9 @@ class TradesCommand extends Command
         ];
     }
 
+    /**
+     * @throws JsonException
+     */
     protected function mergeBotOptions(): array
     {
         return array_merge([
@@ -72,6 +79,7 @@ class TradesCommand extends Command
 
     /**
      * @throws PsrInvalidArgumentException
+     * @throws JsonException
      */
     protected function handling(): int
     {
@@ -92,6 +100,7 @@ class TradesCommand extends Command
 
     /**
      * @throws PsrInvalidArgumentException
+     * @throws JsonException
      */
     protected function report(): string
     {
