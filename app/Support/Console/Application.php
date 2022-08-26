@@ -8,7 +8,6 @@ use App\Support\Console\Concerns\ExecutionWrap;
 use Illuminate\Console\Application as BaseApplication;
 use Illuminate\Console\BufferedConsoleOutput;
 use Illuminate\Support\Str;
-use JsonException;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Symfony\Component\Console\Input\ArgvInput;
@@ -128,9 +127,6 @@ class Application extends BaseApplication
         return $this->runningCommands[count($this->runningCommands) - 1] ?? null;
     }
 
-    /**
-     * @throws JsonException
-     */
     public function renderThrowable(Throwable $e, OutputInterface $output): void
     {
         $runningCommand = $this->rootRunningCommand();
