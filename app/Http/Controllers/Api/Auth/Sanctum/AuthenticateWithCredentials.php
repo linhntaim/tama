@@ -15,11 +15,11 @@ class AuthenticateWithCredentials extends BaseAuthenticateWithCredentials
         return 'sanctum';
     }
 
-    protected function setAuthUser(Request $request, User $user)
+    protected function setAuthUser(Request $request, User $user): void
     {
-        $user->createToken($request->input('device_name', (function (Agent $agent) {
+        $user->createToken($request->input('device_name', (static function (Agent $agent) {
             return ($device = $agent->device())
-                ? $device . (function ($infos) {
+                ? $device . (static function ($infos) {
                     return count($infos) ? sprintf(' (%s)', implode(' - ', $infos)) : '';
                 })(array_filter([
                     ($platform = $agent->platform()) ? $platform . (($version = $agent->version($platform)) ? " $version" : '') : null,

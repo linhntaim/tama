@@ -8,7 +8,7 @@ trait DatabaseTransaction
 {
     protected static array $dbTransactions = [];
 
-    protected function transactionStart(?string $name = null)
+    protected function transactionStart(?string $name = null): void
     {
         if (is_null($name)) {
             $name = config('database.default');
@@ -17,7 +17,7 @@ trait DatabaseTransaction
         DB::connection($name)->beginTransaction();
     }
 
-    protected function transactionComplete($all = false)
+    protected function transactionComplete($all = false): void
     {
         if ($all) {
             while ($name = array_pop(self::$dbTransactions)) {
@@ -29,7 +29,7 @@ trait DatabaseTransaction
         }
     }
 
-    protected function transactionAbort($all = false)
+    protected function transactionAbort($all = false): void
     {
         if ($all) {
             while ($name = array_pop(self::$dbTransactions)) {

@@ -27,18 +27,23 @@ class DataImport extends Model
         'failed_at',
     ];
 
+    protected $casts = [
+        'id' => 'integer',
+        'status' => 'integer',
+    ];
+
     public function import(): Attribute
     {
         return Attribute::make(
-            get: fn() => unserialize($this->attributes['import']),
-            set: fn($value) => serialize($value)
+            get: static fn($value) => safe_unserialize($value),
+            set: static fn($value) => serialize($value)
         );
     }
 
     public function exception(): Attribute
     {
         return Attribute::make(
-            set: fn($value) => is_null($value) ? null : (string)mb_convert_encoding($value, 'UTF-8')
+            set: static fn($value) => is_null($value) ? null : (string)mb_convert_encoding($value, 'UTF-8')
         );
     }
 

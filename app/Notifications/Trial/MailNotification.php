@@ -11,7 +11,7 @@ use Illuminate\Notifications\Messages\MailMessage;
 
 class MailNotification extends Notification implements ViaMail
 {
-    public function dataMailable(NotifiableContract $notifiable): Mailable|MailMessage|null
+    public function dataMail(NotifiableContract $notifiable): Mailable|MailMessage|null
     {
         return (new TrialMailable())
             ->with('notifier', $this->notifier);

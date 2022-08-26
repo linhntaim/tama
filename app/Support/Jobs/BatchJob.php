@@ -2,18 +2,16 @@
 
 namespace App\Support\Jobs;
 
-use Countable;
-
 abstract class BatchJob extends QueueableJob
 {
     /**
      * @return iterable
      */
-    protected abstract function batch(): iterable;
+    abstract protected function batch(): iterable;
 
     protected function batchCount($items): int
     {
-        if ($items instanceof Countable || is_array($items)) {
+        if (is_countable($items)) {
             return count($items);
         }
         $i = 0;
@@ -25,10 +23,10 @@ abstract class BatchJob extends QueueableJob
 
     protected function batchHandled(iterable $items): bool
     {
-        return !!$this->batchCount($items);
+        return (bool)$this->batchCount($items);
     }
 
-    protected function handling()
+    protected function handling(): void
     {
         while ($this->batchHandled($items = $this->batch())) {
             $this->handleBatch($items);
@@ -44,9 +42,9 @@ abstract class BatchJob extends QueueableJob
         return $this;
     }
 
-    protected function handleBatchItems($items)
+    protected function handleBatchItems($items): void
     {
     }
 
-    protected abstract function handleBatchItem($item);
+    abstract protected function handleBatchItem($item): void;
 }

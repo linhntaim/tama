@@ -5,6 +5,8 @@ namespace App\Support\Http\Responses;
 use App\Support\Http\Concerns\Requests;
 use App\Support\Http\Concerns\Responses;
 use Closure;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Laravel\Fortify\Fortify;
 use Laravel\Fortify\Http\Responses\LoginResponse as BaseLoginResponse;
 
@@ -26,7 +28,7 @@ class LoginResponse extends BaseLoginResponse
         return $this->jsonDataCallback ? call_user_func($this->jsonDataCallback, $data) : $data;
     }
 
-    public function toResponse($request)
+    public function toResponse($request): JsonResponse|RedirectResponse
     {
         return $this->advancedRequest()->expectsJson()
             ? $this->responseResource($request, $this->jsonData())

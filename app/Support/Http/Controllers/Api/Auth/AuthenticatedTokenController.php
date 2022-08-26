@@ -33,7 +33,7 @@ abstract class AuthenticatedTokenController extends ApiController
         return (new Pipeline(app()))->send($request)->through(array_filter($this->loginPipes()));
     }
 
-    protected abstract function loginPipes(): array;
+    abstract protected function loginPipes(): array;
 
     protected function loginUser(LoginRequest $request): User|HasApiTokensContract
     {
@@ -68,11 +68,11 @@ abstract class AuthenticatedTokenController extends ApiController
     #endregion
 
     #region Logout
-    public abstract function destroyAllTokens(Request $request);
+    abstract protected function destroyAllTokens(Request $request): void;
 
-    public abstract function destroyToken(Request $request, $token);
+    abstract protected function destroyToken(Request $request, $token): void;
 
-    protected abstract function currentToken(Request $request): mixed;
+    abstract protected function currentToken(Request $request): mixed;
 
     protected function tokenForDestroying(Request $request, $currentToken)
     {

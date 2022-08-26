@@ -6,6 +6,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.0.2",
+        "ext-curl": "*",
         "ext-fileinfo": "*",
         "ext-pdo": "*",
         "guzzlehttp/guzzle": "^7.2",
@@ -45,7 +46,7 @@
             "@php artisan package:discover --ansi --off-shout-out"
         ],
         "post-update-cmd": [
-            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force --off-shout-out"
         ],
         "post-root-package-install": [
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""

@@ -6,7 +6,7 @@ use App\Support\Mail\QueueableMailable;
 
 class ViewQueueableMailable extends QueueableMailable
 {
-    public function build()
+    public function build(): void
     {
         $this->view('trial', [
             'date' => date_timer()->compound('longDate', ' ', 'longTime'),

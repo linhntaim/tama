@@ -56,7 +56,7 @@ trait BaseDataExportJob
         return $exportCompleted;
     }
 
-    protected function handling()
+    protected function handling(): void
     {
         if ($this->export()) {
             (new DataExportProvider())
@@ -75,7 +75,7 @@ trait BaseDataExportJob
         }
     }
 
-    public function failed(?Throwable $e = null)
+    public function failed(?Throwable $e = null): void
     {
         (new DataExportProvider())
             ->withModel($this->dataExport)

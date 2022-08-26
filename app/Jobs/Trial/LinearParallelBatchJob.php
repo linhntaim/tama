@@ -18,7 +18,7 @@ class LinearParallelBatchJob extends ParallelBatchJob
         return range($batchIndex * 10, ($batchIndex + 1) * 10 - 1);
     }
 
-    protected function handleBatchItem($item)
+    protected function handleBatchItem($item): void
     {
         Log::info(sprintf('Batch_%02d [%02d]: %s', $this->batchIndex(), $item, $date = date_timer()->compound('longDate', ' ', 'longTime')));
         if (App::runningSolelyInConsole()) {

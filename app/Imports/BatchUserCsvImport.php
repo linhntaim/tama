@@ -25,8 +25,6 @@ class BatchUserCsvImport extends BatchModelCsvImport
         );
     }
 
-    protected bool $hasHeaders = true;
-
     protected array $attributeKeyMap = [
         'name',
         'email',
@@ -58,7 +56,7 @@ class BatchUserCsvImport extends BatchModelCsvImport
             ];
     }
 
-    protected function dataImport(array $data)
+    protected function dataImport(array $data): void
     {
         $data['password'] = User::hashPassword($data['password']);
         parent::dataImport($data);

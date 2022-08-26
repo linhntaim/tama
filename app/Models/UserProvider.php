@@ -9,10 +9,10 @@ use Illuminate\Database\Eloquent\Builder;
 
 /**
  * @property User|null $model
- * @method  User|null model(Model|callable|int|string $model = null, bool $byUnique = true)
- * @method  User|null first(array $conditions = [])
- * @method  User|null firstByKey(int|string $key)
- * @method  User createWithAttributes(array $attributes = [])
+ * @method User|null model(Model|callable|int|string $model = null, bool $byUnique = true)
+ * @method User|null first(array $conditions = [])
+ * @method User|null firstByKey(int|string $key)
+ * @method User createWithAttributes(array $attributes = [])
  */
 class UserProvider extends ModelProvider implements UserProviderContract
 {

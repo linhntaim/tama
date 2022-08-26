@@ -252,7 +252,7 @@ trait HasModelApi
 
     protected function showImportSampler(Request $request): SymfonyBinaryFileResponse|SymfonyStreamedResponse
     {
-        return $this->responseExport($this->importSampler($request));
+        return $this->responseExport($request, $this->importSampler($request));
     }
 
     protected function importer(Request $request): Import

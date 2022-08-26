@@ -68,11 +68,11 @@ trait Responses
         return $data instanceof JsonResource
             ? $data->toResponse($request)
             : response()->json(
-                $data instanceof Arrayable
-                    ? $data->toArray()
-                    : (($data instanceof JsonSerializable)
-                    ? $data->jsonSerialize()
-                    : ($data ?? [])),
+                match (true) {
+                    $data instanceof Arrayable => $data->toArray(),
+                    $data instanceof JsonSerializable => $data->jsonSerialize(),
+                    default => $data ?? []
+                },
                 $status,
                 $headers,
                 JSON_READABLE
@@ -96,10 +96,10 @@ trait Responses
         );
     }
 
-    protected function responseExport(Export $export, array $headers = []): SymfonyBinaryFileResponse|SymfonyStreamedResponse
+    protected function responseExport(Request $request, Export $export, array $headers = []): SymfonyBinaryFileResponse|SymfonyStreamedResponse
     {
-        return with($export->disableChunk()(), function (Filer $filer) use ($headers) {
-            return take($filer->responseContentDownload($headers), function () use ($filer) {
+        return with($export->disableChunk()(), static function (Filer $filer) use ($headers) {
+            return take($filer->responseContentDownload($headers), static function () use ($filer) {
                 $filer->delete();
             });
         });

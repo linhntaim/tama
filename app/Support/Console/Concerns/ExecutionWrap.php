@@ -11,6 +11,7 @@ use Closure;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use JsonException;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -20,7 +21,7 @@ trait ExecutionWrap
 {
     protected function wrapCanLog(SymfonyCommand $command, InputInterface $input): bool
     {
-        return !in_array($command::class, config_starter('console.commands.logging_except'));
+        return !in_array($command::class, config_starter('console.commands.logging_except'), true);
     }
 
     protected function wrapCanShoutOut(SymfonyCommand $command, InputInterface $input): bool
@@ -49,7 +50,7 @@ trait ExecutionWrap
         $runCallbackWithDebug = !App::runningInDebug()
         && (App::runningSolelyInConsole() || config_starter('app.debug_from_request'))
         && $input->hasParameterOption(Command::PARAMETER_DEBUG)
-            ? function ($command, $input, $output) use ($runCallback) {
+            ? static function ($command, $input, $output) use ($runCallback) {
                 return with_debug($runCallback, $command, $input, $output);
             }
             : $runCallback;
@@ -67,7 +68,7 @@ trait ExecutionWrap
             if ($command instanceof Command) {
                 $command->setForcedInternalSettings($settings);
             }
-            $exitCode = Client::settingsTemporary($settings, function () use ($runCallbackWithDebug, $command, $input, $output) {
+            $exitCode = Client::settingsTemporary($settings, static function () use ($runCallbackWithDebug, $command, $input, $output) {
                 return $runCallbackWithDebug($command, $input, $output);
             });
         }
@@ -85,7 +86,10 @@ trait ExecutionWrap
         return $exitCode;
     }
 
-    protected function wrapException(?SymfonyCommand $command, ?InputInterface $input, OutputInterface $output, Throwable $e)
+    /**
+     * @throws JsonException
+     */
+    protected function wrapException(?SymfonyCommand $command, ?InputInterface $input, OutputInterface $output, Throwable $e): void
     {
         $output->writeln(sprintf('<error> ERROR </error> <caution>%s</caution>', $e->getMessage()), OutputInterface::VERBOSITY_QUIET);
         do {
@@ -123,7 +127,7 @@ trait ExecutionWrap
                                 $trace['class'] ?? '',
                                 $trace['type'] ?? '',
                                 $trace['function'] ?? '',
-                                implode(', ', array_map(fn($arg) => sprintf('<comment>%s</comment>', describe_var($arg)), $trace['args'] ?? []))
+                                implode(', ', array_map(static fn($arg) => sprintf('<comment>%s</comment>', describe_var($arg)), $trace['args'] ?? []))
                             ),
                             OutputInterface::VERBOSITY_QUIET
                         );
@@ -139,45 +143,43 @@ trait ExecutionWrap
                         );
                     }
                 }
+                elseif (isset($trace['function'])) {
+                    $output->writeln(
+                        sprintf(
+                            '<comment>#%s</comment> %s%s%s(%s)',
+                            $order,
+                            $trace['class'] ?? '',
+                            $trace['type'] ?? '',
+                            $trace['function'] ?? '',
+                            implode(', ', array_map(static fn($arg) => sprintf('<comment>%s</comment>', describe_var($arg)), $trace['args'] ?? []))
+                        ),
+                        OutputInterface::VERBOSITY_QUIET
+                    );
+                }
+                elseif (isset($trace['text'])) {
+                    $output->writeln(
+                        sprintf(
+                            '<comment>#%s</comment> %s',
+                            $order,
+                            $trace['text'] ?? ''
+                        )
+                    );
+                }
                 else {
-                    if (isset($trace['function'])) {
-                        $output->writeln(
-                            sprintf(
-                                '<comment>#%s</comment> %s%s%s(%s)',
-                                $order,
-                                $trace['class'] ?? '',
-                                $trace['type'] ?? '',
-                                $trace['function'] ?? '',
-                                implode(', ', array_map(fn($arg) => sprintf('<comment>%s</comment>', describe_var($arg)), $trace['args'] ?? []))
-                            ),
-                            OutputInterface::VERBOSITY_QUIET
-                        );
-                    }
-                    elseif (isset($trace['text'])) {
-                        $output->writeln(
-                            sprintf(
-                                '<comment>#%s</comment> %s',
-                                $order,
-                                $trace['text'] ?? ''
-                            )
-                        );
-                    }
-                    else {
-                        $output->writeln(
-                            sprintf(
-                                '<comment>#%s</comment> %s',
-                                $order,
-                                json_encode_readable($trace)
-                            ),
-                            OutputInterface::VERBOSITY_QUIET
-                        );
-                    }
+                    $output->writeln(
+                        sprintf(
+                            '<comment>#%s</comment> %s',
+                            $order,
+                            json_encode_readable($trace)
+                        ),
+                        OutputInterface::VERBOSITY_QUIET
+                    );
                 }
             }
         }
         while ($e = $e->getPrevious());
 
-        if ($command) {
+        if ($command && $input) {
             if ($this->wrapCanShoutOut($command, $input)) {
                 $output->writeln('', OutputInterface::VERBOSITY_QUIET);
                 $output->writeln(sprintf('<caution>Command <comment>[%s]</comment> failed.</caution>', $command::class), OutputInterface::VERBOSITY_QUIET);

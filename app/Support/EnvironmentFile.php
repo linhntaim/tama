@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use JsonException;
+
 class EnvironmentFile
 {
     protected string $path;
@@ -50,6 +52,9 @@ class EnvironmentFile
         return $matched;
     }
 
+    /**
+     * @throws JsonException
+     */
     protected function compose(string $key, mixed $value = null): string
     {
         if (is_null($value)) {
@@ -61,14 +66,17 @@ class EnvironmentFile
         elseif (is_bool($value)) {
             $value = $value ? 'true' : 'false';
         }
-        if (mb_strpos($value, ' ') !== false) {
-            $value = mb_strpos($value, '"') !== false
+        if (str_contains($value, ' ')) {
+            $value = str_contains($value, '"')
                 ? sprintf('"%s"', str_replace('"', '\\"', $value))
                 : sprintf('"%s"', $value);
         }
         return sprintf('%s=%s', $key, $value);
     }
 
+    /**
+     * @throws JsonException
+     */
     public function fill(string|array $key, mixed $value = null): static
     {
         if (!$this->exists) {
@@ -97,6 +105,9 @@ class EnvironmentFile
         return $this;
     }
 
+    /**
+     * @throws JsonException
+     */
     public function clear(string $key): static
     {
         $this->filled($key) && $this->fill($key, '');

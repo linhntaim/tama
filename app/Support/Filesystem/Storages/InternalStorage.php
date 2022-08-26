@@ -2,6 +2,7 @@
 
 namespace App\Support\Filesystem\Storages;
 
+use App\Support\Exceptions\FileNotFoundException;
 use App\Support\Filesystem\Storages\Contracts\DirectEditableStorage as DirectEditableStorageContract;
 use App\Support\Http\File;
 use BadMethodCallException;
@@ -23,6 +24,9 @@ class InternalStorage extends Storage implements DirectEditableStorageContract
         throw new BadMethodCallException('Internal Storage does not support `fromFile` method.');
     }
 
+    /**
+     * @throws FileNotFoundException
+     */
     public function setFile(string|SplFileInfo $file): static
     {
         $file = File::from($file, false);
@@ -51,6 +55,9 @@ class InternalStorage extends Storage implements DirectEditableStorageContract
         return $this->file->getContent();
     }
 
+    /**
+     * @return resource|bool
+     */
     public function getStream()
     {
         if (($f = fopen($path = $this->getRealPath(), 'r')) === false) {

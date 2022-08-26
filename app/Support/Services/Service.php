@@ -42,8 +42,8 @@ class Service
     protected function body(): array|string
     {
         return match ($this->accept) {
-            'application/json' => $this->lastResponse?->json(),
-            default => $this->lastResponse?->body(),
+            'application/json' => $this->lastResponse->json(),
+            default => $this->lastResponse->body(),
         };
     }
 
@@ -57,7 +57,7 @@ class Service
         return $this->rateLimiterKey ?? static::class;
     }
 
-    protected function requestWithLimit($method, $arguments)
+    protected function requestWithLimit($method, $arguments): void
     {
         RateLimiter::attemptWithDelay(
             $this->getRateLimiterKey(),

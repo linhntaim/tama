@@ -22,17 +22,17 @@ class EventServiceProvider extends ServiceProvider
      * @var array<class-string, array<int, class-string>>
      */
     protected $listen = [
-        Registered::class => [
-            SendEmailWelcomeNotification::class,
-            SendEmailVerificationNotification::class,
-        ],
         TrialEvent::class => [
             TrialListener::class,
             TrialQueueableListener::class,
         ],
+        Registered::class => [
+            SendEmailWelcomeNotification::class,
+            SendEmailVerificationNotification::class,
+        ],
     ];
 
-    public function register()
+    public function register(): void
     {
         if (App::runningInDebug()) {
             $this->listen[QueryExecuted::class] = [
@@ -47,7 +47,7 @@ class EventServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function boot()
+    public function boot(): void
     {
         //
     }
@@ -57,7 +57,7 @@ class EventServiceProvider extends ServiceProvider
      *
      * @return bool
      */
-    public function shouldDiscoverEvents()
+    public function shouldDiscoverEvents(): bool
     {
         return false;
     }

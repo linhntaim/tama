@@ -19,7 +19,7 @@ class PrioritizeHtmlIndex
         $htmlIndexPaths = $htmlIndexConfig['paths'];
         array_unshift($htmlIndexPaths, '');
         foreach ($htmlIndexPaths as $htmlIndexPath) {
-            if (($htmlIndexPath = concat_paths(true, $htmlIndexPath)) == $currentPath
+            if (($htmlIndexPath = concat_paths(true, $htmlIndexPath)) === $currentPath
                 || Str::startsWith($currentPath, $htmlIndexPath)) {
                 foreach ($htmlIndexFiles as $htmlIndexFile) {
                     if (is_file($htmlIndexFile = public_path(concat_paths(true, $htmlIndexPath, $htmlIndexFile)))) {

@@ -8,7 +8,7 @@ class LocaleViewMailable extends Mailable
 {
     protected bool $viewOnLocale = true;
 
-    public function build()
+    public function build(): void
     {
         $this->view('trial', [
             'date' => date_timer()->compound('longDate', ' ', 'longTime'),

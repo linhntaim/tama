@@ -26,10 +26,8 @@ abstract class Mailable extends BaseMailable
     public function __construct()
     {
         $this->captureCurrentSettings();
-        if (App::runningSolelyInConsole()) {
-            if ($runningCommand = Artisan::lastRunningCommand()) {
-                $this->setForcedInternalSettings($runningCommand->settings());
-            }
+        if (App::runningSolelyInConsole() && !is_null($runningCommand = Artisan::lastRunningCommand())) {
+            $this->setForcedInternalSettings($runningCommand->settings());
         }
     }
 
@@ -45,7 +43,7 @@ abstract class Mailable extends BaseMailable
             if (isset($recipient['email'])) {
                 return (object)$recipient;
             }
-            if ($count == 1) {
+            if ($count === 1) {
                 foreach ($recipient as $email => $name) {
                     if (is_string($email)) {
                         return (object)[
@@ -53,9 +51,8 @@ abstract class Mailable extends BaseMailable
                             'name' => $name,
                         ];
                     }
-                    else {
-                        return (object)['email' => $email];
-                    }
+
+                    return (object)['email' => $name];
                 }
             }
 
@@ -83,24 +80,22 @@ abstract class Mailable extends BaseMailable
         return $this;
     }
 
-    protected function sendBefore()
+    protected function sendBefore(): void
     {
     }
 
-    protected function sendAfter()
+    protected function sendAfter(): void
     {
     }
 
-    public function build()
+    public function build(): void
     {
     }
 
     public function send($mailer)
     {
-        if (App::runningSolelyInConsole()) {
-            if ($runningCommand = Artisan::lastRunningCommand()) {
-                $this->setForcedInternalSettings($runningCommand->settings());
-            }
+        if (App::runningSolelyInConsole() && !is_null($runningCommand = Artisan::lastRunningCommand())) {
+            $this->setForcedInternalSettings($runningCommand->settings());
         }
         $this->withInternalSettings(function () use ($mailer) {
             Log::info(sprintf('Mailable [%s] started.', $this->className()));
@@ -117,7 +112,7 @@ abstract class Mailable extends BaseMailable
         });
     }
 
-    protected function sendSeparatedTos($mailer, array $tos)
+    protected function sendSeparatedTos($mailer, array $tos): void
     {
         foreach ($tos as $to) {
             $this->to = [$to];

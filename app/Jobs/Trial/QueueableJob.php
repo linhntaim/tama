@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class QueueableJob extends BaseQueueableJob
 {
-    protected function handling()
+    protected function handling(): void
     {
         Log::info($date = date_timer()->compound('longDate', ' ', 'longTime'));
         if (App::runningSolelyInConsole()) {

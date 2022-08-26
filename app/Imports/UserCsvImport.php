@@ -24,8 +24,6 @@ class UserCsvImport extends ModelCsvImport
         );
     }
 
-    protected bool $hasHeaders = true;
-
     protected array $attributeKeyMap = [
         'name',
         'email',

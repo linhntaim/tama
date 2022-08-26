@@ -23,7 +23,7 @@ class Resource extends BaseResource implements WrappedResource, ArrayResponsible
         $resourceCollectionClass = static::$collectionClass;
         return tap(
             new $resourceCollectionClass($resource, static::class),
-            function ($collection) {
+            static function ($collection) {
                 $collection->collects = static::class;
                 if (property_exists(static::class, 'preserveKeys')) {
                     $collection->preserveKeys = (new static([]))->preserveKeys === true;

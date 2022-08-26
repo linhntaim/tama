@@ -4,6 +4,7 @@ use App\Support\Client\DateTimer;
 use App\Support\Client\NumberFormatter;
 use App\Support\Exceptions\FileException;
 use App\Support\Facades\Client;
+use Illuminate\Routing\Exceptions\UrlGenerationException;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -12,6 +13,10 @@ use Symfony\Component\VarDumper\VarDumper;
 
 const JSON_READABLE = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_LINE_TERMINATORS;
 const JSON_PRETTY = JSON_READABLE | JSON_PRETTY_PRINT;
+
+if (!defined('PHP_OS_ARCHITECTURE')) {
+    define('PHP_OS_ARCHITECTURE', strtolower(php_uname('m')));
+}
 
 if (!function_exists('array_associated_map')) {
     function array_associated_map(array $array, array $associatedKeys): array
@@ -53,7 +58,7 @@ if (!function_exists('call_unless')) {
 if (!function_exists('class_use')) {
     function class_use(object|string $object_or_class, string $trait): bool
     {
-        return in_array($trait, class_uses_recursive($object_or_class));
+        return in_array($trait, class_uses_recursive($object_or_class), true);
     }
 }
 
@@ -68,7 +73,7 @@ if (!function_exists('compose_filename')) {
 if (!function_exists('concat_paths')) {
     function concat_paths($relative = true, string ...$paths): string
     {
-        return ($relative && !windows_os() ? DIRECTORY_SEPARATOR : '')
+        return ($relative || windows_os() ? '' : DIRECTORY_SEPARATOR)
             . concat_with_slash(DIRECTORY_SEPARATOR, ...$paths);
     }
 }
@@ -85,7 +90,7 @@ if (!function_exists('concat_with_slash')) {
     {
         return implode(
             $slash,
-            array_map(fn($part) => trim_more(str_replace(['\\', '/'], $slash, $part), $slash), $parts)
+            array_map(static fn($part) => trim_more(str_replace(['\\', '/'], $slash, $part), $slash), $parts)
         );
     }
 }
@@ -133,17 +138,14 @@ if (!function_exists('copy_recursive')) {
         if (is_file($destination)) {
             return false;
         }
-        if (!is_dir($destination)) {
-            if (false === mkdir_recursive($destination, 0777, $context)) {
-                return false;
-            }
+        if (!is_dir($destination) && false === mkdir_recursive($destination, 0777, $context)) {
+            return false;
         }
         $dir = opendir($source, $context);
         while (false !== ($file = readdir($dir))) {
-            if ($file != '.' && $file != '..') {
-                if (false === copy_recursive($source . DIRECTORY_SEPARATOR . $file, $destination . DIRECTORY_SEPARATOR . $file, $context)) {
-                    return false;
-                }
+            if ($file !== '.' && $file !== '..'
+                && false === copy_recursive($source . DIRECTORY_SEPARATOR . $file, $destination . DIRECTORY_SEPARATOR . $file, $context)) {
+                return false;
             }
         }
         closedir($dir);
@@ -172,14 +174,14 @@ if (!function_exists('describe_var')) {
         }
         if (is_array($value)) {
             return $depth
-                ? sprintf('[%s]', implode(', ', (function ($array) use ($maxShownItems) {
+                ? sprintf('[%s]', implode(', ', (static function ($array) use ($maxShownItems) {
                     if (count($array) <= $maxShownItems) {
                         return $array;
                     }
                     $sliced = array_slice($array, 0, $maxShownItems);
                     $sliced[] = '...';
                     return $sliced;
-                })(array_map(fn($item) => describe_var($item, $depth - 1), $value))))
+                })(array_map(static fn($item) => describe_var($item, $depth - 1), $value))))
                 : '{array}';
         }
         if (is_resource($value)) {
@@ -196,9 +198,9 @@ if (!function_exists('describe_var')) {
 }
 
 if (!function_exists('dd_with_headers')) {
-    function dd_with_headers(array $headers, ...$vars)
+    function dd_with_headers(array $headers, ...$vars): void
     {
-        if (!in_array(\PHP_SAPI, ['cli', 'phpdbg'], true) && !headers_sent()) {
+        if (!in_array(PHP_SAPI, ['cli', 'phpdbg'], true) && !headers_sent()) {
             header('HTTP/1.1 500 Internal Server Error');
             foreach ($headers as $name => $value) {
                 header(sprintf('%s: %s', $name, $value));
@@ -213,7 +215,7 @@ if (!function_exists('dd_with_headers')) {
 }
 
 if (!function_exists('dd_with_cors')) {
-    function dd_with_cors(...$vars)
+    function dd_with_cors(...$vars): void
     {
         dd_with_headers([
             'Access-Control-Allow-Origin' => '*',
@@ -310,23 +312,32 @@ if (!function_exists('is_url')) {
 }
 
 if (!function_exists('json_encode_pretty')) {
-    function json_encode_pretty(mixed $value, int $depth = 512): string|false
+    /**
+     * @throws JsonException
+     */
+    function json_encode_pretty(mixed $value, int $flags = 0, int $depth = 512): string|false
     {
-        return json_encode($value, JSON_PRETTY, $depth);
+        return json_encode($value, $flags | JSON_PRETTY | JSON_THROW_ON_ERROR, $depth);
     }
 }
 
 if (!function_exists('json_encode_readable')) {
-    function json_encode_readable(mixed $value, int $depth = 512): string|false
+    /**
+     * @throws JsonException
+     */
+    function json_encode_readable(mixed $value, int $flags = 0, int $depth = 512): string|false
     {
-        return json_encode($value, JSON_READABLE, $depth);
+        return json_encode($value, $flags | JSON_READABLE | JSON_THROW_ON_ERROR, $depth);
     }
 }
 
 if (!function_exists('json_decode_array')) {
+    /**
+     * @throws JsonException
+     */
     function json_decode_array(string $json, int $depth = 512, int $flags = 0): ?array
     {
-        return is_array($array = json_decode($json, true, $depth, $flags)) ? $array : null;
+        return is_array($array = json_decode($json, true, $depth, $flags | JSON_THROW_ON_ERROR)) ? $array : null;
     }
 }
 
@@ -343,10 +354,8 @@ if (!function_exists('mkdir_recursive')) {
      */
     function mkdir_recursive(string $directory, int $permissions = 0777, $context = null): bool
     {
-        if (!is_dir($directory)) {
-            if (false === @mkdir($directory, $permissions, true, $context) && !is_dir($directory)) {
-                throw new FileException(sprintf('Unable to create the "%s" directory.', $directory));
-            }
+        if (!is_dir($directory) && false === @mkdir($directory, $permissions, true, $context) && !is_dir($directory)) {
+            throw new FileException(sprintf('Unable to create the "%s" directory.', $directory));
         }
         return true;
     }
@@ -404,7 +413,7 @@ if (!function_exists('number_formatter')) {
 if (!function_exists('numcmp')) {
     function numcmp(float|int $num1, float|int $num2): int
     {
-        if ($num1 == $num2) {
+        if ($num1 === $num2) {
             return 0;
         }
         return $num1 > $num2 ? 1 : -1;
@@ -444,12 +453,19 @@ if (!function_exists('rtrim_more')) {
     }
 }
 
+if (!function_exists('safe_unserialize')) {
+    function safe_unserialize(string $data, bool|array $allowedClasses = true, array $options = []): mixed
+    {
+        return unserialize($data, [
+                'allowed_classes' => $allowedClasses,
+            ] + $options);
+    }
+}
+
 if (!function_exists('snaky_filled_array')) {
     function snaky_filled_array(array $array, array $default = null, $nullable = false): array
     {
-        return filled_array($array, $default, $nullable, function ($key) {
-            return Str::snake($key);
-        });
+        return filled_array($array, $default, $nullable, static fn($key) => Str::snake($key));
     }
 }
 
@@ -481,14 +497,18 @@ if (!function_exists('trim_more')) {
 }
 
 if (!function_exists('uri')) {
+    /**
+     * @throws UrlGenerationException
+     */
     function uri(string $uri, mixed $parameters = [], bool $absolute = true): string
     {
         if ($isAbsolute = (preg_match('/^https?:\/\//', $uri) === 1)) {
             $absolute = false;
         }
-        return with(url()->toRoute(new Route('GET', $uri, fn() => true), $parameters, $absolute), function ($url) use ($isAbsolute) {
-            return $isAbsolute ? substr($url, 1) : $url;
-        });
+        return with(
+            url()->toRoute(new Route('GET', $uri, fn() => true), $parameters, $absolute),
+            static fn($url) => $isAbsolute ? substr($url, 1) : $url
+        );
     }
 }
 

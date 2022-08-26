@@ -13,39 +13,22 @@ abstract class Listener
 {
     use ClassHelper;
 
-    /**
-     * @param Event $event
-     * @return void
-     */
-    protected function handleBefore($event)
+    protected function handleBefore(Event $event): void
     {
     }
 
-    /**
-     * @param Event $event
-     * @return void
-     */
-    protected function handleAfter($event)
+    protected function handleAfter(Event $event): void
     {
     }
 
-    /**
-     * @param Event $event
-     * @return void
-     */
-    protected abstract function handling($event);
+    abstract protected function handling(Event $event): void;
 
-    /**
-     * @param Event $event
-     * @return void
-     */
-    final public function handle($event)
+    final public function handle(Event $event): void
     {
-        if (App::runningSolelyInConsole()) {
-            if (($runningCommand = Artisan::lastRunningCommand())
-                && count($settings = $runningCommand->settings())) {
-                $event->setForcedInternalSettings($settings);
-            }
+        if (App::runningSolelyInConsole()
+            && !is_null($runningCommand = Artisan::lastRunningCommand())
+            && count($settings = $runningCommand->settings())) {
+            $event->setForcedInternalSettings($settings);
         }
         $event->withInternalSettings(function () use ($event) {
             Log::info(sprintf('Listener [%s] started.', $this->className()));
@@ -56,12 +39,7 @@ abstract class Listener
         });
     }
 
-    /**
-     * @param Event $event
-     * @param Throwable $e
-     * @return void
-     */
-    public function failed($event, Throwable $e)
+    public function failed(Event $event, Throwable $e): void
     {
     }
 }

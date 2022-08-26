@@ -24,7 +24,7 @@ class RouteServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function boot()
+    public function boot(): void
     {
         $this->configureRateLimiting();
 
@@ -43,9 +43,9 @@ class RouteServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    protected function configureRateLimiting()
+    protected function configureRateLimiting(): void
     {
-        RateLimiter::for('api', function (Request $request) {
+        RateLimiter::for('api', static function (Request $request) {
             $throttle = config_starter('api.throttle');
             return Limit::perMinutes($throttle['decay_minutes'] ?? 1, $throttle['max_attempts'] ?? 60)->by($request->user()?->id ?: $request->ip());
         });

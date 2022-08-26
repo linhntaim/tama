@@ -43,7 +43,7 @@ class CreateNewUser implements CreatesNewUsers
                 'password' => $input['password'],
                 'email_verified_at' => class_implements(User::class, MustVerifyEmail::class) ? DateTimer::databaseNow() : null
             ])),
-            function (User $user) use ($input) {
+            static function (User $user) use ($input) {
                 $user->setRawPassword($input['password']);
                 return $user;
             }

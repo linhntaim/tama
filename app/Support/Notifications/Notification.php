@@ -22,7 +22,12 @@ abstract class Notification extends BaseNotification
 {
     use ClassHelper, InternalSettings;
 
-    public static function sendOnDemand(array|AnonymousNotifiable $routes, mixed ...$args)
+    public static function viaDatabaseEnabled(): bool
+    {
+        return config_starter('notification.uses.database');
+    }
+
+    public static function sendOnDemand(array|AnonymousNotifiable $routes, mixed ...$args): void
     {
         if ($routes instanceof AnonymousNotifiable) {
             $notifiable = $routes;
@@ -36,7 +41,7 @@ abstract class Notification extends BaseNotification
         $notifiable->notify(new static(...$args));
     }
 
-    public static function send(mixed $notifiables, mixed ...$args)
+    public static function send(mixed $notifiables, mixed ...$args): void
     {
         NotificationFacade::send($notifiables, new static(...$args));
     }
@@ -58,7 +63,7 @@ abstract class Notification extends BaseNotification
     {
         $via = [];
         if ($this instanceof ViaDatabase) {
-            if (!config_starter('notification.uses.database')) {
+            if (!self::viaDatabaseEnabled()) {
                 throw new RuntimeException('Notification via database is not enabled.');
             }
             $via[] = 'database';
@@ -103,11 +108,29 @@ abstract class Notification extends BaseNotification
 
     public function toMail(NotifiableContract $notifiable): Mailable|MailMessage|null
     {
-        return $this->dataMailable($notifiable);
+        return modify($this->dataMail($notifiable), function ($mailable) use ($notifiable) {
+            if ($mailable instanceof Mailable) {
+                $mailable->to($this->dataMailRecipients($notifiable));
+            }
+            return $mailable;
+        });
     }
 
-    public function dataMailable(NotifiableContract $notifiable): Mailable|MailMessage|null
+    protected function dataMail(NotifiableContract $notifiable): Mailable|MailMessage|null
     {
         return null;
+    }
+
+    protected function dataMailRecipients(NotifiableContract $notifiable): array
+    {
+        if (is_string($recipients = $notifiable->routeNotificationFor('mail', $this))) {
+            $recipients = [$recipients];
+        }
+
+        return collect($recipients)->mapWithKeys(function ($recipient, $email) {
+            return is_numeric($email)
+                ? [$email => (is_string($recipient) ? $recipient : $recipient->email)]
+                : [$email => $recipient];
+        })->all();
     }
 }

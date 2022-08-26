@@ -31,7 +31,7 @@ class AuthenticateWithCredentials
         return $next($request);
     }
 
-    protected function setAuthUser(Request $request, User $user)
+    protected function setAuthUser(Request $request, User $user): void
     {
         auth($this->guard())->setUser($user);
         auth()->shouldUse($this->guard());
@@ -58,14 +58,14 @@ class AuthenticateWithCredentials
     /**
      * @throws ValidationException
      */
-    protected function throwFailedAuthenticationException(Request $request)
+    protected function throwFailedAuthenticationException(Request $request): void
     {
         throw ValidationException::withMessages([
             Fortify::username() => [trans('auth.failed')],
         ]);
     }
 
-    protected function fireFailedEvent(Request $request)
+    protected function fireFailedEvent(Request $request): void
     {
         event(new Failed($this->guard(), null, [
             Fortify::username() => $request->input(Fortify::username()),

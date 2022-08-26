@@ -56,6 +56,7 @@ class File extends Model
     ];
 
     protected $casts = [
+        'id' => 'integer',
         'size' => 'integer',
         'options' => 'array',
     ];
@@ -78,7 +79,7 @@ class File extends Model
     public function public(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->visibility == Filesystem::VISIBILITY_PUBLIC
+            get: fn() => $this->visibility === Filesystem::VISIBILITY_PUBLIC
         );
     }
 

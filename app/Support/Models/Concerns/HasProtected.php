@@ -16,6 +16,6 @@ trait HasProtected
 
     public function isProtected(): bool
     {
-        return in_array($this->attributes[$this->getProtectedKey()], $this->getProtectedValues());
+        return in_array($this->{$this->getProtectedKey()}, $this->getProtectedValues(), true);
     }
 }

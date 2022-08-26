@@ -53,13 +53,11 @@ class FileProvider extends ModelProvider
                     $filer->publishPublic();
                 }
             }
-            else { // inline
-                if (!$this->public(false)) {
-                    $filer->publishInlinePrivately();
-                }
-                else {
-                    $filer->publishInlinePublicly();
-                }
+            elseif (!$this->public(false)) {
+                $filer->publishInlinePrivately();
+            }
+            else {
+                $filer->publishInlinePublicly();
             }
         }
         return $filer;
@@ -105,7 +103,7 @@ class FileProvider extends ModelProvider
 
     public function delete(): bool
     {
-        Filer::from($this->model)->delete();
+        Filer::from($this->model)?->delete();
         return parent::delete();
     }
 
@@ -114,7 +112,7 @@ class FileProvider extends ModelProvider
         $all = $this->all($conditions);
         parent::deleteAll($conditions);
         foreach ($all as $model) {
-            Filer::from($model)->delete();
+            Filer::from($model)?->delete();
         }
         return true;
     }
