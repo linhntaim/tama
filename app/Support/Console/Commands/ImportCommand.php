@@ -2,10 +2,10 @@
 
 namespace App\Support\Console\Commands;
 
-use App\Models\FileProvider;
 use App\Support\Filesystem\Filers\Filer;
 use App\Support\Imports\BatchModelCsvImport;
 use App\Support\Imports\Import;
+use App\Support\Models\FileProvider;
 
 abstract class ImportCommand extends Command
 {
@@ -26,7 +26,7 @@ abstract class ImportCommand extends Command
         return [];
     }
 
-    protected abstract function importClass(): string;
+    abstract protected function importClass(): string;
 
     protected function import(): Import
     {

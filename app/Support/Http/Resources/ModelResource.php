@@ -2,7 +2,9 @@
 
 namespace App\Support\Http\Resources;
 
-class ModelResource extends Resource implements IModelResource
+use App\Support\Http\Resources\Contracts\ModelResource as ModelResourceContract;
+
+class ModelResource extends Resource implements ModelResourceContract
 {
     protected ?string $wrapped = 'model';
 

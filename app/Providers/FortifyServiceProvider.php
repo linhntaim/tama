@@ -36,12 +36,12 @@ class FortifyServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function register()
+    public function register(): void
     {
         $this->registerResponseBindings();
     }
 
-    protected function registerResponseBindings()
+    protected function registerResponseBindings(): void
     {
         $this->app->singleton(LoginResponseContract::class, LoginResponse::class);
         Facade::clearResolvedInstance(LoginResponseContract::class);
@@ -64,7 +64,7 @@ class FortifyServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function boot()
+    public function boot(): void
     {
         Fortify::createUsersUsing(CreateNewUser::class);
         Fortify::updateUserProfileInformationUsing(UpdateUserProfileInformation::class);
@@ -72,13 +72,13 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
         app()->singleton(BaseCompletePasswordReset::class, CompletePasswordReset::class);
 
-        RateLimiter::for('login', function (Request $request) {
+        RateLimiter::for('login', static function (Request $request) {
             $email = (string)$request->input('email');
 
             return Limit::perMinute(5)->by($email . $request->ip());
         });
 
-        RateLimiter::for('two-factor', function (Request $request) {
+        RateLimiter::for('two-factor', static function (Request $request) {
             return Limit::perMinute(5)->by($request->session()->get('login.id'));
         });
     }

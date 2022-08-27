@@ -10,6 +10,8 @@ use App\Support\Imports\ModelCsvImport;
 
 class UserCsvImport extends ModelCsvImport
 {
+    public const NAME = 'users';
+
     public static function sample(): Export
     {
         return new SimpleCsvExport(
@@ -21,8 +23,6 @@ class UserCsvImport extends ModelCsvImport
             ['Name', 'Email', 'Password'],
         );
     }
-
-    protected bool $hasHeaders = true;
 
     protected array $attributeKeyMap = [
         'name',

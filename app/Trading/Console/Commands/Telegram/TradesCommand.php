@@ -47,14 +47,14 @@ class TradesCommand extends Command
 
     protected function latest(): int
     {
-        return modify((int)($this->option('latest') ?? 1), function (int $latest) {
+        return modify((int)($this->option('latest') ?? 1), static function (int $latest) {
             return $latest > 0 && $latest <= 5 ? $latest : 1;
         });
     }
 
     protected function botOptions(): array
     {
-        return json_decode_array($this->option('bot-options') ?? '') ?: [
+        return json_decode_array($this->option('bot-options')) ?: [
             'oscillator' => [
                 'name' => RsiOscillator::NAME,
             ],

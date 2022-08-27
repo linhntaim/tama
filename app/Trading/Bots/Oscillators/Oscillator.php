@@ -23,17 +23,17 @@ abstract class Oscillator
         $this->createComponents();
     }
 
-    public final function getName(): string
+    final public function getName(): string
     {
         return static::NAME;
     }
 
     public function options(): array
     {
-        if (count($this->components) == 1) {
+        if (count($this->components) === 1) {
             return array_values($this->components)[0]->options();
         }
-        return array_map(function (Component $component) {
+        return array_map(static function (Component $component) {
             return $component->options();
         }, $this->components);
     }
@@ -48,7 +48,7 @@ abstract class Oscillator
 
     public function asSlug(): string
     {
-        if (count($this->components) == 1) {
+        if (count($this->components) === 1) {
             return implode('-', [
                 $this->getName(),
                 ...$this->options(),
@@ -56,13 +56,13 @@ abstract class Oscillator
         }
         return implode('-', [
             $this->getName(),
-            ...array_map(function (Component $component) {
+            ...array_map(static function (Component $component) {
                 return $component->asSlug();
             }, $this->components),
         ]);
     }
 
-    protected function createComponents()
+    protected function createComponents(): void
     {
     }
 
@@ -96,7 +96,7 @@ abstract class Oscillator
 
     protected function input(array $inputs): Packet
     {
-        return take(new Packet(), function (Packet $packet) use ($inputs) {
+        return take(new Packet(), static function (Packet $packet) use ($inputs) {
             foreach ($inputs as $name => $value) {
                 $packet->set('inputs.' . $name, $value);
             }
@@ -115,5 +115,5 @@ abstract class Oscillator
      * @param Packet $packet
      * @return Collection<int, Indication>
      */
-    protected abstract function output(Packet $packet): Collection;
+    abstract protected function output(Packet $packet): Collection;
 }

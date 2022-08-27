@@ -43,7 +43,7 @@ abstract class PriceProvider
             Trader::INTERVAL_3_DAYS,
             Trader::INTERVAL_1_WEEK,
             Trader::INTERVAL_1_MONTH,
-        ]);
+        ], true);
     }
 
     public function availableTickers(string|array|null $pattern = null): Collection
@@ -64,7 +64,7 @@ abstract class PriceProvider
         return $this->cacheStore->get($this->recentCacheKey($ticker, $interval));
     }
 
-    protected function recentToCache(string $ticker, Interval $interval, int $latestTime, array $recentPrices)
+    protected function recentToCache(string $ticker, Interval $interval, int $latestTime, array $recentPrices): void
     {
         $this->cacheStore->forever($this->recentCacheKey($ticker, $interval), [
             'latest_time' => $latestTime,
@@ -82,10 +82,10 @@ abstract class PriceProvider
         }
         $cachedLatestTime = $cache['latest_time'] ?? 0;
         $cachedRecentPrices = $cache['recent_prices'] ?? [];
-        if ($cachedLatestTime == 0 || !count($cachedRecentPrices)) {
+        if ($cachedLatestTime === 0 || !count($cachedRecentPrices)) {
             return false;
         }
-        if ($cachedLatestTime != $matchingLatestTime) {
+        if ($cachedLatestTime !== $matchingLatestTime) {
             return false;
         }
         return true;
@@ -94,7 +94,7 @@ abstract class PriceProvider
     /**
      * @throws PsrInvalidArgumentException
      */
-    public function pushLatest(LatestPrice $latestPrice)
+    public function pushLatest(LatestPrice $latestPrice): void
     {
         if ($this->recentCached(
             $ticker = $latestPrice->getTicker(),
@@ -103,7 +103,7 @@ abstract class PriceProvider
             $cachedRecentPrices
         )) {
             array_shift($cachedRecentPrices);
-            array_push($cachedRecentPrices, $latestPrice->getPrice());
+            $cachedRecentPrices[] = $latestPrice->getPrice();
             $this->recentToCache(
                 $ticker,
                 $interval,
@@ -113,7 +113,7 @@ abstract class PriceProvider
         }
     }
 
-    protected abstract function fetch(string $ticker, Interval $interval, int $startTime = null, int $endTime = null, int $limit = 1000): array;
+    abstract protected function fetch(string $ticker, Interval $interval, int $startTime = null, int $endTime = null, int $limit = 1000): array;
 
     public function recentAt(string $ticker, Interval $interval, int $at = null, int $limit = 999): PriceCollection
     {

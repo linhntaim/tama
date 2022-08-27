@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\File;
-use App\Models\FileProvider;
 use App\Support\Http\Controllers\ModelApiController;
+use App\Support\Models\File;
+use App\Support\Models\FileProvider;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Http\Request;
 
@@ -28,8 +28,8 @@ class FileController extends ModelApiController
 
     protected function showFile(Request $request, $id)
     {
-        return with($this->modelProvider()->model($id), function (File $file) {
-            if ($file->visibility == Filesystem::VISIBILITY_PRIVATE) {
+        return with($this->modelProvider()->model($id), static function (File $file) {
+            if ($file->visibility === Filesystem::VISIBILITY_PRIVATE) {
                 abort(403, 'Access denied.');
             }
             return $file->responseFile();
@@ -38,8 +38,8 @@ class FileController extends ModelApiController
 
     protected function showDownload(Request $request, $id)
     {
-        return with($this->modelProvider()->model($id), function (File $file) {
-            if ($file->visibility == Filesystem::VISIBILITY_PRIVATE) {
+        return with($this->modelProvider()->model($id), static function (File $file) {
+            if ($file->visibility === Filesystem::VISIBILITY_PRIVATE) {
                 abort(403, 'Access denied.');
             }
             return $file->responseDownload();

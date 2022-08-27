@@ -98,7 +98,7 @@ class UnsubscribeCommand extends Command
                 foreach ($tradings as $trading) {
                     $this->unsubscribe($user, $trading, $redis);
                 }
-                if ($count == 1) {
+                if ($count === 1) {
                     $trading = $tradings->first();
                     ConsoleNotification::send(
                         new TelegramUpdateNotifiable($this->telegramUpdate),
@@ -122,11 +122,11 @@ class UnsubscribeCommand extends Command
         return $this->exitSuccess();
     }
 
-    protected function unsubscribe(User $user, Trading $trading, $redis)
+    protected function unsubscribe(User $user, Trading $trading, $redis): void
     {
         $trading->subscribers()->detach($user->id);
-        if ($trading->subscribers()->count() == 0) {
-            $redis->publish('price-stream:unsubscribe', json_encode([
+        if ($trading->subscribers()->count() === 0) {
+            $redis->publish('price-stream:unsubscribe', json_encode_readable([
                 'exchange' => $trading->exchange,
                 'ticker' => $trading->ticker,
                 'interval' => $trading->interval,

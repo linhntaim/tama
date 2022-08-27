@@ -36,6 +36,7 @@ class Trading extends Model
     ];
 
     protected $casts = [
+        'id' => 'integer',
         'options' => 'array',
     ];
 

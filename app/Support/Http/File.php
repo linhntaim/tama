@@ -19,13 +19,13 @@ class File extends BaseFile
         if ($file instanceof UploadedFile) {
             return $file;
         }
-        elseif ($file instanceof SplFileInfo) {
+        if ($file instanceof SplFileInfo) {
             return new static($file->getRealPath(), $checkPath);
         }
         try {
             return new static($file, $checkPath);
         }
-        catch (SymfonyFileNotFoundException $exception) {
+        catch (SymfonyFileNotFoundException) {
             throw new FileNotFoundException($file);
         }
     }
@@ -56,7 +56,7 @@ class File extends BaseFile
     {
         $target = $this->getTargetFile($directory, $name);
 
-        set_error_handler(function ($type, $msg) use (&$error) {
+        set_error_handler(static function ($type, $msg) use (&$error) {
             $error = $msg;
         });
         try {

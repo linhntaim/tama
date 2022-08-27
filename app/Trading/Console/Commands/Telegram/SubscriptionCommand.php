@@ -23,9 +23,7 @@ class SubscriptionCommand extends Command
 
     protected function page(): int
     {
-        return modify((int)($this->option('page') ?? 1), function ($page) {
-            return $page <= 0 ? 1 : $page;
-        });
+        return modify((int)($this->option('page') ?? 1), static fn($page) => $page <= 0 ? 1 : $page);
     }
 
     protected function findUser(): ?User
@@ -53,7 +51,7 @@ class SubscriptionCommand extends Command
 
     protected function printTradings(LengthAwarePaginator $tradings): string
     {
-        if ($tradings->count() == 0) {
+        if ($tradings->count() === 0) {
             return 'No subscriptions.';
         }
         $lines = ['Trading subscriptions:'];

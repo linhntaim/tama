@@ -4,6 +4,7 @@ namespace App\Console\Commands\Setup;
 
 use App\Support\Console\Commands\ForceCommand;
 use App\Support\EnvironmentFile;
+use App\Support\Notifications\Notification;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Composer;
@@ -77,7 +78,7 @@ class MigrateCommand extends ForceCommand
         parent::handleBefore();
     }
 
-    protected function whenForced()
+    protected function whenForced(): void
     {
         $this->uninstallDatabase();
     }
@@ -136,8 +137,11 @@ class MigrateCommand extends ForceCommand
      */
     protected function migrateTables(): bool
     {
-        return $this->migrateExtraTables()
-            && $this->call('migrate') == self::SUCCESS;
+        if ($this->migrateExtraTables()) {
+            $this->newLine();
+            return $this->call('migrate') === self::SUCCESS;
+        }
+        return false;
     }
 
     /**
@@ -157,39 +161,33 @@ class MigrateCommand extends ForceCommand
         $environmentFile = new EnvironmentFile($this->laravel->environmentFilePath());
         if ($environmentFile->filled('CACHE_DRIVER', $cacheDriver) && $cacheDriver === 'database') {
             $this->comment('Cache uses database.');
-            if (in_array(config('cache.stores.database.table'), $migrationTables)) {
+            if (in_array(config('cache.stores.database.table'), $migrationTables, true)) {
                 $this->info('Migration created already.');
             }
-            else {
-                if ($this->call('cache:table') != self::SUCCESS) {
-                    return false;
-                }
+            elseif ($this->call('cache:table') !== self::SUCCESS) {
+                return false;
             }
         }
         if ($environmentFile->filled('SESSION_DRIVER', $sessionDriver) && $sessionDriver === 'database') {
             $this->comment('Session uses database.');
-            if (in_array(config('session.table'), $migrationTables)) {
+            if (in_array(config('session.table'), $migrationTables, true)) {
                 $this->info('Migration created already.');
             }
-            else {
-                if ($this->call('session:table') != self::SUCCESS) {
-                    return false;
-                }
+            elseif ($this->call('session:table') !== self::SUCCESS) {
+                return false;
             }
         }
         if ($environmentFile->filled('QUEUE_CONNECTION', $queueConnection) && $queueConnection === 'database') {
             $this->comment('Queue uses database.');
-            if (in_array(config('queue.connections.database.table'), $migrationTables)) {
+            if (in_array(config('queue.connections.database.table'), $migrationTables, true)) {
                 $this->info('Migration created already.');
             }
-            else {
-                if ($this->call('queue:table') != self::SUCCESS) {
-                    return false;
-                }
+            elseif ($this->call('queue:table') !== self::SUCCESS) {
+                return false;
             }
         }
-        if (($searched = array_search('failed_jobs', $migrationTables)) !== false
-            && ($table = config('queue.failed.table')) != 'failed_jobs') {
+        if (($searched = array_search('failed_jobs', $migrationTables, true)) !== false
+            && ($table = config('queue.failed.table')) !== 'failed_jobs') {
             $this->comment('Failed jobs table changes.');
             $toMigrationFile = database_path(concat_paths(true, 'migrations', str_replace('failed_jobs', $table, $searched)));
             $fromMigrationFile = database_path(concat_paths(true, 'migrations', $searched));
@@ -201,18 +199,14 @@ class MigrateCommand extends ForceCommand
             $this->composer->dumpAutoloads();
             $this->info('Migrate changed successfully.');
         }
-        if (!in_array('notifications', $migrationTables)) {
-            if (config_starter('notification.uses.database')) {
-                if ($this->call('notifications:table') != self::SUCCESS) {
-                    return false;
-                }
-            }
-        }
-        return true;
+        return !(!in_array('notifications', $migrationTables, true)
+            && Notification::viaDatabaseEnabled()
+            && $this->call('notifications:table') !== self::SUCCESS);
     }
 
     protected function migrateSeed(): bool
     {
-        return $this->call('db:seed') == self::SUCCESS;
+        $this->newLine();
+        return $this->call('db:seed') === self::SUCCESS;
     }
 }

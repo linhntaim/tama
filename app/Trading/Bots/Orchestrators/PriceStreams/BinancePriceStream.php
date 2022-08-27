@@ -19,7 +19,7 @@ class BinancePriceStream extends PriceStream
         return new BinancePriceStreamMessageExtractor();
     }
 
-    protected function call(string $method, array $params)
+    protected function call(string $method, array $params): void
     {
         $this->send([
             'method' => $method,
@@ -28,13 +28,13 @@ class BinancePriceStream extends PriceStream
         ]);
     }
 
-    protected function subscribe()
+    protected function subscribe(): void
     {
         $this->call('SET_PROPERTY', ['combined', true]);
         parent::subscribe();
     }
 
-    protected function subscribeTradings(Collection $tradings)
+    protected function subscribeTradings(Collection $tradings): void
     {
         $this->call(
             'SUBSCRIBE',
@@ -47,12 +47,12 @@ class BinancePriceStream extends PriceStream
         );
     }
 
-    public function subscribeTrading(string $ticker, string $interval)
+    public function subscribeTrading(string $ticker, string $interval): void
     {
         $this->call('SUBSCRIBE', [sprintf('%s@kline_%s', strtolower($ticker), $interval)]);
     }
 
-    public function unsubscribeTrading(string $ticker, string $interval)
+    public function unsubscribeTrading(string $ticker, string $interval): void
     {
         $this->call('UNSUBSCRIBE', [sprintf('%s@kline_%s', strtolower($ticker), $interval)]);
     }

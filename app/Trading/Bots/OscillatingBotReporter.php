@@ -19,7 +19,7 @@ class OscillatingBotReporter extends PlainTextReporter
 
     protected function headlineMetaItem(IndicationMetaItem $metaItem): string
     {
-        if ($metaItem->getType() == 'rsi') {
+        if ($metaItem->getType() === 'rsi') {
             return sprintf('{RSI=%s}', $metaItem->get('rsi'));
         }
         return parent::headlineMetaItem($metaItem);

@@ -2,10 +2,11 @@
 
 namespace App\Support\Models;
 
+use App\Support\Models\Contracts\HasApiTokens as HasApiTokensContract;
 use Laravel\Sanctum\HasApiTokens;
 use Laravel\Sanctum\NewAccessToken;
 
-abstract class SanctumUser extends User implements IHasApiTokens
+abstract class SanctumUser extends User implements HasApiTokensContract
 {
     use HasApiTokens {
         createToken as baseCreateToken;

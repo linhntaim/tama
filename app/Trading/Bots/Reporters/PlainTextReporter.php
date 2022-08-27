@@ -54,7 +54,7 @@ class PlainTextReporter extends Reporter
      */
     protected function headlineIndications(Collection $indications): ?string
     {
-        if (($count = count($indications)) == 1) {
+        if (($count = count($indications)) === 1) {
             return null;
         }
         return $this->lines([

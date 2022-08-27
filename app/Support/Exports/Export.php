@@ -2,10 +2,10 @@
 
 namespace App\Support\Exports;
 
-use App\Models\File;
+use App\Support\Concerns\UnlimitedResource;
 use App\Support\Exceptions\FileException;
 use App\Support\Filesystem\Filers\Filer;
-use App\Support\UnlimitedResource;
+use App\Support\Models\File;
 use InvalidArgumentException;
 
 abstract class Export
@@ -65,7 +65,7 @@ abstract class Export
 
     public function chunkEnable(): bool
     {
-        return !!$this->chunkSize;
+        return (bool)$this->chunkSize;
     }
 
     public function chunkEnded(): bool
@@ -73,33 +73,28 @@ abstract class Export
         return $this->chunkEnded;
     }
 
-    protected function data()
+    protected function data(): mixed
     {
         return null;
     }
 
     /**
-     * @param Filer $filer
      * @throws FileException
      */
-    protected function exportBefore($filer)
+    protected function exportBefore(Filer $filer): void
     {
         $filer->openForWriting(false);
     }
 
-    /**
-     * @param Filer $filer
-     */
-    protected function exportAfter($filer)
+    protected function exportAfter(Filer $filer): void
     {
         $filer->close();
     }
 
     /**
-     * @param Filer $filer
      * @throws FileException
      */
-    protected function export($filer)
+    protected function export(Filer $filer): void
     {
         $this->chunkDataIndex = -1;
         while (!is_null($data = $this->data())) {
@@ -117,11 +112,9 @@ abstract class Export
     }
 
     /**
-     * @param Filer $filer
-     * @param $data
      * @throws FileException
      */
-    protected function store($filer, $data)
+    protected function store(Filer $filer, $data): void
     {
         $filer->writeln($data);
     }

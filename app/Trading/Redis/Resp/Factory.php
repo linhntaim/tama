@@ -45,7 +45,7 @@ class Factory
                 switch (true) {
                     case $count < 0:
                         return null;
-                    case $count == 0:
+                    case $count === 0:
                         return new RespArray([]);
                     default:
                         $data = [];

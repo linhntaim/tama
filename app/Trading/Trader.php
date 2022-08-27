@@ -63,6 +63,6 @@ class Trader
         if (!function_exists($function = 'trader_' . Str::snake($name))) {
             throw new BadMethodCallException('Method does not exist.');
         }
-        return call_user_func($function, ...$arguments);
+        return $function(...$arguments);
     }
 }

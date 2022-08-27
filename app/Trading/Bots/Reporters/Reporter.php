@@ -25,5 +25,5 @@ abstract class Reporter implements IReport
      * @param Collection<int, Indication> $indications
      * @return string
      */
-    protected abstract function print(Collection $indications): string;
+    abstract protected function print(Collection $indications): string;
 }

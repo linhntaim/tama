@@ -12,7 +12,7 @@ class SessionTableCommand extends BaseSessionTableCommand
      *
      * @throws FileNotFoundException
      */
-    public function handle()
+    public function handle(): void
     {
         $table = $this->laravel['config']['session.table'];
 
@@ -38,7 +38,7 @@ class SessionTableCommand extends BaseSessionTableCommand
      *
      * @throws FileNotFoundException
      */
-    protected function replaceMigration(string $path, string $table)
+    protected function replaceMigration(string $path, string $table): void
     {
         $stub = str_replace(
             '{{table}}', $table, $this->files->get(base_path('stubs/migration.session.stub'))

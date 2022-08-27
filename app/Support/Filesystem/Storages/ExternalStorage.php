@@ -2,6 +2,8 @@
 
 namespace App\Support\Filesystem\Storages;
 
+use App\Support\Filesystem\Storages\Concerns\HasUrlStorage;
+use App\Support\Filesystem\Storages\Contracts\HasExternalStorage as HasExternalStorageContract;
 use BadMethodCallException;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Http;
@@ -9,7 +11,7 @@ use RuntimeException;
 use SplFileInfo;
 use Throwable;
 
-class ExternalStorage extends Storage implements IHasExternalStorage
+class ExternalStorage extends Storage implements HasExternalStorageContract
 {
     use HasUrlStorage;
 
@@ -31,7 +33,7 @@ class ExternalStorage extends Storage implements IHasExternalStorage
                         ->setName(basename($file))
                         ->setMimeType(trim(explode(';', $response->header('content-type'))[0]))
                         ->setExtension(
-                            ($extension = pathinfo(parse_url($file)['path'] ?? '', PATHINFO_EXTENSION)) == ''
+                            ($extension = pathinfo(parse_url($file)['path'] ?? '', PATHINFO_EXTENSION)) === ''
                                 ? guess_extension($this->mimeType) : $extension
                         )
                         ->setSize((int)$response->header('content-length'));

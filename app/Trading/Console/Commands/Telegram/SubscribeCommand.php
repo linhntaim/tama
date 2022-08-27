@@ -55,7 +55,7 @@ class SubscribeCommand extends Command
 
     protected function botOptions(): array
     {
-        return json_decode_array($this->option('bot-options') ?? '') ?: [
+        return json_decode_array($this->option('bot-options')) ?: [
             'oscillator' => [
                 'name' => RsiOscillator::NAME,
             ],
@@ -87,7 +87,7 @@ class SubscribeCommand extends Command
             Trader::INTERVAL_1_MINUTE,
             Trader::INTERVAL_3_MINUTES,
             Trader::INTERVAL_5_MINUTES,
-        ])) {
+        ], true)) {
             ConsoleNotification::send(
                 new TelegramUpdateNotifiable($this->telegramUpdate),
                 sprintf('Subscription for the interval "%s" was not supported/enabled.', $this->interval())
@@ -101,7 +101,7 @@ class SubscribeCommand extends Command
         }
         else {
             $redis = Redis::connection(trading_cfg_redis_pubsub_connection());
-            if ($this->ticker()[0] == '*') {
+            if ($this->ticker()[0] === '*') {
                 $tickers = $this->fetchTickers();
                 foreach ($tickers as $ticker) {
                     $this->subscribe($user, $this->createTrading([
@@ -166,7 +166,7 @@ class SubscribeCommand extends Command
             ($userProvider = new UserProvider())
                 ->notStrict()
                 ->firstByEmail($email),
-            function ($user) use ($userProvider, $name, $email, $providerId) {
+            static function ($user) use ($userProvider, $name, $email, $providerId) {
                 return take(
                     is_null($user) ? $userProvider->createWithAttributes([
                         'email' => $email,
@@ -174,7 +174,7 @@ class SubscribeCommand extends Command
                         'password' => Str::random(40),
                         'email_verified_at' => DateTimer::databaseNow(),
                     ]) : $user,
-                    function (User $user) use ($providerId) {
+                    static function (User $user) use ($providerId) {
                         (new UserSocialProvider())->firstOrCreateWithAttributes([
                             'user_id' => $user->id,
                             'provider' => 'telegram',
@@ -192,7 +192,7 @@ class SubscribeCommand extends Command
             ($tradingProvider = new TradingProvider())
                 ->notStrict()
                 ->firstBySlug($slug = ($bot = BotFactory::create($this->bot(), $this->mergeBotOptions($botOptions)))->asSlug()),
-            function ($trading) use ($tradingProvider, $bot, $slug) {
+            static function ($trading) use ($tradingProvider, $bot, $slug) {
                 return is_null($trading)
                     ? $tradingProvider->createWithAttributes([
                         'slug' => $slug,
@@ -207,14 +207,14 @@ class SubscribeCommand extends Command
         );
     }
 
-    protected function subscribe(User $user, Trading $trading, $redis)
+    protected function subscribe(User $user, Trading $trading, $redis): void
     {
         $trading->subscribers()->syncWithoutDetaching([
             $user->id => [
                 'subscribed_at' => DateTimer::databaseNow(),
             ],
         ]);
-        $redis->publish('price-stream:subscribe', json_encode([
+        $redis->publish('price-stream:subscribe', json_encode_readable([
             'exchange' => $trading->exchange,
             'ticker' => $trading->ticker,
             'interval' => $trading->interval,

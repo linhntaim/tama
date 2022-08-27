@@ -2,11 +2,11 @@
 
 namespace App\Support\Models;
 
-use App\Support\Auth\MustWelcomeEmail;
-use App\Support\Mail\IEmailAddress;
-use App\Support\Notifications\INotifiable;
-use App\Support\Notifications\INotifier;
-use App\Support\Notifications\Notifiable;
+use App\Support\Auth\Concerns\MustWelcomeEmail;
+use App\Support\Mail\Contracts\ProvidesEmailAddress;
+use App\Support\Notifications\Concerns\Notifiable;
+use App\Support\Notifications\Contracts\Notifiable as NotifiableContract;
+use App\Support\Notifications\Contracts\Notifier as NotifierContract;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Auth\MustVerifyEmail;
 use Illuminate\Auth\Passwords\CanResetPassword;
@@ -20,9 +20,9 @@ use Illuminate\Support\Facades\Hash;
 abstract class User extends Model implements AuthenticatableContract,
                                              AuthorizableContract,
                                              CanResetPasswordContract,
-                                             INotifiable,
-                                             INotifier,
-                                             IEmailAddress
+                                             NotifiableContract,
+                                             NotifierContract,
+                                             ProvidesEmailAddress
 {
     use Authenticatable, Authorizable, CanResetPassword, Notifiable, MustWelcomeEmail, MustVerifyEmail;
 
@@ -44,7 +44,7 @@ abstract class User extends Model implements AuthenticatableContract,
     protected function password(): Attribute
     {
         return Attribute::make(
-            set: fn($value) => static::hashPassword($value),
+            set: static fn($value) => static::hashPassword($value),
         );
     }
 

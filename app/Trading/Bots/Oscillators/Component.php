@@ -17,7 +17,7 @@ abstract class Component
     {
     }
 
-    public final function getName(): string
+    final public function getName(): string
     {
         return static::NAME;
     }
@@ -58,9 +58,9 @@ abstract class Component
         return $packet->get('inputs.prices');
     }
 
-    protected abstract function convert(Packet $packet): Packet;
+    abstract protected function convert(Packet $packet): Packet;
 
-    protected abstract function analyze(Packet $packet, bool|int $latest = true): Packet;
+    abstract protected function analyze(Packet $packet, bool|int $latest = true): Packet;
 
-    protected abstract function transform(Packet $packet): Packet;
+    abstract protected function transform(Packet $packet): Packet;
 }

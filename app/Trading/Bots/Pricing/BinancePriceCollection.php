@@ -16,8 +16,6 @@ class BinancePriceCollection extends PriceCollection
      */
     protected function createPrices(): array
     {
-        return array_map(function ($item) {
-            return (float)$item[4]; // Close
-        }, $this->items);
+        return array_map(static fn($item) => (float)$item[4], $this->items);
     }
 }
