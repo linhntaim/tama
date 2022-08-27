@@ -8,7 +8,7 @@ class LocaleViewQueueableMailable extends QueueableMailable
 {
     protected bool $viewOnLocale = true;
 
-    public function build()
+    public function build(): void
     {
         $this->view('trial', [
             'date' => date_timer()->compound('longDate', ' ', 'longTime'),

@@ -8,6 +8,7 @@ use Binance\Spot;
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Throwable;
 
 class BinancePriceProvider extends PriceProvider
 {
@@ -28,9 +29,9 @@ class BinancePriceProvider extends PriceProvider
             ])['symbols'][0];
 
             return $symbol['status'] === 'TRADING'
-                && in_array('SPOT', $symbol['permissions']);
+                && in_array('SPOT', $symbol['permissions'], true);
         }
-        catch (\Throwable) {
+        catch (Throwable) {
             return false;
         }
     }
@@ -40,7 +41,7 @@ class BinancePriceProvider extends PriceProvider
         return collect($this->spot->exchangeInfo()['symbols'])
             ->filter(function ($item) use ($pattern) {
                 return $item['status'] === 'TRADING'
-                    && in_array('SPOT', $item['permissions'])
+                    && in_array('SPOT', $item['permissions'], true)
                     && (is_null($pattern) || Str::is($pattern, $item['symbol']));
             })
             ->pluck('symbol');

@@ -2,13 +2,14 @@
 
 namespace App\Trading;
 
-use App\Trading\Telegram\Client;
+use App\Trading\Services\Telegram\Client;
 use GuzzleHttp\Client as HttpClient;
+use Illuminate\Support\ServiceProvider as BaseServiceProvider;
 use NotificationChannels\Telegram\Telegram;
 
-class ServiceProvider extends \Illuminate\Support\ServiceProvider
+class ServiceProvider extends BaseServiceProvider
 {
-    public function register()
+    public function register(): void
     {
         $this->app->bind(Telegram::class, static function () {
             return new Client(

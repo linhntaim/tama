@@ -2,6 +2,7 @@
 
 namespace App\Support\Client;
 
+use App\Support\Client\Contracts\ProvidesSettings;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Support\Str;
@@ -19,7 +20,7 @@ use Illuminate\Support\Str;
  * @property int $longTimeFormat
  * @property int $shortTimeFormat
  */
-class Settings implements ISettings, Arrayable, Jsonable
+class Settings implements ProvidesSettings, Arrayable, Jsonable
 {
     public static function config(?string $client = null, ?array $default = []): array
     {
@@ -42,7 +43,7 @@ class Settings implements ISettings, Arrayable, Jsonable
 
     public static function parseConfig(Settings|string|array|null $settings): array
     {
-        if ($settings instanceof Settings) {
+        if ($settings instanceof self) {
             return $settings->toArray();
         }
         if (is_string($settings)) {
@@ -63,7 +64,7 @@ class Settings implements ISettings, Arrayable, Jsonable
         return $config;
     }
 
-    public function isDiff(Settings|string|array|null $comparedSettings, Settings|string|array|null $comparingSettings, &$diff = null): bool
+    public static function isDiff(Settings|string|array|null $comparedSettings, Settings|string|array|null $comparingSettings, &$diff = null): bool
     {
         return count($diff = static::diff($comparedSettings, $comparingSettings)) > 0;
     }
@@ -74,7 +75,7 @@ class Settings implements ISettings, Arrayable, Jsonable
         $comparingSettings = static::parseConfig($comparingSettings);
         $diff = [];
         foreach ($comparingSettings as $name => $value) {
-            if (($comparedSettings[$name] ?? null) != $value) {
+            if (($comparedSettings[$name] ?? null) !== $value) {
                 $diff[$name] = $value;
             }
         }
@@ -126,7 +127,7 @@ class Settings implements ISettings, Arrayable, Jsonable
             }
             return $this;
         }
-        if ($settings instanceof Settings) {
+        if ($settings instanceof self) {
             return $this->merge($settings->toArray(), $permanently);
         }
         return $this;
@@ -138,6 +139,11 @@ class Settings implements ISettings, Arrayable, Jsonable
             return $this->{$method}();
         }
         return $this->settings[Str::snake($name)] ?? null;
+    }
+
+    public function __isset(string $name): bool
+    {
+        return isset($this->settings[$name]);
     }
 
     public function __set(string $name, $value): void
@@ -152,7 +158,7 @@ class Settings implements ISettings, Arrayable, Jsonable
 
     public function set(string $name, $value, bool $permanently = false): static
     {
-        if (!$permanently && ($this->settings[$name] ?? null) != $value) {
+        if (!$permanently && ($this->settings[$name] ?? null) !== $value) {
             $this->changes[] = $name;
         }
         $this->settings[$name] = $value;
@@ -161,7 +167,7 @@ class Settings implements ISettings, Arrayable, Jsonable
 
     public function setLocale(string $locale, bool $permanently = false): static
     {
-        if (in_array($locale, config_starter('supported_locales'))) {
+        if (in_array($locale, config_starter('supported_locales'), true)) {
             return $this->set('locale', $locale, $permanently);
         }
         return $this;
@@ -174,7 +180,7 @@ class Settings implements ISettings, Arrayable, Jsonable
 
     public function setCountry(string $country, bool $permanently = false): static
     {
-        if (in_array($country = strtoupper($country), array_keys(config_starter('countries')))) {
+        if (array_key_exists($country = strtoupper($country), config_starter('countries'))) {
             return $this->set('country', $country, $permanently);
         }
         return $this;
@@ -190,7 +196,7 @@ class Settings implements ISettings, Arrayable, Jsonable
 
     public function setCurrency(string $currency, bool $permanently = false): static
     {
-        if (in_array($currency = strtoupper($currency), array_keys(config_starter('currencies')))) {
+        if (array_key_exists($currency = strtoupper($currency), config_starter('currencies'))) {
             return $this->set('currency', $currency, $permanently);
         }
         return $this;
@@ -198,7 +204,7 @@ class Settings implements ISettings, Arrayable, Jsonable
 
     public function setNumberFormat(string $numberFormat, bool $permanently = false): static
     {
-        if (in_array($numberFormat, config_starter('number_formats'))) {
+        if (in_array($numberFormat, config_starter('number_formats'), true)) {
             return $this->set('number_format', $numberFormat, $permanently);
         }
         return $this;
@@ -253,6 +259,6 @@ class Settings implements ISettings, Arrayable, Jsonable
 
     public function toJson($options = 0): bool|string
     {
-        return json_encode($this->toArray(), $options);
+        return json_encode_readable($this->toArray(), $options);
     }
 }

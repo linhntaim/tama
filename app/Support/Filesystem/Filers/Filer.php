@@ -2,21 +2,21 @@
 
 namespace App\Support\Filesystem\Filers;
 
-use App\Models\File;
 use App\Support\Exceptions\FileException;
+use App\Support\Exceptions\FileNotFoundException;
 use App\Support\Filesystem\Storages\AwsS3Storage;
 use App\Support\Filesystem\Storages\AzureBlobStorage;
+use App\Support\Filesystem\Storages\Contracts\DirectEditableStorage as DirectEditableStorageContract;
+use App\Support\Filesystem\Storages\Contracts\HasInternalStorage as HasInternalStorageContract;
+use App\Support\Filesystem\Storages\Contracts\HasUrlStorage as HasUrlStorageContract;
 use App\Support\Filesystem\Storages\ExternalStorage;
-use App\Support\Filesystem\Storages\IDirectEditableStorage;
-use App\Support\Filesystem\Storages\IHasExternalStorage;
-use App\Support\Filesystem\Storages\IHasInternalStorage;
-use App\Support\Filesystem\Storages\IHasUrlStorage;
 use App\Support\Filesystem\Storages\InlineStorage;
 use App\Support\Filesystem\Storages\InternalStorage;
 use App\Support\Filesystem\Storages\PrivateStorage;
 use App\Support\Filesystem\Storages\PublicStorage;
 use App\Support\Filesystem\Storages\Storage;
 use App\Support\Filesystem\Storages\StorageFactory;
+use App\Support\Models\File;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Http\UploadedFile;
 use SplFileInfo;
@@ -49,10 +49,10 @@ class Filer
     public static function from(string|SplFileInfo|Storage|Filer|File $file): ?static
     {
         if ($file instanceof File) {
-            return take(new static(), function (Filer $filer) use ($file) {
+            return take(new static(), static function (Filer $filer) use ($file) {
                 $filer->storage = take(
                     StorageFactory::create($file->storage),
-                    function (Storage $storage) use ($file) {
+                    static function (Storage $storage) use ($file) {
                         $storage
                             ->setFile($file->file)
                             ->setName($file->name)
@@ -64,20 +64,26 @@ class Filer
                 );
             });
         }
-        if ($file instanceof Filer) {
-            return take(new static(), function (Filer $filer) use ($file) {
+        if ($file instanceof self) {
+            return take(new static(), static function (Filer $filer) use ($file) {
                 $filer->storage = $file->storage;
             });
         }
         if ($file instanceof Storage) {
-            return take(new static(), function (Filer $filer) use ($file) {
+            return take(new static(), static function (Filer $filer) use ($file) {
                 $filer->storage = $file;
             });
         }
         if ($file instanceof UploadedFile) {
-            return take(new static(), function (Filer $filer) use ($file) {
-                $filer->storage = (new PrivateStorage())->fromFile($file);
-            });
+            return take(
+                new static(),
+                /**
+                 * @throws FileNotFoundException
+                 */
+                static function (Filer $filer) use ($file) {
+                    $filer->storage = (new PrivateStorage())->fromFile($file);
+                }
+            );
         }
         foreach (is_url($file) ? [
             PublicStorage::class,
@@ -90,7 +96,7 @@ class Filer
             InternalStorage::class,
         ] as $storageClass) {
             if (!is_null($storageClass) && ($storage = new $storageClass())->setFile($file)->has()) {
-                return take(new static(), function (Filer $filer) use ($storage) {
+                return take(new static(), static function (Filer $filer) use ($storage) {
                     $filer->storage = $storage;
                 });
             }
@@ -103,7 +109,7 @@ class Filer
      */
     public static function create(?string $in = null, ?string $name = null, ?string $extension = null): static
     {
-        return take(new static(), function (Filer $filer) use ($in, $name, $extension) {
+        return take(new static(), static function (Filer $filer) use ($in, $name, $extension) {
             $filer->storage = StorageFactory::localStorage()->create($in, $name, $extension);
         });
     }
@@ -144,12 +150,12 @@ class Filer
 
     public function getRealPath(): ?string
     {
-        return $this->storage instanceof IHasInternalStorage ? $this->storage->getRealPath() : null;
+        return $this->storage instanceof HasInternalStorageContract ? $this->storage->getRealPath() : null;
     }
 
     public function getUrl(): ?string
     {
-        return $this->storage instanceof IHasUrlStorage ? $this->storage->getUrl() : null;
+        return $this->storage instanceof HasUrlStorageContract ? $this->storage->getUrl() : null;
     }
 
     public function getStorage(): string
@@ -169,7 +175,7 @@ class Filer
 
     public function internal(): bool
     {
-        return $this->storage instanceof IHasInternalStorage;
+        return $this->storage instanceof HasInternalStorageContract;
     }
 
     protected function moveToStorage(Storage $toStorage, ?string $in = null, bool $duplicate = false): static
@@ -217,7 +223,7 @@ class Filer
         return $this->moveToStorage(new InlineStorage(), null, $duplicate);
     }
 
-    public function delete()
+    public function delete(): void
     {
         $this->storage->delete();
         $this->storage = null;
@@ -231,7 +237,7 @@ class Filer
         if (!is_null($this->openingFile)) {
             throw new FileException('File is opening.');
         }
-        if (!($this->storage instanceof IDirectEditableStorage)) {
+        if (!($this->storage instanceof DirectEditableStorageContract)) {
             throw new FileException('File could not open from the storage.');
         }
         try {
@@ -249,7 +255,7 @@ class Filer
             $this->openingFile = null;
             $this->readingLine = -1;
             $this->writingLine = -1;
-            clearstatcache(true, $this->storage->getRealPath());
+            clearstatcache(true, $this->getRealPath());
         }
         return $this;
     }
@@ -267,7 +273,7 @@ class Filer
      * @return static
      * @throws FileException
      */
-    public function write($data): static
+    public function write(mixed $data): static
     {
         ++$this->writingLine;
         if ($this->openingFile->fwrite($data) === 0) {
@@ -281,18 +287,18 @@ class Filer
      * @return static
      * @throws FileException
      */
-    public function writeln($data): static
+    public function writeln(mixed $data): static
     {
         return $this->write($data . PHP_EOL);
     }
 
     /**
-     * @param string|array|string[] $data
+     * @param string|string[] $data
      * @param bool $close
      * @return static
      * @throws FileException
      */
-    public function writeAll($data, bool $close = true): static
+    public function writeAll(mixed $data, bool $close = true): static
     {
         foreach ((array)$data as $line) {
             $this->writeln($line);
@@ -313,15 +319,13 @@ class Filer
      * @return string|null
      * @throws FileException
      */
-    public function read()
+    public function read(): mixed
     {
         ++$this->readingLine;
         if ($this->openingFile->eof()) {
             return null;
         }
-        if (($read = $this->openingFile->fgets()) === false) {
-            throw new FileException(sprintf('Could not read at line %d.', $this->readingLine()));
-        }
+        $read = $this->openingFile->fgets();
         if ($this->skipEmpty && null_or_empty_string($read)) {
             return $this->read();
         }

@@ -40,7 +40,7 @@ class PriceStreamOrchestrator extends Orchestrator
             ->allByHavingSubscribers(ExchangeFactory::enables());
     }
 
-    protected function subscribeTrading(array $trading)
+    protected function subscribeTrading(array $trading): void
     {
         if (!is_null($exchange = $trading['exchange'] ?? null)
             && !is_null($ticker = $trading['ticker'] ?? null)
@@ -56,7 +56,7 @@ class PriceStreamOrchestrator extends Orchestrator
         }
     }
 
-    protected function unsubscribeTrading(array $trading)
+    protected function unsubscribeTrading(array $trading): void
     {
         if (!is_null($exchange = $trading['exchange'] ?? null)
             && !is_null($ticker = $trading['ticker'] ?? null)
@@ -66,7 +66,7 @@ class PriceStreamOrchestrator extends Orchestrator
         }
     }
 
-    public function proceed()
+    public function proceed(): void
     {
         $this->streams = $this->fetchTradings()
             ->keyBy('exchange')

@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 class CompletePasswordReset
 {
-    public function __invoke(?StatefulGuard $guard, $user)
+    public function __invoke(?StatefulGuard $guard, $user): void
     {
         $user->setRememberToken(Str::random(60));
 

@@ -4,7 +4,7 @@ namespace App\Support\Log;
 
 use App\Support\Console\RunningCommand;
 use App\Support\Exceptions\ShellException;
-use App\Support\Http\Requests;
+use App\Support\Http\Concerns\Requests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Monolog\Formatter\LineFormatter as BaseLineFormatter;
@@ -48,7 +48,7 @@ class LineFormatter extends BaseLineFormatter
 
     protected function normalizeException(Throwable $e, int $depth = 0): string
     {
-        $normalized[] = '';
+        $normalized = [''];
         $normalized[] = '<Exception>';
         if ($e instanceof ShellException && ($output = $e->getOutput())) {
             $normalized[] = '[Output]';
@@ -85,7 +85,7 @@ class LineFormatter extends BaseLineFormatter
                             $trace['class'] ?? '',
                             $trace['type'] ?? '',
                             $trace['function'] ?? '',
-                            implode(', ', array_map(fn($arg) => describe_var($arg), $trace['args'] ?? []))
+                            implode(', ', array_map(static fn($arg) => describe_var($arg), $trace['args'] ?? []))
                         );
                     }
                     elseif (isset($trace['text'])) {
@@ -96,31 +96,29 @@ class LineFormatter extends BaseLineFormatter
                         );
                     }
                 }
+                elseif (isset($trace['function'])) {
+                    $normalized[] = sprintf(
+                        '#%s %s%s%s(%s)',
+                        $order,
+                        $trace['class'] ?? '',
+                        $trace['type'] ?? '',
+                        $trace['function'] ?? '',
+                        implode(', ', array_map(static fn($arg) => describe_var($arg), $trace['args'] ?? []))
+                    );
+                }
+                elseif (isset($trace['text'])) {
+                    $normalized[] = sprintf(
+                        '#%s %s',
+                        $order,
+                        $trace['text'] ?? ''
+                    );
+                }
                 else {
-                    if (isset($trace['function'])) {
-                        $normalized[] = sprintf(
-                            '#%s %s%s%s(%s)',
-                            $order,
-                            $trace['class'] ?? '',
-                            $trace['type'] ?? '',
-                            $trace['function'] ?? '',
-                            implode(', ', array_map(fn($arg) => describe_var($arg), $trace['args'] ?? []))
-                        );
-                    }
-                    elseif (isset($trace['text'])) {
-                        $normalized[] = sprintf(
-                            '#%s %s',
-                            $order,
-                            $trace['text'] ?? ''
-                        );
-                    }
-                    else {
-                        $normalized[] = sprintf(
-                            '#%s %s',
-                            $order,
-                            json_encode_readable($trace)
-                        );
-                    }
+                    $normalized[] = sprintf(
+                        '#%s %s',
+                        $order,
+                        json_encode_readable($trace)
+                    );
                 }
             }
         }

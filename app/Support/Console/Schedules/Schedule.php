@@ -2,34 +2,32 @@
 
 namespace App\Support\Console\Schedules;
 
-use App\Support\ClassTrait;
-use App\Support\Client\InternalSettings;
+use App\Support\Client\Concerns\InternalSettings;
+use App\Support\Concerns\ClassHelper;
 use App\Support\Facades\App;
 use App\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 
 abstract class Schedule
 {
-    use ClassTrait, InternalSettings;
+    use ClassHelper, InternalSettings;
 
     public function __construct()
     {
-        if (App::runningSolelyInConsole()) {
-            if ($runningCommand = Artisan::lastRunningCommand()) {
-                $this->setForcedInternalSettings($runningCommand->settings());
-            }
+        if (App::runningSolelyInConsole() && !is_null($runningCommand = Artisan::lastRunningCommand())) {
+            $this->setForcedInternalSettings($runningCommand->settings());
         }
     }
 
-    protected function handleBefore()
+    protected function handleBefore(): void
     {
     }
 
-    protected function handleAfter()
+    protected function handleAfter(): void
     {
     }
 
-    protected abstract function handling();
+    abstract protected function handling(): void;
 
     final public function __invoke(): static
     {

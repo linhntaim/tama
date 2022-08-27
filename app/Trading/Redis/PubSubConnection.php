@@ -7,13 +7,13 @@ use App\Trading\Redis\Resp\RespData;
 
 class PubSubConnection extends Connection
 {
-    protected function emitRespData(RespData $respData)
+    protected function emitRespData(RespData $respData): void
     {
         parent::emitRespData($respData);
 
         if ($respData instanceof RespArray) {
             $output = $respData->output();
-            if (count($output) >= 3 && $output[0] == 'message') {
+            if (count($output) >= 3 && $output[0] === 'message') {
                 $this->emit(sprintf('channel:%s', $output[1]), [$output[2]]);
                 $this->emit('channel', [$output[1], $output[2]]);
             }

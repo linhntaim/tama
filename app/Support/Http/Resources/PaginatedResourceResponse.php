@@ -2,6 +2,8 @@
 
 namespace App\Support\Http\Resources;
 
+use App\Support\Http\Resources\Concerns\ResourceResponseWrapper;
+use App\Support\Http\Resources\Contracts\ArrayResponsible;
 use Illuminate\Http\Resources\Json\PaginatedResourceResponse as BasePaginatedResourceResponse;
 
 class PaginatedResourceResponse extends BasePaginatedResourceResponse implements ArrayResponsible

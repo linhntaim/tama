@@ -12,7 +12,7 @@ class CacheTableCommand extends BaseCacheTableCommand
      *
      * @throws FileNotFoundException
      */
-    public function handle()
+    public function handle(): void
     {
         $table = $this->laravel['config']['cache.stores.database.table'];
         $lockTable = $this->laravel['config']['cache.stores.database.lock_table'] ?? 'cache_locks';
@@ -39,7 +39,7 @@ class CacheTableCommand extends BaseCacheTableCommand
      *
      * @throws FileNotFoundException
      */
-    protected function replaceMigration(string $path, string $table, string $lockTable)
+    protected function replaceMigration(string $path, string $table, string $lockTable): void
     {
         $stub = str_replace(
             ['{{table}}', '{{lock_table}}'], [$table, $lockTable], $this->files->get(base_path('stubs/migration.cache.stub'))

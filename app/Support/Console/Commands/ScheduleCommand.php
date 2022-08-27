@@ -34,7 +34,7 @@ abstract class ScheduleCommand extends Command
         return $this->exitSuccess();
     }
 
-    protected function runSchedule()
+    protected function runSchedule(): void
     {
         $this->getSchedule()?->__invoke();
     }

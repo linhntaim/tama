@@ -16,7 +16,7 @@ abstract class ParallelBatchJob extends SingleBatchJob
         return [$batchIndex];
     }
 
-    protected abstract function batchTotal(): int;
+    abstract protected function batchTotal(): int;
 
     protected function handleBatchByIndex($batchIndex): static
     {
@@ -24,7 +24,7 @@ abstract class ParallelBatchJob extends SingleBatchJob
         return $this;
     }
 
-    final protected function handling()
+    final protected function handling(): void
     {
         if ($this->batchIndex() < 0) {
             $this->parallelHandleBatch();
@@ -43,7 +43,7 @@ abstract class ParallelBatchJob extends SingleBatchJob
         return $indices;
     }
 
-    protected function parallelHandleBatch()
+    protected function parallelHandleBatch(): void
     {
         foreach ($this->parallelBatchIndices() as $batchIndex) {
             $this->handleBatchByIndex($batchIndex);

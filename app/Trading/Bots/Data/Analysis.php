@@ -44,7 +44,7 @@ class Analysis extends ArrayReader
     {
         $types = array_merge((array)$types, $moreTypes);
         return $this->getSignals()->contains(function (Signal $signal) use ($types) {
-            return in_array($signal->getType(), (array)$types);
+            return in_array($signal->getType(), $types, true);
         });
     }
 }

@@ -29,7 +29,7 @@ class LatestPriceCommand extends Command
 
     protected function price(): array
     {
-        return json_decode_array(base64_decode($this->argument('price')));
+        return json_decode_array(base64_decode($this->argument('price'))) ?: [];
     }
 
     /**

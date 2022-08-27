@@ -25,14 +25,14 @@ abstract class SingleBatchJob extends BatchJob
         return $this->batchCount ?: ($this->batchCount = parent::batchCount($items));
     }
 
-    protected abstract function batchByIndex(int $batchIndex): iterable;
+    abstract protected function batchByIndex(int $batchIndex): iterable;
 
     final protected function batch(): iterable
     {
         return $this->batchByIndex($this->batchIndex());
     }
 
-    protected function handling()
+    protected function handling(): void
     {
         if ($this->batchHandled($items = $this->batch())) {
             $this->handleBatch($items);

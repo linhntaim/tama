@@ -3,10 +3,10 @@
 namespace App\Support\Http\Controllers\Api\Auth;
 
 use App\Support\Http\Controllers\ApiController;
+use App\Support\Http\Resources\Concerns\ResourceTransformer;
 use App\Support\Http\Resources\ModelResource;
 use App\Support\Http\Resources\Resource;
-use App\Support\Http\Resources\ResourceTransformer;
-use App\Support\Models\IHasApiTokens;
+use App\Support\Models\Contracts\HasApiTokens as HasApiTokensContract;
 use App\Support\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Pipeline;
@@ -33,19 +33,19 @@ abstract class AuthenticatedTokenController extends ApiController
         return (new Pipeline(app()))->send($request)->through(array_filter($this->loginPipes()));
     }
 
-    protected abstract function loginPipes(): array;
+    abstract protected function loginPipes(): array;
 
-    protected function loginUser(LoginRequest $request): User|IHasApiTokens
+    protected function loginUser(LoginRequest $request): User|HasApiTokensContract
     {
         return $request->user();
     }
 
-    protected function loginUserTransform(LoginRequest $request, User|IHasApiTokens $user): array
+    protected function loginUserTransform(LoginRequest $request, User|HasApiTokensContract $user): array
     {
         return $this->resourceTransform($user, $this->modelResourceClass, $request);
     }
 
-    protected function loginTokenTransform(LoginRequest $request, User|IHasApiTokens $user): array
+    protected function loginTokenTransform(LoginRequest $request, User|HasApiTokensContract $user): array
     {
         return $this->resourceTransform($user->retrieveToken(), $this->tokenResourceClass, $request);
     }
@@ -68,11 +68,11 @@ abstract class AuthenticatedTokenController extends ApiController
     #endregion
 
     #region Logout
-    public abstract function destroyAllTokens(Request $request);
+    abstract protected function destroyAllTokens(Request $request): void;
 
-    public abstract function destroyToken(Request $request, $token);
+    abstract protected function destroyToken(Request $request, $token): void;
 
-    protected abstract function currentToken(Request $request): mixed;
+    abstract protected function currentToken(Request $request): mixed;
 
     protected function tokenForDestroying(Request $request, $currentToken)
     {

@@ -61,8 +61,8 @@ class EnvironmentFile
         elseif (is_bool($value)) {
             $value = $value ? 'true' : 'false';
         }
-        if (mb_strpos($value, ' ') !== false) {
-            $value = mb_strpos($value, '"') !== false
+        if (str_contains($value, ' ')) {
+            $value = str_contains($value, '"')
                 ? sprintf('"%s"', str_replace('"', '\\"', $value))
                 : sprintf('"%s"', $value);
         }

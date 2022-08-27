@@ -1,11 +1,12 @@
 {
-    "name": "laravel/laravel",
+    "name": "linhntaim/tama",
     "type": "project",
-    "description": "The Laravel Framework.",
-    "keywords": ["framework", "laravel"],
+    "description": "A cryptocurrency trading bot.",
+    "keywords": ["cryptocurrency", "trading", "bot", "framework", "laravel", "starter"],
     "license": "MIT",
     "require": {
         "php": "^8.0.2",
+        "ext-curl": "*",
         "ext-fileinfo": "*",
         "ext-pdo": "*",
         "ext-trader": "*",
@@ -14,8 +15,8 @@
         "jenssegers/agent": "^2.6",
         "laravel-notification-channels/telegram": "^2.1",
         "laravel/fortify": "^1.13",
-        "laravel/framework": "^9.11",
-        "laravel/sanctum": "^2.14.1",
+        "laravel/framework": "^9.19",
+        "laravel/sanctum": "^3.0",
         "laravel/tinker": "^2.7",
         "ratchet/pawl": "^0.4.1",
         "react/async": "^4.0",
@@ -24,6 +25,7 @@
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",
+        "laravel/pint": "^1.0",
         "laravel/sail": "^1.0.1",
         "mockery/mockery": "^1.4.4",
         "nunomaduro/collision": "^6.1",
@@ -49,10 +51,10 @@
     "scripts": {
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover --ansi"
+            "@php artisan package:discover --ansi --off-shout-out"
         ],
         "post-update-cmd": [
-            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force --off-shout-out"
         ],
         "post-root-package-install": [
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
@@ -69,7 +71,10 @@
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
-        "sort-packages": true
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
     },
     "minimum-stability": "dev",
     "prefer-stable": true

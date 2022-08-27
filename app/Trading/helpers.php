@@ -14,8 +14,8 @@ function trading_cfg_redis_pubsub_connection(): string
 function trading_cfg_exchange_disables(): array
 {
     return array_filter(
-        array_map(function ($exchange) {
-            return strlen(($exchange == trim($exchange))) == 0 ? null : $exchange;
+        array_map(static function ($exchange) {
+            return ($exchange = trim($exchange)) === '' ? null : $exchange;
         }, explode(',', trading_cfg('exchange.disables') ?: ''))
     );
 }

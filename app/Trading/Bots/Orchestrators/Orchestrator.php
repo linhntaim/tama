@@ -29,19 +29,19 @@ class Orchestrator
         return (new TradingProvider())->allByHavingSubscribers(ExchangeFactory::enables());
     }
 
-    public function proceed()
+    public function proceed(): void
     {
         $this->broadcast();
     }
 
-    protected function broadcast()
+    protected function broadcast(): void
     {
         foreach ($this->fetchTradings() as $trading) {
             $this->broadcastTrading($trading);
         }
     }
 
-    protected function broadcastTrading(Trading $trading)
+    protected function broadcastTrading(Trading $trading): void
     {
         try {
             (new BotBroadcaster($trading, $this->actions))->broadcast();

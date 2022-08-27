@@ -31,6 +31,11 @@ class AdvancedRequest
         return isset($this->request->{$name});
     }
 
+    public function __set(string $name, $value): void
+    {
+        $this->request->offsetSet($name, $value);
+    }
+
     public function __get(string $name)
     {
         return $this->request->{$name};
@@ -56,7 +61,7 @@ class AdvancedRequest
     public function sortBy(string $default, array $allowed = []): ?string
     {
         if ($this->if('sort_by', $by, true)) {
-            return !count($allowed) || in_array($by, $allowed) ? $by : null;
+            return !count($allowed) || in_array($by, $allowed, true) ? $by : null;
         }
         return $default;
     }
@@ -109,9 +114,7 @@ class AdvancedRequest
 
             public function __toString(): string
             {
-                $nameLength = max(array_map(function (BagString $bagString) {
-                    return $bagString->getNameLength();
-                }, $this->bagStrings));
+                $nameLength = max(array_map(static fn(BagString $bagString) => $bagString->getNameLength(), $this->bagStrings));
                 $stringified = [];
                 foreach ($this->bagStrings as $group => $bagString) {
                     $stringified[] = sprintf('[%s]', $group);

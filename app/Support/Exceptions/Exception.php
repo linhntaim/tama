@@ -32,7 +32,7 @@ class Exception extends \Exception implements HttpExceptionInterface
             }
             else {
                 $this->message = $previous->getMessage();
-                $this->messages = $previous instanceof Exception ?
+                $this->messages = $previous instanceof self ?
                     $previous->getMessages() : [$this->getMessage()];
             }
         }

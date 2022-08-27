@@ -2,6 +2,10 @@
 
 namespace App\Support\Http\Resources;
 
+use App\Support\Http\Resources\Concerns\ResourceTransformer;
+use App\Support\Http\Resources\Concerns\ResourceWrapper;
+use App\Support\Http\Resources\Contracts\ArrayResponsibleResource;
+use App\Support\Http\Resources\Contracts\WrappedResource;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -10,7 +14,7 @@ use Illuminate\Pagination\AbstractCursorPaginator;
 use Illuminate\Pagination\AbstractPaginator;
 use JsonSerializable;
 
-class ResourceCollection extends BaseResourceCollection implements IWrappedResource, IArrayResponsibleResource
+class ResourceCollection extends BaseResourceCollection implements WrappedResource, ArrayResponsibleResource
 {
     use ResourceWrapper, ResourceTransformer;
 
