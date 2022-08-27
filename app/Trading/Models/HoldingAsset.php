@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Trading\Models;
 
 use App\Support\Models\Model;
 

@@ -2,18 +2,19 @@
 
 namespace App\Providers;
 
-use App\Events\CoinIdentificationEvent;
 use App\Events\Trial\Event as TrialEvent;
-use App\Listeners\CoinIdentificationListener;
 use App\Listeners\Trial\Listener as TrialListener;
 use App\Listeners\Trial\QueueableListener as TrialQueueableListener;
 use App\Support\Auth\Listeners\SendEmailWelcomeNotification;
 use App\Support\Facades\App;
 use App\Support\Listeners\OnQueryExecuted;
+use App\Trading\Events\CoinIdentificationEvent;
+use App\Trading\Listeners\CoinIdentificationListener;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+
 // use Illuminate\Support\Facades\Event;
 
 class EventServiceProvider extends ServiceProvider

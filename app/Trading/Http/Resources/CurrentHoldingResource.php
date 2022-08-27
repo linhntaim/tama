@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Resources;
+namespace App\Trading\Http\Resources;
 
-use App\Models\Holding;
 use App\Support\Http\Resources\Concerns\ResourceTransformer;
 use App\Support\Http\Resources\ModelResource;
+use App\Trading\Models\Holding;
 use Illuminate\Contracts\Support\Arrayable;
 use JsonSerializable;
 

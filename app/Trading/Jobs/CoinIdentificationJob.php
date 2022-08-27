@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Trading\Jobs;
 
-use App\Events\CoinIdentificationEvent;
 use App\Support\Jobs\ContinuousBatchJob;
+use App\Trading\Events\CoinIdentificationEvent;
 
 abstract class CoinIdentificationJob extends ContinuousBatchJob
 {

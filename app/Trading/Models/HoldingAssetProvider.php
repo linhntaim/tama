@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Models;
+namespace App\Trading\Models;
 
+use App\Models\User;
 use App\Support\Models\Model;
 use App\Support\Models\ModelProvider;
 use App\Support\Models\QueryConditions\WhereCondition;

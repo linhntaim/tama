@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Events;
+namespace App\Trading\Events;
 
 use App\Support\Events\Event;
 

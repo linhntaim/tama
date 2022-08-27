@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Api\Account;
+namespace App\Trading\Http\Controllers\Api\Account;
 
-use App\Http\Resources\CurrentHoldingResource;
-use App\Models\HoldingProvider;
 use App\Support\Http\Controllers\ModelApiController;
 use App\Support\Http\Resources\Concerns\ResourceTransformer;
+use App\Trading\Http\Resources\CurrentHoldingResource;
+use App\Trading\Models\HoldingProvider;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;

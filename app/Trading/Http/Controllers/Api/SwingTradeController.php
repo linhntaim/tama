@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Trading\Http\Controllers\Api;
 
 use App\Support\Http\Controllers\ApiController;
 use App\Support\Services\Binance\Api\V3\MarketDataApi;

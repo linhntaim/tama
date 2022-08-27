@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Console\Commands\Coin;
+namespace App\Trading\Console\Commands\Coin;
 
-use App\Jobs\CoinGeckoIdentificationJob;
-use App\Jobs\CoinMarketCapIdentificationJob;
 use App\Support\Console\Commands\Command;
+use App\Trading\Jobs\CoinGeckoIdentificationJob;
+use App\Trading\Jobs\CoinMarketCapIdentificationJob;
 
 class IdentificationCommand extends Command
 {

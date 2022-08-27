@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Listeners;
+namespace App\Trading\Listeners;
 
-use App\Events\CoinIdentificationEvent;
 use App\Support\Events\Event;
 use App\Support\Listeners\Listener;
+use App\Trading\Events\CoinIdentificationEvent;
 
 class CoinIdentificationListener extends Listener
 {

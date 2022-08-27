@@ -1,25 +1,25 @@
 <?php
 
 use App\Http\Controllers\Api\Account\AccountController;
-use App\Http\Controllers\Api\Account\HoldingAssetController as AccountHoldingAssetController;
-use App\Http\Controllers\Api\Account\HoldingController as AccountHoldingController;
 use App\Http\Controllers\Api\Auth\NewPasswordController;
 use App\Http\Controllers\Api\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Api\Auth\RegisteredUserController;
 use App\Http\Controllers\Api\Auth\Sanctum\AuthenticatedTokenController as SanctumAuthenticatedTokenController;
 use App\Http\Controllers\Api\DataExportController;
 use App\Http\Controllers\Api\EncryptController;
-use App\Http\Controllers\Api\ExchangeController;
 use App\Http\Controllers\Api\FileController;
 use App\Http\Controllers\Api\PrerequisiteController;
-use App\Http\Controllers\Api\SwingTradeController;
 use App\Http\Controllers\Api\Trial\EventController as TrialEventController;
 use App\Http\Controllers\Api\Trial\FileController as TrialFileController;
 use App\Http\Controllers\Api\Trial\JobController as TrialJobController;
 use App\Http\Controllers\Api\Trial\UserController as TrialUserController;
 use App\Http\Controllers\Api\WelcomeController;
 use App\Support\Http\Middleware\DisableInProduction;
+use App\Trading\Http\Controllers\Api\Account\HoldingAssetController as AccountHoldingAssetController;
+use App\Trading\Http\Controllers\Api\Account\HoldingController as AccountHoldingController;
+use App\Trading\Http\Controllers\Api\ExchangeController;
 use App\Trading\Http\Controllers\Api\Integration\Telegram\BotController as TelegramBotController;
+use App\Trading\Http\Controllers\Api\SwingTradeController;
 use Illuminate\Support\Facades\Route;
 
 /*

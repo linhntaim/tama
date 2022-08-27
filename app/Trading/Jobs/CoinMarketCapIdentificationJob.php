@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Trading\Jobs;
 
 use App\Support\Services\CoinMarketCap\Api\V1\CryptocurrencyApi as CoinMarketCapCryptocurrencyApi;
 
