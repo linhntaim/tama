@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trading\Telegram;
+namespace App\Trading\Services\Telegram;
 
 class MarkdownConsole extends MarkdownString
 {

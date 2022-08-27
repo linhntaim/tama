@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Support\Services\Binance\Api\V3;
+namespace App\Trading\Services\Binance\Api\V3;
 
-use App\Support\Services\Binance\Api\Api as BaseApi;
+use App\Trading\Services\Binance\Api\Api as BaseApi;
 
 class Api extends BaseApi
 {

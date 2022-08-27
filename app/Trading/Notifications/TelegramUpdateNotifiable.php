@@ -3,7 +3,7 @@
 namespace App\Trading\Notifications;
 
 use App\Support\Notifications\AnonymousNotifiable;
-use App\Trading\Telegram\Update as TelegramUpdate;
+use App\Trading\Services\Telegram\Update as TelegramUpdate;
 use BadMethodCallException;
 
 /**

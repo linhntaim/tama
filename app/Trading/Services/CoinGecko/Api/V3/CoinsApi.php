@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support\Services\CoinGecko\Api\V3;
+namespace App\Trading\Services\CoinGecko\Api\V3;
 
 class CoinsApi extends Api
 {

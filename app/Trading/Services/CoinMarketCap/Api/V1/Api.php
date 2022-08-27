@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support\Services\CoinMarketCap\Api\V1;
+namespace App\Trading\Services\CoinMarketCap\Api\V1;
 
 use App\Support\Services\Service;
 use Illuminate\Http\Client\PendingRequest;

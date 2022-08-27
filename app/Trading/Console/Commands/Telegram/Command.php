@@ -3,7 +3,7 @@
 namespace App\Trading\Console\Commands\Telegram;
 
 use App\Support\Console\Commands\Command as BaseCommand;
-use App\Trading\Telegram\Update as TelegramUpdate;
+use App\Trading\Services\Telegram\Update as TelegramUpdate;
 use InvalidArgumentException;
 use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputOption;

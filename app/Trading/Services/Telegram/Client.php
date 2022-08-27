@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trading\Telegram;
+namespace App\Trading\Services\Telegram;
 
 use Exception;
 use GuzzleHttp\Exception\ClientException;

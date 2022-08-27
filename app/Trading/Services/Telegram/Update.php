@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trading\Telegram;
+namespace App\Trading\Services\Telegram;
 
 use App\Support\ArrayReader;
 

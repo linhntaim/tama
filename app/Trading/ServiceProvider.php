@@ -2,7 +2,7 @@
 
 namespace App\Trading;
 
-use App\Trading\Telegram\Client;
+use App\Trading\Services\Telegram\Client;
 use GuzzleHttp\Client as HttpClient;
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
 use NotificationChannels\Telegram\Telegram;

@@ -2,7 +2,7 @@
 
 namespace App\Trading\Jobs;
 
-use App\Support\Services\CoinGecko\Api\V3\CoinsApi as CoinGeckoCoinsApi;
+use App\Trading\Services\CoinGecko\Api\V3\CoinsApi as CoinGeckoCoinsApi;
 
 class CoinGeckoIdentificationJob extends CoinIdentificationJob
 {

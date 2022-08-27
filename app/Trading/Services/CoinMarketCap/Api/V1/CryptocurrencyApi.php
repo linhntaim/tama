@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support\Services\CoinMarketCap\Api\V1;
+namespace App\Trading\Services\CoinMarketCap\Api\V1;
 
 class CryptocurrencyApi extends Api
 {

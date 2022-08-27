@@ -3,7 +3,7 @@
 namespace App\Trading\Notifications\Telegram;
 
 use App\Support\Notifications\Contracts\Notifiable as NotifiableContract;
-use App\Trading\Telegram\MarkdownConsole;
+use App\Trading\Services\Telegram\MarkdownConsole;
 
 class ConsoleNotification extends TextNotification
 {

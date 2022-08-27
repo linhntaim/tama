@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support\Services\Binance\Api\V3;
+namespace App\Trading\Services\Binance\Api\V3;
 
 use App\Support\Trading\Candle;
 use App\Support\Trading\Candles;

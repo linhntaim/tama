@@ -2,7 +2,7 @@
 
 namespace App\Trading\Jobs;
 
-use App\Support\Services\CoinMarketCap\Api\V1\CryptocurrencyApi as CoinMarketCapCryptocurrencyApi;
+use App\Trading\Services\CoinMarketCap\Api\V1\CryptocurrencyApi as CoinMarketCapCryptocurrencyApi;
 
 class CoinMarketCapIdentificationJob extends CoinIdentificationJob
 {

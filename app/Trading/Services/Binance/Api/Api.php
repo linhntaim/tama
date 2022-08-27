@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support\Services\Binance\Api;
+namespace App\Trading\Services\Binance\Api;
 
 use App\Support\Services\Service;
 
