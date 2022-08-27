@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support\Trading;
+namespace App\Trading\Support;
 
 use Illuminate\Contracts\Support\Arrayable;
 use JsonSerializable;

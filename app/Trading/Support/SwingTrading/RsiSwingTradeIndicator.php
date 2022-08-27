@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Support\Trading\SwingTrading;
+namespace App\Trading\Support\SwingTrading;
 
-use App\Support\Trading\Candles;
+use App\Trading\Support\Candles;
 
 class RsiSwingTradeIndicator extends SwingTradeIndicator
 {

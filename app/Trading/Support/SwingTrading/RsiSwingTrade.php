@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support\Trading\SwingTrading;
+namespace App\Trading\Support\SwingTrading;
 
 class RsiSwingTrade extends SwingTrade
 {

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Support\Trading\SwingTrading;
+namespace App\Trading\Support\SwingTrading;
 
-use App\Support\Trading\PricedValue;
+use App\Trading\Support\PricedValue;
 
 class RsiValue extends PricedValue
 {

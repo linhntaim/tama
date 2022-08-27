@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support\Trading;
+namespace App\Trading\Support;
 
 use Carbon\Carbon;
 use Carbon\CarbonTimeZone;

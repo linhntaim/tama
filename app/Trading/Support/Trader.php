@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support\Trading;
+namespace App\Trading\Support;
 
 use BadMethodCallException;
 use Illuminate\Support\Str;

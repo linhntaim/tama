@@ -2,8 +2,8 @@
 
 namespace App\Trading\Services\Binance\Api\V3;
 
-use App\Support\Trading\Candle;
-use App\Support\Trading\Candles;
+use App\Trading\Support\Candle;
+use App\Trading\Support\Candles;
 
 class MarketDataApi extends Api
 {

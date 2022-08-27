@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Support\Trading\SwingTrading;
+namespace App\Trading\Support\SwingTrading;
 
-use App\Support\Trading\Candles;
-use App\Support\Trading\Trader;
+use App\Trading\Support\Candles;
+use App\Trading\Support\Trader;
 
 abstract class SwingTradeIndicator
 {

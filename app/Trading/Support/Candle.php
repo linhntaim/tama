@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support\Trading;
+namespace App\Trading\Support;
 
 class Candle
 {
