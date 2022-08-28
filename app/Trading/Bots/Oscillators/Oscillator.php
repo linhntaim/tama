@@ -96,7 +96,7 @@ abstract class Oscillator
 
     protected function input(array $inputs): Packet
     {
-        return take(new Packet(), static function (Packet $packet) use ($inputs) {
+        return tap(new Packet(), static function (Packet $packet) use ($inputs) {
             foreach ($inputs as $name => $value) {
                 $packet->set('inputs.' . $name, $value);
             }

@@ -65,10 +65,10 @@ trait ResourceTransformer
 
     protected function resourceTransform($resource, string $resourceClass = Resource::class, ?Request $request = null, ?string $wrap = null): ?array
     {
-        return modify(
+        return with(
             $this->resourceFrom($resource, $resourceClass),
-            static function (ArrayResponsibleResource|WrappedResource|null $resource) use ($request, $wrap) {
-                return is_null($resource) ? null : $resource->setWrapped($wrap)->toArrayResponse($request);
+            static function (ArrayResponsibleResource|WrappedResource $resource) use ($request, $wrap) {
+                return $resource->setWrapped($wrap)->toArrayResponse($request);
             }
         );
     }

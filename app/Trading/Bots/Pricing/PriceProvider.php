@@ -143,7 +143,7 @@ abstract class PriceProvider
                 $interval->getPreviousLatestTimes(count($cachedRecentPrices))
             );
         }
-        return take($this->recentAt($ticker, $interval), function (PriceCollection $recent) use ($ticker, $interval, $latestTime) {
+        return tap($this->recentAt($ticker, $interval), function (PriceCollection $recent) use ($ticker, $interval, $latestTime) {
             $this->recentToCache(
                 $ticker,
                 $interval,

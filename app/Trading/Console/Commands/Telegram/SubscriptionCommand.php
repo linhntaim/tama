@@ -23,7 +23,7 @@ class SubscriptionCommand extends Command
 
     protected function page(): int
     {
-        return modify((int)($this->option('page') ?? 1), static fn($page) => $page <= 0 ? 1 : $page);
+        return with((int)($this->option('page') ?? 1), static fn($page) => $page <= 0 ? 1 : $page);
     }
 
     protected function findUser(): ?User
