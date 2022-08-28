@@ -30,8 +30,8 @@ abstract class ImportCommand extends Command
 
     protected function import(): Import
     {
-        return modify($this->importClass(), function ($class) {
-            return modify(new $class(...$this->importArguments()), function (Import $import) {
+        return transform($this->importClass(), function ($class) {
+            return with(new $class(...$this->importArguments()), function (Import $import) {
                 if ($import instanceof BatchModelCsvImport) {
                     $import->perWrite($this->perWrite());
                 }
