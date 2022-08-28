@@ -162,12 +162,12 @@ class SubscribeCommand extends Command
 
     protected function createUser(string $name, string $email, string $providerId): User
     {
-        return modify(
+        return with(
             ($userProvider = new UserProvider())
                 ->notStrict()
                 ->firstByEmail($email),
-            static function ($user) use ($userProvider, $name, $email, $providerId) {
-                return take(
+            static function (?User $user) use ($userProvider, $name, $email, $providerId) {
+                return tap(
                     is_null($user) ? $userProvider->createWithAttributes([
                         'email' => $email,
                         'name' => $name,
@@ -188,11 +188,11 @@ class SubscribeCommand extends Command
 
     protected function createTrading(array $botOptions = []): Trading
     {
-        return modify(
+        return with(
             ($tradingProvider = new TradingProvider())
                 ->notStrict()
                 ->firstBySlug($slug = ($bot = BotFactory::create($this->bot(), $this->mergeBotOptions($botOptions)))->asSlug()),
-            static function ($trading) use ($tradingProvider, $bot, $slug) {
+            static function (?Trading $trading) use ($tradingProvider, $bot, $slug) {
                 return is_null($trading)
                     ? $tradingProvider->createWithAttributes([
                         'slug' => $slug,

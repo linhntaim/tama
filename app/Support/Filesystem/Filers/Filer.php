@@ -49,8 +49,8 @@ class Filer
     public static function from(string|SplFileInfo|Storage|Filer|File $file): ?static
     {
         if ($file instanceof File) {
-            return take(new static(), static function (Filer $filer) use ($file) {
-                $filer->storage = take(
+            return tap(new static(), static function (Filer $filer) use ($file) {
+                $filer->storage = tap(
                     StorageFactory::create($file->storage),
                     static function (Storage $storage) use ($file) {
                         $storage
@@ -65,17 +65,17 @@ class Filer
             });
         }
         if ($file instanceof self) {
-            return take(new static(), static function (Filer $filer) use ($file) {
+            return tap(new static(), static function (Filer $filer) use ($file) {
                 $filer->storage = $file->storage;
             });
         }
         if ($file instanceof Storage) {
-            return take(new static(), static function (Filer $filer) use ($file) {
+            return tap(new static(), static function (Filer $filer) use ($file) {
                 $filer->storage = $file;
             });
         }
         if ($file instanceof UploadedFile) {
-            return take(
+            return tap(
                 new static(),
                 /**
                  * @throws FileNotFoundException
@@ -96,7 +96,7 @@ class Filer
             InternalStorage::class,
         ] as $storageClass) {
             if (!is_null($storageClass) && ($storage = new $storageClass())->setFile($file)->has()) {
-                return take(new static(), static function (Filer $filer) use ($storage) {
+                return tap(new static(), static function (Filer $filer) use ($storage) {
                     $filer->storage = $storage;
                 });
             }
@@ -109,7 +109,7 @@ class Filer
      */
     public static function create(?string $in = null, ?string $name = null, ?string $extension = null): static
     {
-        return take(new static(), static function (Filer $filer) use ($in, $name, $extension) {
+        return tap(new static(), static function (Filer $filer) use ($in, $name, $extension) {
             $filer->storage = StorageFactory::localStorage()->create($in, $name, $extension);
         });
     }

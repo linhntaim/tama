@@ -38,7 +38,7 @@ class Client extends Telegram
         $apiUri = sprintf('%s/bot%s/%s', $this->apiBaseUri, $this->token, $endpoint);
 
         try {
-            return take(
+            return tap(
                 $this->httpClient()->post($apiUri, [
                     $multipart ? 'multipart' : 'form_params' => $params,
                 ]),

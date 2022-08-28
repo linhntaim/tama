@@ -108,7 +108,7 @@ abstract class Notification extends BaseNotification
 
     public function toMail(NotifiableContract $notifiable): Mailable|MailMessage|null
     {
-        return modify($this->dataMail($notifiable), function ($mailable) use ($notifiable) {
+        return with($this->dataMail($notifiable), function ($mailable) use ($notifiable) {
             if ($mailable instanceof Mailable) {
                 $mailable->to($this->dataMailRecipients($notifiable));
             }

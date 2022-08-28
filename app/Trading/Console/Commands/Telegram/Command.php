@@ -46,7 +46,7 @@ abstract class Command extends BaseCommand
 
     public function getDefinitionForDescriptor(): InputDefinition
     {
-        return $this->definitionForDescriptor ?? $this->definitionForDescriptor = modify(new InputDefinition(), function (InputDefinition $inputDefinition) {
+        return $this->definitionForDescriptor ?? $this->definitionForDescriptor = with(new InputDefinition(), function (InputDefinition $inputDefinition) {
             $inputDefinition->setArguments($this->getNativeDefinition()->getArguments());
             $inputDefinition->setOptions(array_filter($this->getNativeDefinition()->getOptions(), static function (InputOption $option) {
                 return !in_array($option->getName(), [
