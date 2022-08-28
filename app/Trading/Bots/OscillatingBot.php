@@ -33,13 +33,12 @@ class OscillatingBot extends Bot
         );
     }
 
-    public function asSlug(): string
+    protected function optionsAsSlug(): string
     {
-        return implode('-', [
-            $this->getName(),
-            ...parent::options(),
-            $this->oscillator()->asSlug(),
-        ]);
+        return $this->slugConcat(...with(array_values(parent::options()), function ($options) {
+            $options[] = $this->oscillator()->asSlug();
+            return $options;
+        }));
     }
 
     protected function indicating(PriceCollection $prices, int $latest = 0): Collection

@@ -14,7 +14,7 @@ use RuntimeException;
 
 abstract class Bot
 {
-    use ClassHelper;
+    use ClassHelper, BotSlug;
 
     public const NAME = '';
 
@@ -87,12 +87,17 @@ abstract class Bot
         ];
     }
 
+    protected function optionsAsSlug(): string
+    {
+        return $this->slugConcat(...$this->options());
+    }
+
     public function asSlug(): string
     {
-        return implode('-', [
+        return $this->slugConcat(
             $this->getName(),
-            ...$this->options(),
-        ]);
+            $this->optionsAsSlug(),
+        );
     }
 
     /**
