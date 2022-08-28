@@ -366,13 +366,6 @@ if (!function_exists('mkdir_for_writing')) {
     }
 }
 
-if (!function_exists('modify')) {
-    function modify(mixed $value, ?Closure $callback = null): mixed
-    {
-        return is_null($callback) ? $value : $callback($value);
-    }
-}
-
 if (!function_exists('name_starter')) {
     function name_starter(string $name, string $separator = '_'): string
     {
@@ -464,19 +457,6 @@ if (!function_exists('stringable')) {
     function stringable(mixed $value): bool
     {
         return is_string($value) || (is_object($value) && method_exists($value, '__toString'));
-    }
-}
-
-if (!function_exists('take')) {
-    function take(mixed $value, ?Closure $callback = null): mixed
-    {
-        if (is_null($callback)) {
-            return $value;
-        }
-
-        $callback($value);
-
-        return $value;
     }
 }
 

@@ -182,7 +182,7 @@ abstract class ModelProvider
     public function __call(string $name, array $arguments)
     {
         if (property_exists($this, $name)) {
-            return take($this->{$name}, function () use ($name, $arguments) {
+            return tap($this->{$name}, function () use ($name, $arguments) {
                 $this->{$name} = $arguments[0] ?? null;
             });
         }

@@ -67,7 +67,7 @@ class MarketDataApi extends Api
         ?int   $limit = null,
     ): bool|Candles
     {
-        return modify(
+        return transform(
             $this
                 ->get('klines', filled_array(get_defined_vars(), [
                     'limit' => 500,

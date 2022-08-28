@@ -27,8 +27,8 @@ abstract class ExportCommand extends Command
 
     protected function export(): Export
     {
-        return modify($this->exportClass(), function ($class) {
-            return modify(new $class(...$this->exportArguments()), function (Export $export) {
+        return transform($this->exportClass(), function ($class) {
+            return with(new $class(...$this->exportArguments()), function (Export $export) {
                 if ($export instanceof ModelCsvExport) {
                     $export->perRead($this->perRead());
                 }

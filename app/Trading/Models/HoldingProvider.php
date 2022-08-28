@@ -36,7 +36,7 @@ class HoldingProvider extends ModelProvider
 
             if (!is_null($assets)) {
                 if (count($assets) > 0) {
-                    take(new HoldingAssetProvider(), function (HoldingAssetProvider $holdingAssetProvider) use ($assets) {
+                    tap(new HoldingAssetProvider(), function (HoldingAssetProvider $holdingAssetProvider) use ($assets) {
                         $ids = [];
                         foreach ($assets as $index => $asset) {
                             $ids[] = $holdingAssetProvider->updateOrCreateWithAttributes([

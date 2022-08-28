@@ -47,7 +47,7 @@ class TradesCommand extends Command
 
     protected function latest(): int
     {
-        return modify((int)($this->option('latest') ?? 1), static function (int $latest) {
+        return with((int)($this->option('latest') ?? 1), static function (int $latest) {
             return $latest > 0 && $latest <= 5 ? $latest : 1;
         });
     }
