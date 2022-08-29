@@ -6,6 +6,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.0.2",
+        "ext-bcmath": "*",
         "ext-curl": "*",
         "ext-fileinfo": "*",
         "ext-pdo": "*",
