@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands\MailHog;
 
+use App\Support\Exceptions\FileException;
 use App\Support\Services\MailHogReleaseService;
-use RuntimeException;
 
 class SetupCommand extends Command
 {
@@ -29,12 +29,13 @@ class SetupCommand extends Command
         return $this->exitSuccess();
     }
 
+    /**
+     * @throws FileException
+     */
     protected function downloadBin(string $downloadUrl): void
     {
         $ch = curl_init($downloadUrl);
-        if (!is_dir($dir = dirname($this->binFile)) && !mkdir($dir, 0777, true) && !is_dir($dir)) {
-            throw new RuntimeException(sprintf('Cannot create the directory "%s"', $dir));
-        }
+        mkdir_for_writing(dirname($this->binFile));
         $fp = fopen($this->binFile, 'wb');
         curl_setopt($ch, CURLOPT_FILE, $fp);
         curl_setopt($ch, CURLOPT_HEADER, 0);
