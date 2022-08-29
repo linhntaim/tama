@@ -43,12 +43,12 @@ class DatabaseNotification extends Model
 
     public function read(): bool
     {
-        return $this->attributes['read_at'] !== null;
+        return !$this->unread();
     }
 
     public function unread(): bool
     {
-        return $this->attributes['read_at'] === null;
+        return is_null($this->attributes['read_at'] ?? null);
     }
 
     public function scopeRead(Builder $query): Builder

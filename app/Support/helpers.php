@@ -230,6 +230,13 @@ if (!function_exists('empty_string')) {
     }
 }
 
+if (!function_exists('equal_int')) {
+    function equal_int(float|int $value): bool
+    {
+        return is_int($value) || numcmp($value, (int)$value) === 0;
+    }
+}
+
 if (!function_exists('extension')) {
     function extension(string $path): bool
     {
@@ -397,7 +404,7 @@ if (!function_exists('number_formatter')) {
 if (!function_exists('numcmp')) {
     function numcmp(float|int $num1, float|int $num2): int
     {
-        if ($num1 === $num2) {
+        if (($num1 = (float)$num1) === ($num2 = (float)$num2)) {
             return 0;
         }
         return $num1 > $num2 ? 1 : -1;

@@ -84,11 +84,7 @@ class StorageCommand extends ForceCommand
             ]) === self::SUCCESS) {
             foreach ($this->links() as $link => $target) {
                 if (!file_exists($link)) {
-                    if (false === mkdir_recursive($link)) {
-                        $this->error(sprintf('Cannot create [%s] link.', $link));
-                        return false;
-                    }
-
+                    mkdir_for_writing($link);
                     copy_recursive($target, $link);
                 }
             }
