@@ -15,6 +15,7 @@ use Illuminate\Contracts\Support\DeferrableProvider;
 use Illuminate\Notifications\ChannelManager as BaseChannelManager;
 use Illuminate\Support\Facades\Facade;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Psr\Container\ContainerExceptionInterface;
@@ -102,8 +103,27 @@ class AppServiceProvider extends ServiceProvider implements DeferrableProvider
      */
     public function boot(): void
     {
+        $this->configureGlobal();
         $this->configureLog();
         $this->configureMail();
+    }
+
+    protected function configureGlobal(): void
+    {
+        // ext-bcmath
+        bcscale(18);
+        // ext-mbstring
+        mb_detect_order([
+            'UTF-8',
+            'UTF-7',
+            'ASCII',
+            'EUC-JP',
+            'SJIS',
+            'eucJP-win',
+            'SJIS-win',
+            'JIS',
+            'ISO-2022-JP',
+        ]);
     }
 
     /**
