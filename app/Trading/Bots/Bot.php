@@ -8,6 +8,8 @@ use App\Trading\Bots\Pricing\Interval;
 use App\Trading\Bots\Pricing\PriceCollection;
 use App\Trading\Bots\Pricing\PriceProvider;
 use App\Trading\Bots\Pricing\PriceProviderFactory;
+use App\Trading\Bots\Pricing\SwapperFactory;
+use App\Trading\Bots\Pricing\SwapProvider;
 use Illuminate\Support\Collection;
 use Psr\SimpleCache\InvalidArgumentException as PsrInvalidArgumentException;
 use RuntimeException;
@@ -21,6 +23,8 @@ abstract class Bot
     private string $exchange;
 
     private PriceProvider $priceProvider;
+
+    private SwapProvider $swapProvider;
 
     private string $ticker; // always uppercase
 
@@ -56,6 +60,11 @@ abstract class Bot
     public function priceProvider(): PriceProvider
     {
         return $this->priceProvider ?? $this->priceProvider = PriceProviderFactory::create($this->exchange());
+    }
+
+    public function swapProvider(): SwapProvider
+    {
+        return $this->swapProvider ?? $this->swapProvider = SwapperFactory::create($this->exchange());
     }
 
     public function ticker(): string

@@ -51,12 +51,12 @@ class Indication extends ArrayReader
 
     public function getActionSell(): bool
     {
-        return num_eq($this->getValue(), 1.0);
+        return num_gt($this->getValue(), 0);
     }
 
     public function getActionBuy(): bool
     {
-        return num_eq($this->getValue(), -1.0);
+        return num_lt($this->getValue(), 0);
     }
 
     public function getAction(): string
