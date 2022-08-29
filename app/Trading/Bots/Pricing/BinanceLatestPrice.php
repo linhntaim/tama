@@ -13,6 +13,6 @@ class BinanceLatestPrice extends LatestPrice
 
     public function getTime(): int
     {
-        return (int)($this->getPrice()[0] / 1000);
+        return int_exp($this->getPrice()[0] / 1000);
     }
 }

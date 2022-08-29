@@ -296,6 +296,20 @@ if (!function_exists('guess_mime_type')) {
     }
 }
 
+if (!function_exists('int_eq')) {
+    function int_eq(float|int $value): bool
+    {
+        return is_int($value) || num_eq($value, (int)$value);
+    }
+}
+
+if (!function_exists('int_exp')) {
+    function int_exp(float|int $num, bool $raw = false): int
+    {
+        return num_exp($num, $raw);
+    }
+}
+
 if (!function_exists('is_base64')) {
     function is_base64($string): bool
     {
@@ -387,20 +401,59 @@ if (!function_exists('nullify_empty_array')) {
     }
 }
 
+if (!function_exists('num_eq')) {
+    function num_eq(float|int $num1, float|int $num2): bool
+    {
+        return bccomp($num1, $num2) === 0;
+    }
+}
+
+if (!function_exists('num_exp')) {
+    function num_exp(float|int $num, bool $raw = false): float
+    {
+        return !$raw ? bcadd($num, 0) : $num;
+    }
+}
+
+if (!function_exists('num_gt')) {
+    function num_gt(float|int $num1, float|int $num2): bool
+    {
+        return bccomp($num1, $num2) === 1;
+    }
+}
+
+if (!function_exists('num_gte')) {
+    function num_gte(float|int $num1, float|int $num2): bool
+    {
+        return bccomp($num1, $num2) >= 0;
+    }
+}
+
+if (!function_exists('num_lt')) {
+    function num_lt(float|int $num1, float|int $num2): bool
+    {
+        return bccomp($num1, $num2) === -1;
+    }
+}
+
+if (!function_exists('num_lte')) {
+    function num_lte(float|int $num1, float|int $num2): bool
+    {
+        return bccomp($num1, $num2) <= 0;
+    }
+}
+
+if (!function_exists('num_ne')) {
+    function num_ne(float|int $num1, float|int $num2): bool
+    {
+        return !num_eq($num1, $num2);
+    }
+}
+
 if (!function_exists('number_formatter')) {
     function number_formatter(): NumberFormatter
     {
         return Client::numberFormatter();
-    }
-}
-
-if (!function_exists('numcmp')) {
-    function numcmp(float|int $num1, float|int $num2): int
-    {
-        if ($num1 === $num2) {
-            return 0;
-        }
-        return $num1 > $num2 ? 1 : -1;
     }
 }
 
@@ -413,14 +466,14 @@ if (!function_exists('readable_filesize')) {
         if (($index = array_search($unit, $units)) === false) {
             $index = $minUnitIndex;
         }
-        if ($size >= 1024) {
-            while ($size >= 1024 && $index < $maxUnitIndex) {
+        if (num_gte($size, 1024)) {
+            while (num_gte($size, 1024) && $index < $maxUnitIndex) {
                 ++$index;
                 $size /= 1024;
             }
         }
-        elseif ($size < 1) {
-            while ($size < 1 && $index > $minUnitIndex) {
+        elseif (num_lt($size, 1)) {
+            while (num_lt($size, 1) && $index > $minUnitIndex) {
                 --$index;
                 $size *= 1024;
             }

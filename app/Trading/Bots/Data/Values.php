@@ -10,12 +10,21 @@ class Values
     public const SPIKE_TROUGH = -1;
     public const SPIKE_PEAK = 1;
 
-    protected array $keys;
-
     protected int $count;
 
+    /**
+     * @var int[]|string[]
+     */
+    protected array $keys;
+
+    /**
+     * @var int[]
+     */
     protected array $spikes;
 
+    /**
+     * @param float[] $values
+     */
     public function __construct(
         protected array $values
     )
@@ -31,7 +40,7 @@ class Values
         return isset($this->values[$key]);
     }
 
-    public function value($key)
+    public function value($key): float
     {
         if (!$this->has($key)) {
             throw new RuntimeException('Key does not exist.');
@@ -69,40 +78,42 @@ class Values
     protected function determine($key): void
     {
         $value = $this->value($key);
-        $i = array_search($key, $this->keys, true);
+        $index = array_search($key, $this->keys, true);
 
-        $nextKey = $this->keys[$i + 1];
+        $nextKey = $this->keys[$index + 1];
         if ($this->has($nextKey)) {
             $nextValue = $this->value($nextKey);
 
             // trough
-            if ($nextValue > $value
-                && (function ($prev) use ($value) {
+            if (num_gt($nextValue, $value)
+                && (function ($prevIndex) use ($value) {
                     $prevValue = $value;
                     $hasPrevValue = false;
-                    while ($prev >= 0
-                        && ($hasPrevValue = $this->has($prevKey = $this->keys[$prev]))
-                        && (($prevValue = $this->value($prevKey)) === $value)) {
+                    while ($prevIndex >= 0
+                        && ($hasPrevValue = $this->has($prevKey = $this->keys[$prevIndex]))
+                        && num_eq($prevValue = $this->value($prevKey), $value)) {
                         $this->spikes[$prevKey] = self::SPIKE_NONE;
-                        --$prev;
+                        --$prevIndex;
                     }
-                    return $hasPrevValue && $prevValue > $value;
-                })($i - 1)) {
+                    return $hasPrevValue && num_gt($prevValue, $value);
+                })($index - 1)) {
                 $this->spikes[$key] = self::SPIKE_TROUGH;
                 return;
             }
 
             // peak
-            if ($nextValue < $value
-                && (function ($prev) use ($value) {
+            if (num_lt($nextValue, $value)
+                && (function ($prevIndex) use ($value) {
                     $prevValue = $value;
-                    while (($hasPrevValue = $this->has($prevKey = $this->keys[$prev]))
-                        && (($prevValue = $this->value($prevKey)) === $value)) {
+                    $hasPrevValue = false;
+                    while ($prevIndex >= 0
+                        && ($hasPrevValue = $this->has($prevKey = $this->keys[$prevIndex]))
+                        && num_eq($prevValue = $this->value($prevKey), $value)) {
                         $this->spikes[$prevKey] = self::SPIKE_NONE;
-                        --$prev;
+                        --$prevIndex;
                     }
-                    return $hasPrevValue && $prevValue < $value;
-                })($i - 1)) {
+                    return $hasPrevValue && num_lt($prevValue, $value);
+                })($index - 1)) {
                 $this->spikes[$key] = self::SPIKE_PEAK;
                 return;
             }
