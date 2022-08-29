@@ -276,7 +276,7 @@ class Filer
     public function write(mixed $data): static
     {
         ++$this->writingLine;
-        if ($this->openingFile->fwrite($data) === 0) {
+        if ($this->openingFile->fwrite($data) === false) {
             throw new FileException('Cannot write into the file.');
         }
         return $this;
