@@ -26,7 +26,7 @@ class NumberFormatter extends SettingsApplier
     {
         if ($this->autoInt) {
             $this->autoInt = false;
-            if (equal_int($number)) {
+            if (int_eq($number)) {
                 $decimals = 0;
             }
         }
