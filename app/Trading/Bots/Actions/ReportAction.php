@@ -21,7 +21,7 @@ class ReportAction implements IAction
 
     public function __invoke(Trading $trading, Bot $bot, Indication $indication): void
     {
-        $label = sprintf('%s %s BROADCAST', $indication->getAction(), $bot->ticker());
+        $label = sprintf('%s %s %s', $indication->getAction(), $bot->ticker(), $bot->interval());
         ConsoleNotification::send(
             $trading->subscribers,
             '.' . str_repeat('_', strlen($label) + 2) . '.' . PHP_EOL

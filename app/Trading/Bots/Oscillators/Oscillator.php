@@ -2,6 +2,7 @@
 
 namespace App\Trading\Bots\Oscillators;
 
+use App\Trading\Bots\BotSlug;
 use App\Trading\Bots\Data\Indication;
 use App\Trading\Bots\Pricing\PriceCollection;
 use Illuminate\Support\Collection;
@@ -9,6 +10,8 @@ use RuntimeException;
 
 abstract class Oscillator
 {
+    use BotSlug;
+
     public const NAME = '';
 
     /**
@@ -46,20 +49,22 @@ abstract class Oscillator
         ];
     }
 
-    public function asSlug(): string
+    protected function optionsAsSlug(): string
     {
         if (count($this->components) === 1) {
-            return implode('-', [
-                $this->getName(),
-                ...$this->options(),
-            ]);
+            return $this->slugConcat(...$this->options());
         }
-        return implode('-', [
+        return $this->slugConcat(...array_map(static function (Component $component) {
+            return $component->asSlug();
+        }, $this->components));
+    }
+
+    public function asSlug(): string
+    {
+        return $this->slugConcat(
             $this->getName(),
-            ...array_map(static function (Component $component) {
-                return $component->asSlug();
-            }, $this->components),
-        ]);
+            $this->optionsAsSlug(),
+        );
     }
 
     protected function createComponents(): void

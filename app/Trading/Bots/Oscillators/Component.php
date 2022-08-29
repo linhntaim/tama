@@ -2,10 +2,13 @@
 
 namespace App\Trading\Bots\Oscillators;
 
+use App\Trading\Bots\BotSlug;
 use App\Trading\Bots\Pricing\PriceCollection;
 
 abstract class Component
 {
+    use BotSlug;
+
     public const NAME = '';
 
     /**
@@ -35,12 +38,17 @@ abstract class Component
         ];
     }
 
+    protected function optionsAsSlug(): string
+    {
+        return $this->slugConcat(...$this->options());
+    }
+
     public function asSlug(): string
     {
-        return implode('-', [
+        return $this->slugConcat(
             $this->getName(),
-            ...$this->options(),
-        ]);
+            $this->optionsAsSlug(),
+        );
     }
 
     public function transmit(Packet $packet, bool|int $latest = true): Packet

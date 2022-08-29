@@ -18,7 +18,7 @@ class RsiOscillator extends Oscillator
     {
         return $packet->get('transformers.rsi', [])
             ->filter(function (Indication $indication) {
-                return $indication->getValue() !== 0.0;
+                return num_ne($indication->getValue(), 0.0);
             });
     }
 }

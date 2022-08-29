@@ -34,19 +34,19 @@ class Interval
         $timestampNow = $now->getTimestamp() + 62135596800; // full timestamp from 01/01/0001 00:00:00
         return (match ($this->getUnit()) {
             'm' => $now
-                ->subMinutes(((int)($timestampNow / 60)) % $this->getNumber() + $index * $this->getNumber())
+                ->subMinutes(int_exp($timestampNow / 60) % $this->getNumber() + $index * $this->getNumber())
                 ->second(0),
             'h' => $now
-                ->subHours(((int)($timestampNow / 3600)) % $this->getNumber() + $index * $this->getNumber())
+                ->subHours(int_exp($timestampNow / 3600) % $this->getNumber() + $index * $this->getNumber())
                 ->minute(0)
                 ->second(0),
             'd' => $now
-                ->subDays(((int)($timestampNow / 3600 * 24)) % $this->getNumber() + $index * $this->getNumber())
+                ->subDays(int_exp($timestampNow / 3600 * 24) % $this->getNumber() + $index * $this->getNumber())
                 ->hour(0)
                 ->minute(0)
                 ->second(0),
             'w' => $now
-                ->subDays(((int)($timestampNow / 3600 * 24)) % ($this->getNumber() * 7) + $index * $this->getNumber() * 7)
+                ->subDays(int_exp($timestampNow / 3600 * 24) % ($this->getNumber() * 7) + $index * $this->getNumber() * 7)
                 ->hour(0)
                 ->minute(0)
                 ->second(0),

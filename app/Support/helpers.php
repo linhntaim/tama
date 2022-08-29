@@ -303,6 +303,13 @@ if (!function_exists('int_eq')) {
     }
 }
 
+if (!function_exists('int_exp')) {
+    function int_exp(float|int $num, bool $raw = false): int
+    {
+        return num_exp($num, $raw);
+    }
+}
+
 if (!function_exists('is_base64')) {
     function is_base64($string): bool
     {
@@ -401,6 +408,13 @@ if (!function_exists('num_eq')) {
     }
 }
 
+if (!function_exists('num_exp')) {
+    function num_exp(float|int $num, bool $raw = false): float
+    {
+        return !$raw ? bcadd($num, 0) : $num;
+    }
+}
+
 if (!function_exists('num_gt')) {
     function num_gt(float|int $num1, float|int $num2): bool
     {
@@ -452,14 +466,14 @@ if (!function_exists('readable_filesize')) {
         if (($index = array_search($unit, $units)) === false) {
             $index = $minUnitIndex;
         }
-        if ($size >= 1024) {
-            while ($size >= 1024 && $index < $maxUnitIndex) {
+        if (num_gte($size, 1024)) {
+            while (num_gte($size, 1024) && $index < $maxUnitIndex) {
                 ++$index;
                 $size /= 1024;
             }
         }
-        elseif ($size < 1) {
-            while ($size < 1 && $index > $minUnitIndex) {
+        elseif (num_lt($size, 1)) {
+            while (num_lt($size, 1) && $index > $minUnitIndex) {
                 --$index;
                 $size *= 1024;
             }
