@@ -2,9 +2,7 @@
 
 namespace App\Trading\Console\Commands\Telegram;
 
-use App\Trading\Bots\Bot;
 use App\Trading\Bots\BotFactory;
-use App\Trading\Bots\BotReporter;
 use App\Trading\Bots\Exchanges\Factory as ExchangeFactory;
 use App\Trading\Bots\Oscillators\RsiOscillator;
 use App\Trading\Notifications\Telegram\ConsoleNotification;

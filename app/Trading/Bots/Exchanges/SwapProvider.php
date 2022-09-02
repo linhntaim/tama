@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trading\Bots\Pricing;
+namespace App\Trading\Bots\Exchanges;
 
 abstract class SwapProvider
 {

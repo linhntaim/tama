@@ -1,8 +1,6 @@
 <?php
 
-namespace App\Trading\Bots\Pricing;
-
-use App\Trading\Bots\Exchanges\Binance;
+namespace App\Trading\Bots\Exchanges;
 
 class BinanceLatestPrice extends LatestPrice
 {

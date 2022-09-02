@@ -4,9 +4,9 @@ namespace App\Trading\Bots\Orchestrators;
 
 use App\Trading\Bots\Actions\IAction;
 use App\Trading\Bots\Exchanges\Factory as ExchangeFactory;
-use App\Trading\Bots\Pricing\PriceProviderFactory;
-use App\Trading\Bots\Pricing\LatestPrice;
-use App\Trading\Bots\Pricing\PriceProvider;
+use App\Trading\Bots\Exchanges\LatestPrice;
+use App\Trading\Bots\Exchanges\PriceProvider;
+use App\Trading\Bots\Exchanges\PriceProviderFactory;
 use App\Trading\Models\Trading;
 use App\Trading\Models\TradingProvider;
 use Illuminate\Database\Eloquent\Collection;

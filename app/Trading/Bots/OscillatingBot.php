@@ -3,9 +3,9 @@
 namespace App\Trading\Bots;
 
 use App\Trading\Bots\Data\Indication;
+use App\Trading\Bots\Exchanges\PriceCollection;
 use App\Trading\Bots\Oscillators\Factory as OscillatorFactory;
 use App\Trading\Bots\Oscillators\Oscillator;
-use App\Trading\Bots\Pricing\PriceCollection;
 use App\Trading\Bots\Reporters\IReport;
 use Illuminate\Support\Collection;
 

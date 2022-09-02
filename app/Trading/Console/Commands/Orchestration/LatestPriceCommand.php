@@ -4,8 +4,8 @@ namespace App\Trading\Console\Commands\Orchestration;
 
 use App\Support\Console\Commands\Command;
 use App\Trading\Bots\Actions\ReportAction;
+use App\Trading\Bots\Exchanges\LatestPriceFactory;
 use App\Trading\Bots\Orchestrators\LatestPriceOrchestrator;
-use App\Trading\Bots\Pricing\LatestPriceFactory;
 use Psr\SimpleCache\InvalidArgumentException as PsrInvalidArgumentException;
 
 class LatestPriceCommand extends Command

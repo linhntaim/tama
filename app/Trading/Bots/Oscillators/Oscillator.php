@@ -4,7 +4,7 @@ namespace App\Trading\Bots\Oscillators;
 
 use App\Trading\Bots\BotSlug;
 use App\Trading\Bots\Data\Indication;
-use App\Trading\Bots\Pricing\PriceCollection;
+use App\Trading\Bots\Exchanges\PriceCollection;
 use Illuminate\Support\Collection;
 use RuntimeException;
 

@@ -1,8 +1,7 @@
 <?php
 
-namespace App\Trading\Bots\Pricing;
+namespace App\Trading\Bots\Exchanges;
 
-use App\Trading\Bots\Exchanges\Binance;
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
 use InvalidArgumentException;
 

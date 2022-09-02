@@ -2,7 +2,7 @@
 
 namespace App\Trading\Bots\Orchestrators\PriceStreams;
 
-use App\Trading\Bots\Pricing\LatestPrice;
+use App\Trading\Bots\Exchanges\LatestPrice;
 
 interface IPriceMessageExtract
 {

@@ -2,8 +2,8 @@
 
 namespace App\Trading\Bots\Orchestrators\PriceStreams;
 
-use App\Trading\Bots\Pricing\BinanceLatestPrice;
-use App\Trading\Bots\Pricing\LatestPrice;
+use App\Trading\Bots\Exchanges\BinanceLatestPrice;
+use App\Trading\Bots\Exchanges\LatestPrice;
 
 class BinancePriceMessageExtractor implements IPriceMessageExtract
 {
