@@ -10,6 +10,7 @@ use App\Trading\Bots\BotFactory;
 use App\Trading\Bots\Exchanges\Factory as ExchangeFactory;
 use App\Trading\Bots\Oscillators\RsiOscillator;
 use App\Trading\Bots\Pricing\PriceProviderFactory;
+use App\Trading\Bots\Pricing\Ticker;
 use App\Trading\Models\Trading;
 use App\Trading\Models\TradingProvider;
 use App\Trading\Notifications\Telegram\ConsoleNotification;
@@ -105,7 +106,9 @@ class SubscribeCommand extends Command
                 $tickers = $this->fetchTickers();
                 foreach ($tickers as $ticker) {
                     $this->subscribe($user, $this->createTrading([
-                        'ticker' => $ticker,
+                        'ticker' => $ticker->getSymbol(),
+                        'base_symbol' => $ticker->getBaseSymbol(),
+                        'quote_symbol' => $ticker->getQuoteSymbol(),
                         'safe_ticker' => true,
                     ]), $redis);
                 }
@@ -125,6 +128,9 @@ class SubscribeCommand extends Command
         return $this->exitSuccess();
     }
 
+    /**
+     * @return Collection<int, Ticker>
+     */
     protected function fetchTickers(): Collection
     {
         return PriceProviderFactory::create($this->exchange())->availableTickers($this->ticker());
@@ -199,6 +205,8 @@ class SubscribeCommand extends Command
                         'bot' => $bot->getName(),
                         'exchange' => $bot->exchange(),
                         'ticker' => $bot->ticker(),
+                        'base_symbol' => $bot->baseSymbol(),
+                        'quote_symbol' => $bot->quoteSymbol(),
                         'interval' => (string)$bot->interval(),
                         'options' => $bot->options(),
                     ])

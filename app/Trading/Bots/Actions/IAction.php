@@ -12,7 +12,7 @@ interface IAction
      * @param Trading $trading
      * @param Bot $bot
      * @param Indication $indication
-     * @return mixed
+     * @return void
      */
     public function __invoke(Trading $trading, Bot $bot, Indication $indication): void;
 }

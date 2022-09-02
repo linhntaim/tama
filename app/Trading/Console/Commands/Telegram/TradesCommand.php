@@ -84,7 +84,7 @@ class TradesCommand extends Command
         else {
             ConsoleNotification::send(
                 new TelegramUpdateNotifiable($this->telegramUpdate),
-                $this->report()
+                $this->report() ?: 'No trade found.'
             );
         }
         return $this->exitSuccess();
@@ -93,16 +93,8 @@ class TradesCommand extends Command
     /**
      * @throws PsrInvalidArgumentException
      */
-    protected function report(): string
+    protected function report(): ?string
     {
-        return $this->reportIndications(BotFactory::create($this->bot(), $this->mergeBotOptions()));
-    }
-
-    /**
-     * @throws PsrInvalidArgumentException
-     */
-    protected function reportIndications(Bot $bot): string
-    {
-        return (new BotReporter())->report($bot, $bot->indicate($this->latest()));
+        return BotFactory::create($this->bot(), $this->mergeBotOptions())->report($this->latest());
     }
 }

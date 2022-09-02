@@ -20,7 +20,7 @@ abstract class PriceProvider
         $this->cacheStore = $cache instanceof CacheRepository ? $cache : Cache::store($cache);
     }
 
-    public function isTickerValid(string $ticker): bool
+    public function isTickerValid(string $ticker): false|Ticker
     {
         return false;
     }
@@ -46,6 +46,10 @@ abstract class PriceProvider
         ], true);
     }
 
+    /**
+     * @param string|array|null $pattern
+     * @return Collection<int, Ticker>
+     */
     public function availableTickers(string|array|null $pattern = null): Collection
     {
         return collect([]);

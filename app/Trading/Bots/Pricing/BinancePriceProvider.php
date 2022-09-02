@@ -21,15 +21,15 @@ class BinancePriceProvider extends PriceProvider
         $this->spot = new Spot();
     }
 
-    public function isTickerValid(string $ticker): bool
+    public function isTickerValid(string $ticker): false|Ticker
     {
         try {
-            $symbol = $this->spot->exchangeInfo([
+            $ticker = $this->spot->exchangeInfo([
                 'symbol' => $ticker,
             ])['symbols'][0];
 
-            return $symbol['status'] === 'TRADING'
-                && in_array('SPOT', $symbol['permissions'], true);
+            return $ticker['status'] === 'TRADING' && in_array('SPOT', $ticker['permissions'], true)
+                ? new BinanceTicker($ticker) : false;
         }
         catch (Throwable) {
             return false;
@@ -39,12 +39,14 @@ class BinancePriceProvider extends PriceProvider
     public function availableTickers(string|array|null $pattern = null): Collection
     {
         return collect($this->spot->exchangeInfo()['symbols'])
-            ->filter(function ($item) use ($pattern) {
-                return $item['status'] === 'TRADING'
-                    && in_array('SPOT', $item['permissions'], true)
-                    && (is_null($pattern) || Str::is($pattern, $item['symbol']));
+            ->filter(function ($ticker) use ($pattern) {
+                return $ticker['status'] === 'TRADING'
+                    && in_array('SPOT', $ticker['permissions'], true)
+                    && (is_null($pattern) || Str::is($pattern, $ticker['symbol']));
             })
-            ->pluck('symbol');
+            ->map(function (array $ticker) {
+                return new BinanceTicker($ticker);
+            });
     }
 
     /**

@@ -59,12 +59,17 @@ class Indication extends ArrayReader
         return num_lt($this->getValue(), 0);
     }
 
+    public function getActionNeutral(): bool
+    {
+        return num_eq($this->getValue(), 0);
+    }
+
     public function getAction(): string
     {
         return match (true) {
             $this->getActionSell() => 'SELL',
             $this->getActionBuy() => 'BUY',
-            default => 'UNKNOWN'
+            default => 'NEUTRAL'
         };
     }
 
