@@ -2,6 +2,7 @@
 
 namespace App\Trading;
 
+use App\Trading\Bots\Exchanges\ExchangeManager;
 use App\Trading\Services\Telegram\Client;
 use GuzzleHttp\Client as HttpClient;
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
@@ -17,6 +18,10 @@ class ServiceProvider extends BaseServiceProvider
                 app(HttpClient::class),
                 config('services.telegram-bot-api.base_uri')
             );
+        });
+
+        $this->app->singleton(ExchangeManager::class, function ($app) {
+            return new ExchangeManager($app);
         });
     }
 }

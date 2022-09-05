@@ -2,19 +2,20 @@
 
 namespace App\Trading\Bots;
 
+use App\Models\User;
 use App\Support\Concerns\ClassHelper;
 use App\Trading\Bots\Data\Indication;
 use App\Trading\Bots\Data\Trade;
+use App\Trading\Bots\Exchanges\BasicTicker;
+use App\Trading\Bots\Exchanges\ConnectorInterface as ExchangeConnector;
+use App\Trading\Bots\Exchanges\Exchanger;
+use App\Trading\Bots\Exchanges\FakeConnector as FakeExchangeConnector;
 use App\Trading\Bots\Exchanges\Interval;
 use App\Trading\Bots\Exchanges\PriceCollection;
-use App\Trading\Bots\Exchanges\PriceProvider;
-use App\Trading\Bots\Exchanges\PriceProviderFactory;
-use App\Trading\Bots\Exchanges\SwapperFactory;
-use App\Trading\Bots\Exchanges\SwapProvider;
+use App\Trading\Bots\Exchanges\Ticker;
 use App\Trading\Bots\Reporters\IReport;
 use App\Trading\Bots\Reporters\PlainTextReporter;
 use Illuminate\Support\Collection;
-use Psr\SimpleCache\InvalidArgumentException as PsrInvalidArgumentException;
 use RuntimeException;
 
 abstract class Bot
@@ -25,15 +26,9 @@ abstract class Bot
 
     private string $exchange;
 
-    private PriceProvider $priceProvider;
+    private ExchangeConnector|FakeExchangeConnector $exchangeConnector;
 
-    private SwapProvider $swapProvider;
-
-    private string $ticker; // always uppercase
-
-    private string $baseSymbol; // always uppercase
-
-    private string $quoteSymbol; // always uppercase
+    private Ticker $ticker; // always uppercase symbols
 
     private Interval $interval;
 
@@ -41,14 +36,14 @@ abstract class Bot
         protected array $options = []
     )
     {
-        $priceProvider = $this->priceProvider();
+        $exchangeConnector = $this->exchangeConnector();
         if (!($this->options['safe_ticker'] ?? false)) {
-            if (($ticker = $priceProvider->isTickerValid($this->ticker())) === false) {
+            if (($ticker = $exchangeConnector->isTickerValid($this->options['ticker'])) === false) {
                 throw new RuntimeException('Ticker is invalid.');
             }
             [$this->options['base_symbol'], $this->options['quote_symbol']] = [$ticker->getBaseSymbol(), $ticker->getQuoteSymbol()];
         }
-        if (!(($this->options['safe_interval'] ?? false) || $priceProvider->isIntervalValid($this->interval()))) {
+        if (!(($this->options['safe_interval'] ?? false) || $exchangeConnector->isIntervalValid($this->interval()))) {
             throw new RuntimeException('Interval is invalid.');
         }
     }
@@ -69,32 +64,52 @@ abstract class Bot
             ?? $this->exchange = $this->options['exchange'];
     }
 
-    public function priceProvider(): PriceProvider
+    public function exchangeConnector(?User $user = null): ExchangeConnector|FakeExchangeConnector
     {
-        return $this->priceProvider ?? $this->priceProvider = PriceProviderFactory::create($this->exchange());
+        return with(
+            $this->exchangeConnector ?? $this->exchangeConnector = Exchanger::connector($this->exchange()),
+            static fn(ExchangeConnector $connector) => is_null($user) ? $connector : $connector->withUser($user)
+        );
     }
 
-    public function swapProvider(): SwapProvider
+    public function useFakeExchangeConnector(): FakeExchangeConnector
     {
-        return $this->swapProvider ?? $this->swapProvider = SwapperFactory::create($this->exchange());
+        $exchangeConnector = $this->exchangeConnector();
+        if ($exchangeConnector instanceof FakeExchangeConnector) {
+            return $exchangeConnector;
+        }
+        return tap(
+            new FakeExchangeConnector($exchangeConnector),
+            fn(ExchangeConnector $connector) => $this->exchangeConnector = $connector
+        );
     }
 
-    public function ticker(): string
+    public function removeFakeExchangeConnector(): static
+    {
+        if ($this->exchangeConnector() instanceof FakeExchangeConnector) {
+            unset($this->exchangeConnector);
+        }
+        return $this;
+    }
+
+    public function ticker(): Ticker
     {
         return $this->ticker
-            ?? $this->ticker = $this->options['ticker'];
+            ?? $this->ticker = new BasicTicker(
+                $this->options['ticker'],
+                $this->options['base_symbol'],
+                $this->options['quote_symbol']
+            );
     }
 
     public function baseSymbol(): string
     {
-        return $this->baseSymbol
-            ?? $this->baseSymbol = $this->options['base_symbol'];
+        return $this->ticker()->getBaseSymbol();
     }
 
     public function quoteSymbol(): string
     {
-        return $this->quoteSymbol
-            ?? $this->quoteSymbol = $this->options['quote_symbol'];
+        return $this->ticker()->getQuoteSymbol();
     }
 
     public function interval(): Interval
@@ -107,7 +122,7 @@ abstract class Bot
     {
         return [
             'exchange' => $this->exchange(),
-            'ticker' => $this->ticker(),
+            'ticker' => (string)$this->ticker(),
             'base_symbol' => $this->baseSymbol(),
             'quote_symbol' => $this->quoteSymbol(),
             'interval' => (string)$this->interval(),
@@ -139,12 +154,9 @@ abstract class Bot
         );
     }
 
-    /**
-     * @throws PsrInvalidArgumentException
-     */
     protected function fetchPrices(): PriceCollection
     {
-        return $this->priceProvider()->recent(
+        return $this->exchangeConnector()->finalPrices(
             $this->ticker(),
             $this->interval()
         );
@@ -155,23 +167,19 @@ abstract class Bot
      * @param int $latest
      * @return Collection<int, Indication>
      */
-    abstract protected function indicating(PriceCollection $prices, int $latest = 0): Collection;
+    abstract public function indicating(PriceCollection $prices, int $latest = 0): Collection;
 
     /**
      * @param int $latest
      * @return Collection<int, Indication>
-     * @throws PsrInvalidArgumentException
      */
     public function indicate(int $latest = 0): Collection
     {
         return $this->indicating($this->fetchPrices(), $latest);
     }
 
-    abstract protected function indicatingNow(PriceCollection $prices): ?Indication;
+    abstract public function indicatingNow(PriceCollection $prices): ?Indication;
 
-    /**
-     * @throws PsrInvalidArgumentException
-     */
     public function indicateNow(): ?Indication
     {
         return $this->indicatingNow($this->fetchPrices());
@@ -185,7 +193,6 @@ abstract class Bot
     /**
      * @param int|Collection<int, Indication> $latest
      * @return string|null
-     * @throws PsrInvalidArgumentException
      */
     public function report(int|Collection $latest = 0): ?string
     {
@@ -195,9 +202,6 @@ abstract class Bot
         return $this->reporter()->report($this, $indications);
     }
 
-    /**
-     * @throws PsrInvalidArgumentException
-     */
     public function reportNow(?Indication $indication = null): ?string
     {
         if (is_null($indication ?: $indication = $this->indicateNow())) {
@@ -206,44 +210,72 @@ abstract class Bot
         return $this->reporter()->report($this, collect([$indication]));
     }
 
-    /**
-     * @throws PsrInvalidArgumentException
-     */
     public function tradeNow(
+        User        $user,
         float       $baseAmount,
         float       $quoteAmount,
-        float       $buyingRisk = 1.0,
-        float       $sellingRisk = 1.0,
+        float       $buyRisk = 0.0,
+        float       $sellRisk = 0.0,
         ?Indication $indication = null
     ): ?Trade
     {
-        if (is_null($indication ?: $indication = $this->indicateNow())) {
+        $indication = $indication ?: $this->indicateNow();
+        if (is_null($indication)) {
             return null;
         }
         return match (true) {
-            $indication->getActionBuy() => $this->buyNow($baseAmount, $buyingRisk, $indication),
-            $indication->getActionSell() => $this->sellNow($quoteAmount, $sellingRisk, $indication),
+            $indication->getActionBuy() => $this->buyNow($user, $baseAmount, $indication, $buyRisk),
+            $indication->getActionSell() => $this->sellNow($user, $quoteAmount, $indication, $sellRisk),
             default => null
         };
     }
 
-    protected function buyNow(
-        float      $baseAmount,
-        float      $buyingRisk,
-        Indication $indication
+    public function tryToBuyNow(
+        User        $user,
+        float       $baseAmount,
+        float       $buyRisk = 0.0,
+        ?Indication $indication = null
     ): ?Trade
     {
-        if (num_eq($buyAmount = $this->calculateBuyAmount($indication, $baseAmount, $buyingRisk), 0.0)) {
+        $indication = $indication ?: $this->indicateNow();
+        if (is_null($indication) || !$indication->getActionBuy()) {
             return null;
         }
-        [$fromAmount, $toAmount] = $this->swapProvider()->swap($this->baseSymbol, $this->quoteSymbol, $buyAmount);
+        return $this->buyNow($user, $baseAmount, $indication, $buyRisk);
+    }
+
+    public function tryToSellNow(
+        User        $user,
+        float       $quoteAmount,
+        float       $sellRisk = 0.0,
+        ?Indication $indication = null
+    ): ?Trade
+    {
+        $indication = $indication ?: $this->indicateNow();
+        if (is_null($indication) || !$indication->getActionSell()) {
+            return null;
+        }
+        return $this->sellNow($user, $quoteAmount, $indication, $sellRisk);
+    }
+
+    protected function buyNow(
+        User       $user,
+        float      $baseAmount,
+        Indication $indication,
+        float      $buyRisk = 0.0
+    ): ?Trade
+    {
+        if (num_eq($buyAmount = $this->calculateBuyAmount($indication, $baseAmount, $buyRisk), 0.0)) {
+            return null;
+        }
+        $marketOrder = $this->exchangeConnector($user)->buyMarket($this->ticker(), $buyAmount);
         return new Trade([
-            'base_amount' => -$fromAmount,
-            'quote_amount' => $toAmount,
+            'base_amount' => -$marketOrder->getBaseAmount(),
+            'quote_amount' => $marketOrder->getQuoteAmount(),
         ]);
     }
 
-    protected function calculateBuyAmount(Indication $indication, float $amount, float $risk): bool
+    protected function calculateBuyAmount(Indication $indication, float $amount, float $risk = 0.0): float
     {
         // Note: value of the indication is less than 0 and greater or equal -1
         if (num_gte(-$indication->getValue(), 1 - $risk)) { // accepted buy risk
@@ -253,22 +285,23 @@ abstract class Bot
     }
 
     protected function sellNow(
+        User       $user,
         float      $quoteAmount,
-        float      $sellingRisk,
-        Indication $indication
+        Indication $indication,
+        float      $sellRisk = 0.0
     ): ?Trade
     {
-        if (num_eq($sellAmount = $this->calculateSellAmount($indication, $quoteAmount, $sellingRisk), 0.0)) {
+        if (num_eq($sellAmount = $this->calculateSellAmount($indication, $quoteAmount, $sellRisk), 0.0)) {
             return null;
         }
-        [$fromAmount, $toAmount] = $this->swapProvider()->swap($this->quoteSymbol, $this->baseSymbol, $sellAmount);
+        $marketOrder = $this->exchangeConnector($user)->sellMarket($this->ticker(), $sellAmount);
         return new Trade([
-            'base_amount' => $toAmount,
-            'quote_amount' => -$fromAmount,
+            'base_amount' => $marketOrder->getQuoteAmount(),
+            'quote_amount' => -$marketOrder->getBaseAmount(),
         ]);
     }
 
-    protected function calculateSellAmount(Indication $indication, float $amount, float $risk): float
+    protected function calculateSellAmount(Indication $indication, float $amount, float $risk = 0.0): float
     {
         // Note: value of the indication is greater than 0 and less than or equal 1
         if (num_gte($indication->getValue(), $risk)) { // accepted sell risk

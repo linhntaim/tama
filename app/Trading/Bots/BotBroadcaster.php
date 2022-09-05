@@ -7,7 +7,6 @@ use App\Trading\Bots\Actions\IAction;
 use App\Trading\Bots\Data\Indication;
 use App\Trading\Models\Trading;
 use App\Trading\Models\TradingBroadcastProvider;
-use Psr\SimpleCache\InvalidArgumentException as PsrInvalidArgumentException;
 
 class BotBroadcaster
 {
@@ -27,15 +26,9 @@ class BotBroadcaster
     )
     {
         $this->tradingBroadcastProvider = new TradingBroadcastProvider();
-        $this->bot = BotFactory::create($trading->bot, array_merge($trading->options, [
-            'safe_ticker' => true,
-            'safe_interval' => true,
-        ]));
+        $this->bot = BotFactory::create($trading->bot, $trading->botOptions);
     }
 
-    /**
-     * @throws PsrInvalidArgumentException
-     */
     public function broadcast(): void
     {
         if (is_null($indication = $this->bot->indicateNow())

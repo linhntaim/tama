@@ -27,6 +27,7 @@ class TradeAction implements IAction
     {
         try {
             if (!is_null($trade = $bot->tradeNow(
+                $strategy->user,
                 $strategy->baseAmount,
                 $strategy->quoteAmount,
                 $strategy->buy_risk,

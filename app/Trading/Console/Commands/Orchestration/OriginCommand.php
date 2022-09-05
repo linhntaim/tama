@@ -10,7 +10,9 @@ class OriginCommand extends Command
 {
     protected function handling(): int
     {
-        (new Orchestrator([new ReportAction()]))->proceed();
+        (new Orchestrator([
+            new ReportAction(),
+        ]))->proceed();
         return $this->exitSuccess();
     }
 }

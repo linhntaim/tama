@@ -6,13 +6,9 @@ use App\Trading\Bots\Bot;
 use App\Trading\Bots\Data\Indication;
 use App\Trading\Models\Trading;
 use App\Trading\Notifications\Telegram\ConsoleNotification;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class ReportAction implements IAction
 {
-    /**
-     * @throws InvalidArgumentException
-     */
     public function __invoke(Trading $trading, Bot $bot, Indication $indication): void
     {
         $label = sprintf('%s %s %s', $indication->getAction(), $bot->ticker(), $bot->interval());

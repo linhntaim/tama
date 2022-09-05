@@ -21,6 +21,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property float $baseAmount
  * @property float $quoteAmount
  * @property User $user
+ * @property Trading $buyTrading
+ * @property Trading $sellTrading
  * @property Collection<int, TradingSwap> $swaps
  */
 class TradingStrategy extends Model
@@ -52,6 +54,16 @@ class TradingStrategy extends Model
     public function swaps(): HasMany
     {
         return $this->hasMany(TradingSwap::class, 'trading_strategy_id', 'id');
+    }
+
+    public function buyTrading(): BelongsTo
+    {
+        return $this->belongsTo(Trading::class, 'buy_trading_id', 'id');
+    }
+
+    public function sellTrading(): BelongsTo
+    {
+        return $this->belongsTo(Trading::class, 'sell_trading_id', 'id');
     }
 
     public function baseAmount(): Attribute

@@ -282,6 +282,13 @@ if (!function_exists('from_ini_filesize')) {
     }
 }
 
+if (!function_exists('gcd')) {
+    function gcd(int $num1, int $num2): int
+    {
+        return $num2 === 0 ? $num1 : gcd($num2, $num1 % $num2);
+    }
+}
+
 if (!function_exists('guess_extension')) {
     function guess_extension(string $mimeType): string
     {
@@ -343,6 +350,13 @@ if (!function_exists('json_decode_array')) {
     function json_decode_array(string|bool|null $json, int $depth = 512, int $flags = 0): ?array
     {
         return is_array($array = json_decode($json, true, $depth, $flags)) ? $array : null;
+    }
+}
+
+if (!function_exists('lcm')) {
+    function lcm(int $num1, int $num2): int
+    {
+        return ($num1 * $num2) / gcd($num1, $num2);
     }
 }
 
@@ -412,6 +426,13 @@ if (!function_exists('num_exp')) {
     function num_exp(float|int $num, bool $raw = false): float
     {
         return !$raw ? bcadd($num, 0) : $num;
+    }
+}
+
+if (!function_exists('num_floor')) {
+    function num_floor(int|float $num, int $precision = 0): float
+    {
+        return bcdiv($num, 1, $precision);
     }
 }
 

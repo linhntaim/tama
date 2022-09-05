@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Trading\Bots\Orchestrators\PriceStreams;
+namespace App\Trading\Bots\Exchanges\Binance;
 
-use App\Trading\Bots\Exchanges\BinanceLatestPrice;
+use App\Trading\Bots\Exchanges\Binance\LatestPrice as BinanceLatestPrice;
+use App\Trading\Bots\Exchanges\PriceMessageExtract;
 use App\Trading\Bots\Exchanges\LatestPrice;
 
-class BinancePriceMessageExtractor implements IPriceMessageExtract
+class PriceMessageExtractor implements PriceMessageExtract
 {
     public function __invoke(array $messagePayload, ?string &$ticker = null, ?string &$interval = null): ?LatestPrice
     {

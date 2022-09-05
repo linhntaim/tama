@@ -27,116 +27,227 @@ class Interval
         return $this->number ?? $this->number = (int)$this->interval;
     }
 
-    public function getLatestTime(int $index = 0): int
+    public function eq(Interval $interval): bool
     {
-        $index = $index >= 0 ? 0 : -$index;
-        $now = Carbon::now();
-        $timestampNow = $now->getTimestamp() + 62135596800; // full timestamp from 01/01/0001 00:00:00
+        return $this->getUnit() === $interval->getUnit()
+            && $this->getNumber() === $interval->getNumber();
+    }
+
+    public function gt(Interval $interval): bool
+    {
+        $unitOrder = [
+            'm' => 0,
+            'h' => 1,
+            'd' => 2,
+            'w' => 3,
+            'M' => 4,
+        ];
+        return ($thisUnit = $unitOrder[$this->getUnit()]) > ($thatUnit = $unitOrder[$interval->getUnit()])
+            || ($thisUnit === $thatUnit && $this->getNumber() > $interval->getNumber());
+    }
+
+    public function gte(Interval $interval): bool
+    {
+        $unitOrder = [
+            'm' => 0,
+            'h' => 1,
+            'd' => 2,
+            'w' => 3,
+            'M' => 4,
+        ];
+        return ($thisUnit = $unitOrder[$this->getUnit()]) > ($thatUnit = $unitOrder[$interval->getUnit()])
+            || ($thisUnit === $thatUnit && $this->getNumber() >= $interval->getNumber());
+    }
+
+    public function lt(Interval $interval): bool
+    {
+        $unitOrder = [
+            'm' => 0,
+            'h' => 1,
+            'd' => 2,
+            'w' => 3,
+            'M' => 4,
+        ];
+        return ($thisUnit = $unitOrder[$this->getUnit()]) < ($thatUnit = $unitOrder[$interval->getUnit()])
+            || ($thisUnit === $thatUnit && $this->getNumber() < $interval->getNumber());
+    }
+
+    public function lte(Interval $interval): bool
+    {
+        $unitOrder = [
+            'm' => 0,
+            'h' => 1,
+            'd' => 2,
+            'w' => 3,
+            'M' => 4,
+        ];
+        return ($thisUnit = $unitOrder[$this->getUnit()]) < ($thatUnit = $unitOrder[$interval->getUnit()])
+            || ($thisUnit === $thatUnit && $this->getNumber() <= $interval->getNumber());
+    }
+
+    public function gcd(Interval $interval): int
+    {
+        $unitOrder = [
+            'm' => fn($number) => $number * 60,
+            'h' => fn($number) => $number * 3600,
+            'd' => fn() => 24 * 3600,
+            'w' => fn() => 24 * 3600,
+            'M' => fn() => 24 * 3600,
+        ];
+
+        return gcd(
+            $unitOrder[$this->getUnit()]($this->getNumber()),
+            $unitOrder[$interval->getUnit()]($interval->getNumber())
+        );
+    }
+
+    public function findOpenTimeOf(Carbon|int|null $time = null, int $directionIndex = 0, bool $asInt = true): int|Carbon
+    {
+        $carbon = is_null($time)
+            ? Carbon::now()
+            : ($time instanceof Carbon ? $time : Carbon::createFromTimestamp($time));
+        $timestamp = $carbon->getTimestamp() + 62135596800; // full timestamp from 01/01/0001 00:00:00
+        return with(
+            match ($this->getUnit()) {
+                'm' => $carbon
+                    ->subMinutes(int_exp($timestamp / 60) % $this->getNumber())
+                    ->addMinutes($this->getNumber() * $directionIndex)
+                    ->second(0),
+                'h' => $carbon
+                    ->subHours(int_exp($timestamp / 3600) % $this->getNumber())
+                    ->addHours($this->getNumber() * $directionIndex)
+                    ->minute(0)
+                    ->second(0),
+                'd' => $carbon
+                    ->subDays(int_exp($timestamp / 3600 * 24) % $this->getNumber())
+                    ->addDays($this->getNumber() * $directionIndex)
+                    ->hour(0)
+                    ->minute(0)
+                    ->second(0),
+                'w' => $carbon
+                    ->subDays(int_exp($timestamp / 3600 * 24) % ($this->getNumber() * 7))
+                    ->addDays($this->getNumber() * $directionIndex * 7)
+                    ->hour(0)
+                    ->minute(0)
+                    ->second(0),
+                'M' => $carbon
+                    ->subMonths((($carbon->year - 1) * 12 + $carbon->month) % $this->getNumber())
+                    ->addMonths($this->getNumber() * $directionIndex)
+                    ->day(1)
+                    ->hour(0)
+                    ->minute(0)
+                    ->second(0),
+                default => throw new InvalidArgumentException('Interval was not supported.'),
+            },
+            static fn(Carbon $time) => $asInt ? $time->getTimestamp() : $time
+        );
+    }
+
+    public function isExact(int $time): bool
+    {
+        return $time === $this->findOpenTimeOf($time);
+    }
+
+    public function getLatestOpenTime(int $directionIndex = 0, bool $asInt = true): int|Carbon
+    {
+        return $this->findOpenTimeOf(null, $directionIndex, $asInt);
+    }
+
+    public function getPreviousOpenTimeOfLatest(bool $asInt = true): int|Carbon
+    {
+        return $this->getLatestOpenTime(-1, $asInt);
+    }
+
+    public function getPreviousOpenTimeOf(Carbon|int|null $time = null, bool $asInt = true): int|Carbon
+    {
+        return $this->findOpenTimeOf($time, -1, $asInt);
+    }
+
+    public function getPreviousOpenTimeOfExact(int $openTime, int $index = 0): int
+    {
+        $index = max($index, 0);
         return (match ($this->getUnit()) {
-            'm' => $now
-                ->subMinutes(int_exp($timestampNow / 60) % $this->getNumber() + $index * $this->getNumber())
-                ->second(0),
-            'h' => $now
-                ->subHours(int_exp($timestampNow / 3600) % $this->getNumber() + $index * $this->getNumber())
-                ->minute(0)
-                ->second(0),
-            'd' => $now
-                ->subDays(int_exp($timestampNow / 3600 * 24) % $this->getNumber() + $index * $this->getNumber())
-                ->hour(0)
-                ->minute(0)
-                ->second(0),
-            'w' => $now
-                ->subDays(int_exp($timestampNow / 3600 * 24) % ($this->getNumber() * 7) + $index * $this->getNumber() * 7)
-                ->hour(0)
-                ->minute(0)
-                ->second(0),
-            'M' => $now
-                ->subMonths((($now->year - 1) * 12 + $now->month) % $this->getNumber() + $index * $this->getNumber())
-                ->day(1)
-                ->hour(0)
-                ->minute(0)
-                ->second(0),
+            'm' => Carbon::createFromTimestamp($openTime)->subMinutes($this->getNumber() * ($index + 1)),
+            'h' => Carbon::createFromTimestamp($openTime)->subHours($this->getNumber() * ($index + 1)),
+            'd' => Carbon::createFromTimestamp($openTime)->subDays($this->getNumber() * ($index + 1)),
+            'w' => Carbon::createFromTimestamp($openTime)->subDays($this->getNumber() * ($index + 1) * 7),
+            'M' => Carbon::createFromTimestamp($openTime)->subMonths($this->getNumber() * ($index + 1)),
             default => throw new InvalidArgumentException('Interval was not supported.'),
         })->getTimestamp();
     }
 
-    public function getPreviousLatestTime(): int
+    public function getNextOpenTimeOf(Carbon|int|null $time = null, bool $asInt = true): int|Carbon
     {
-        return $this->getLatestTime(-1);
+        return $this->findOpenTimeOf($time, 1, $asInt);
     }
 
-    public function getPreviousLatestTimeOf(int $latestTime): int
+    public function getNextOpenTimeOfExact(int $openTime, int $index = 0): int
     {
+        $index = max($index, 0);
         return (match ($this->getUnit()) {
-            'm' => Carbon::createFromTimestamp($latestTime)->subMinutes($this->getNumber()),
-            'h' => Carbon::createFromTimestamp($latestTime)->subHours($this->getNumber()),
-            'd' => Carbon::createFromTimestamp($latestTime)->subDays($this->getNumber()),
-            'w' => Carbon::createFromTimestamp($latestTime)->subDays($this->getNumber() * 7),
-            'M' => Carbon::createFromTimestamp($latestTime)->subMonths($this->getNumber()),
+            'm' => Carbon::createFromTimestamp($openTime)->addMinutes($this->getNumber() * ($index + 1)),
+            'h' => Carbon::createFromTimestamp($openTime)->addHours($this->getNumber() * ($index + 1)),
+            'd' => Carbon::createFromTimestamp($openTime)->addDays($this->getNumber() * ($index + 1)),
+            'w' => Carbon::createFromTimestamp($openTime)->addDays($this->getNumber() * ($index + 1) * 7),
+            'M' => Carbon::createFromTimestamp($openTime)->addMonths($this->getNumber() * ($index + 1)),
             default => throw new InvalidArgumentException('Interval was not supported.'),
         })->getTimestamp();
     }
 
-    public function getNextLatestTimeOf(int $latestTime): int
+    public function diffIndexOfExact(int $openTime1, int $openTime2): int
     {
         return (match ($this->getUnit()) {
-            'm' => Carbon::createFromTimestamp($latestTime)->addMinutes($this->getNumber()),
-            'h' => Carbon::createFromTimestamp($latestTime)->addHours($this->getNumber()),
-            'd' => Carbon::createFromTimestamp($latestTime)->addDays($this->getNumber()),
-            'w' => Carbon::createFromTimestamp($latestTime)->addDays($this->getNumber() * 7),
-            'M' => Carbon::createFromTimestamp($latestTime)->addMonths($this->getNumber()),
+            'm' => Carbon::createFromTimestamp($openTime1)->diffInMinutes(Carbon::createFromTimestamp($openTime2)) / $this->getNumber(),
+            'h' => Carbon::createFromTimestamp($openTime1)->diffInHours(Carbon::createFromTimestamp($openTime2)) / $this->getNumber(),
+            'd' => Carbon::createFromTimestamp($openTime1)->diffInDays(Carbon::createFromTimestamp($openTime2)) / $this->getNumber(),
+            'w' => Carbon::createFromTimestamp($openTime1)->diffInWeeks(Carbon::createFromTimestamp($openTime2)) / $this->getNumber(),
+            'M' => Carbon::createFromTimestamp($openTime1)->diffInMonths(Carbon::createFromTimestamp($openTime2)) / $this->getNumber(),
             default => throw new InvalidArgumentException('Interval was not supported.'),
-        })->getTimestamp();
+        });
     }
 
     /**
      * @param int $limit
-     * @param int $index
-     * @return int[]
+     * @param Carbon|int|null $time
+     * @param int $directionIndex
+     * @param bool $asInt
+     * @return int[]|Carbon[]
      */
-    public function getLatestTimes(int $limit = 1000, int $index = 0): array
+    public function getRecentOpenTimes(int $limit, Carbon|int|null $time = null, int $directionIndex = 0, bool $asInt = true): array
     {
-        $latestTime = Carbon::createFromTimestamp($this->getLatestTime($index));
-        $latestTimes = [$latestTime->getTimestamp()];
+        $transform = static fn(Carbon $openTime) => $asInt ? $openTime->getTimestamp() : $openTime;
+        $openTime = $this->findOpenTimeOf($time, $directionIndex, false);
+        $openTimes = [$transform($openTime)];
         switch ($this->getUnit()) {
             case 'm':
                 while (--$limit > 0) {
-                    array_unshift($latestTimes, $latestTime->subMinutes($this->getNumber())->getTimestamp());
+                    array_unshift($openTimes, $transform($openTime->subMinutes($this->getNumber())));
                 }
                 break;
             case 'h':
                 while (--$limit > 0) {
-                    array_unshift($latestTimes, $latestTime->subHours($this->getNumber())->getTimestamp());
+                    array_unshift($openTimes, $transform($openTime->subHours($this->getNumber())));
                 }
                 break;
             case 'd':
                 while (--$limit > 0) {
-                    array_unshift($latestTimes, $latestTime->subDays($this->getNumber())->getTimestamp());
+                    array_unshift($openTimes, $transform($openTime->subDays($this->getNumber())));
                 }
                 break;
             case 'w':
                 while (--$limit > 0) {
-                    array_unshift($latestTimes, $latestTime->subDays($this->getNumber() * 7)->getTimestamp());
+                    array_unshift($openTimes, $transform($openTime->subDays($this->getNumber() * 7)));
                 }
                 break;
             case 'M':
                 while (--$limit > 0) {
-                    array_unshift($latestTimes, $latestTime->subMonths($this->getNumber())->getTimestamp());
+                    array_unshift($openTimes, $transform($openTime->subMonths($this->getNumber())));
                 }
                 break;
             default :
                 throw new InvalidArgumentException('Interval was not supported.');
         }
-        return $latestTimes;
-    }
-
-    /**
-     * @param int $limit
-     * @return int[]
-     */
-    public function getPreviousLatestTimes(int $limit = 999): array
-    {
-        return $this->getLatestTimes($limit, -1);
+        return $openTimes;
     }
 
     public function __toString(): string

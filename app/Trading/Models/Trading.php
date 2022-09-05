@@ -4,6 +4,7 @@ namespace App\Trading\Models;
 
 use App\Models\User;
 use App\Support\Models\Model;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -19,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property User[]|Collection $subscribers
  * @property TradingStrategy[]|Collection $buyingStrategies
  * @property TradingStrategy[]|Collection $sellingStrategies
+ * @property array $botOptions
  */
 class Trading extends Model
 {
@@ -58,5 +60,13 @@ class Trading extends Model
     public function sellingStrategies(): HasMany
     {
         return $this->hasMany(TradingStrategy::class, 'sell_trading_id', 'id');
+    }
+
+    public function botOptions(): Attribute
+    {
+        return Attribute::get(fn() => array_merge($this->options, [
+            'safe_ticker' => true,
+            'safe_interval' => true,
+        ]));
     }
 }

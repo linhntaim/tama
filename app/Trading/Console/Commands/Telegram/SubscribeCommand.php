@@ -7,8 +7,7 @@ use App\Models\UserProvider;
 use App\Models\UserSocialProvider;
 use App\Support\Client\DateTimer;
 use App\Trading\Bots\BotFactory;
-use App\Trading\Bots\Exchanges\Factory as ExchangeFactory;
-use App\Trading\Bots\Exchanges\PriceProviderFactory;
+use App\Trading\Bots\Exchanges\Exchanger;
 use App\Trading\Bots\Exchanges\Ticker;
 use App\Trading\Bots\Oscillators\RsiOscillator;
 use App\Trading\Models\Trading;
@@ -78,7 +77,7 @@ class SubscribeCommand extends Command
 
     protected function handling(): int
     {
-        if (!ExchangeFactory::enabled($this->exchange())) {
+        if (!Exchanger::available($this->exchange())) {
             ConsoleNotification::send(
                 new TelegramUpdateNotifiable($this->telegramUpdate),
                 sprintf('Subscription for the exchange "%s" was not supported/enabled.', $this->exchange())
@@ -133,7 +132,7 @@ class SubscribeCommand extends Command
      */
     protected function fetchTickers(): Collection
     {
-        return PriceProviderFactory::create($this->exchange())->availableTickers($this->ticker());
+        return Exchanger::connector($this->exchange())->availableTickers($this->ticker());
     }
 
     protected function createUserFromTelegram(): ?User
@@ -204,7 +203,7 @@ class SubscribeCommand extends Command
                         'slug' => $slug,
                         'bot' => $bot->getName(),
                         'exchange' => $bot->exchange(),
-                        'ticker' => $bot->ticker(),
+                        'ticker' => (string)$bot->ticker(),
                         'base_symbol' => $bot->baseSymbol(),
                         'quote_symbol' => $bot->quoteSymbol(),
                         'interval' => (string)$bot->interval(),

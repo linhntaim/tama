@@ -39,12 +39,12 @@ class OscillatingBot extends Bot
         return $this->slugConcat(parent::optionsAsSlug(), $this->oscillator()->asSlug());
     }
 
-    protected function indicating(PriceCollection $prices, int $latest = 0): Collection
+    public function indicating(PriceCollection $prices, int $latest = 0): Collection
     {
         return $this->oscillator()->run($prices, $latest);
     }
 
-    protected function indicatingNow(PriceCollection $prices): ?Indication
+    public function indicatingNow(PriceCollection $prices): ?Indication
     {
         return $this->oscillator()->run($prices)->first();
     }

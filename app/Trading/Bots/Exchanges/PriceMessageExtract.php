@@ -1,10 +1,8 @@
 <?php
 
-namespace App\Trading\Bots\Orchestrators\PriceStreams;
+namespace App\Trading\Bots\Exchanges;
 
-use App\Trading\Bots\Exchanges\LatestPrice;
-
-interface IPriceMessageExtract
+interface PriceMessageExtract
 {
     public function __invoke(array $messagePayload, ?string &$ticker = null, ?string &$interval = null): ?LatestPrice;
 }

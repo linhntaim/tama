@@ -3,11 +3,10 @@
 namespace App\Trading\Console\Commands\Telegram;
 
 use App\Trading\Bots\BotFactory;
-use App\Trading\Bots\Exchanges\Factory as ExchangeFactory;
+use App\Trading\Bots\Exchanges\Exchanger;
 use App\Trading\Bots\Oscillators\RsiOscillator;
 use App\Trading\Notifications\Telegram\ConsoleNotification;
 use App\Trading\Notifications\TelegramUpdateNotifiable;
-use Psr\SimpleCache\InvalidArgumentException as PsrInvalidArgumentException;
 
 class TradesCommand extends Command
 {
@@ -68,12 +67,9 @@ class TradesCommand extends Command
         ], $this->botOptions());
     }
 
-    /**
-     * @throws PsrInvalidArgumentException
-     */
     protected function handling(): int
     {
-        if (!ExchangeFactory::enabled($this->exchange())) {
+        if (!Exchanger::available($this->exchange())) {
             ConsoleNotification::send(
                 new TelegramUpdateNotifiable($this->telegramUpdate),
                 'Exchange was not supported/enabled.'
@@ -88,9 +84,6 @@ class TradesCommand extends Command
         return $this->exitSuccess();
     }
 
-    /**
-     * @throws PsrInvalidArgumentException
-     */
     protected function report(): ?string
     {
         return BotFactory::create($this->bot(), $this->mergeBotOptions())->report($this->latest());

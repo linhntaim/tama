@@ -1,22 +1,23 @@
 <?php
 
-namespace App\Trading\Bots\Orchestrators\PriceStreams;
+namespace App\Trading\Bots\Exchanges\Binance;
 
-use App\Trading\Bots\Exchanges\Binance;
+use App\Trading\Bots\Exchanges\PriceMessageExtract;
+use App\Trading\Bots\Exchanges\PriceStream as BasePriceStream;
 use App\Trading\Models\Trading;
 use Illuminate\Database\Eloquent\Collection;
 use React\EventLoop\LoopInterface;
 
-class BinancePriceStream extends PriceStream
+class PriceStream extends BasePriceStream
 {
     public function __construct(LoopInterface $loop)
     {
         parent::__construct($loop, Binance::NAME, 'wss://stream.binance.com:9443/ws', 0);
     }
 
-    protected function createMessageExtractor(): IPriceMessageExtract
+    protected function createMessageExtractor(): PriceMessageExtract
     {
-        return new BinancePriceStreamMessageExtractor();
+        return new PriceStreamMessageExtractor();
     }
 
     protected function call(string $method, array $params): void

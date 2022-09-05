@@ -1,8 +1,10 @@
 <?php
 
-namespace App\Trading\Bots\Exchanges;
+namespace App\Trading\Bots\Exchanges\Binance;
 
-class BinanceTicker extends Ticker
+use App\Trading\Bots\Exchanges\Ticker as BaseTicker;
+
+class Ticker extends BaseTicker
 {
     public function getSymbol(): string
     {

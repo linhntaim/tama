@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trading\Bots\Orchestrators\PriceStreams;
+namespace App\Trading\Bots\Exchanges;
 
 use App\Support\Client\DateTimer;
 use App\Support\Console\Commands\Command;
@@ -24,7 +24,7 @@ abstract class PriceStream
 
     private int $id = 0;
 
-    protected IPriceMessageExtract $messageExtract;
+    protected PriceMessageExtract $messageExtract;
 
     protected ?ClientSocketConnection $connection = null;
 
@@ -44,7 +44,7 @@ abstract class PriceStream
         $this->messageExtract = $this->createMessageExtractor();
     }
 
-    abstract protected function createMessageExtractor(): IPriceMessageExtract;
+    abstract protected function createMessageExtractor(): PriceMessageExtract;
 
     final protected function getId(): int
     {
