@@ -4,21 +4,21 @@ namespace App\Trading\Bots\Exchanges;
 
 class FakeMarketOrder extends MarketOrder
 {
-    public function __construct(
-        protected float $baseAmount,
-        protected float $quoteAmount
-    )
+    public function __construct(float $fromAmount, float $toAmount)
     {
-        parent::__construct();
+        parent::__construct([
+            'from_amount' => $fromAmount,
+            'to_amount' => $toAmount,
+        ]);
     }
 
-    public function getBaseAmount(): float
+    public function getFromAmount(): float
     {
-        return $this->baseAmount;
+        return $this->get('from_amount');
     }
 
-    public function getQuoteAmount(): float
+    public function getToAmount(): float
     {
-        return $this->quoteAmount;
+        return $this->get('to_amount');
     }
 }

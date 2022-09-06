@@ -59,11 +59,11 @@ class FakeConnector implements ConnectorInterface
 
     public function buyMarket(string $ticker, float $amount): MarketOrder
     {
-        return new FakeMarketOrder($amount, round($amount / ($this->currentPrices[$ticker] ?? 1), 2, PHP_ROUND_HALF_DOWN));
+        return new FakeMarketOrder($amount, bcdiv($amount, $this->currentPrices[$ticker] ?? 1));
     }
 
     public function sellMarket(string $ticker, float $amount): MarketOrder
     {
-        return new FakeMarketOrder($amount, round($amount * ($this->currentPrices[$ticker] ?? 1), 2, PHP_ROUND_HALF_DOWN));
+        return new FakeMarketOrder($amount, bcmul($amount, $this->currentPrices[$ticker] ?? 1));
     }
 }

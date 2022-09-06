@@ -11,6 +11,9 @@ use Illuminate\Support\Str;
 use Symfony\Component\Mime\MimeTypes;
 use Symfony\Component\VarDumper\VarDumper;
 
+const BC_DEFAULT_SCALE = 18;
+const DATE_DEFAULT = 'Y-m-d H:i:s';
+const DATE_DATABASE = DATE_DEFAULT;
 const JSON_READABLE = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_LINE_TERMINATORS;
 const JSON_PRETTY = JSON_READABLE | JSON_PRETTY_PRINT;
 
@@ -430,7 +433,7 @@ if (!function_exists('num_exp')) {
 }
 
 if (!function_exists('num_floor')) {
-    function num_floor(int|float $num, int $precision = 0): float
+    function num_floor(int|float $num, ?int $precision = null): float
     {
         return bcdiv($num, 1, $precision);
     }

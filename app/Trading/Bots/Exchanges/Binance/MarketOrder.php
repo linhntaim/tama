@@ -6,12 +6,12 @@ use App\Trading\Bots\Exchanges\MarketOrder as BaseMarketOrder;
 
 class MarketOrder extends BaseMarketOrder
 {
-    public function getBaseAmount(): float
+    public function getFromAmount(): float
     {
         return $this->get('executedQty');
     }
 
-    public function getQuoteAmount(): float
+    public function getToAmount(): float
     {
         return $this->get('cummulativeQuoteQty');
     }

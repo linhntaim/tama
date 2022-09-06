@@ -224,15 +224,15 @@ abstract class Bot
             return null;
         }
         return match (true) {
-            $indication->getActionBuy() => $this->buyNow($user, $baseAmount, $indication, $buyRisk),
-            $indication->getActionSell() => $this->sellNow($user, $quoteAmount, $indication, $sellRisk),
+            $indication->getActionBuy() => $this->buyNow($user, $quoteAmount, $indication, $buyRisk),
+            $indication->getActionSell() => $this->sellNow($user, $baseAmount, $indication, $sellRisk),
             default => null
         };
     }
 
     public function tryToBuyNow(
         User        $user,
-        float       $baseAmount,
+        float       $quoteAmount,
         float       $buyRisk = 0.0,
         ?Indication $indication = null
     ): ?Trade
@@ -241,12 +241,12 @@ abstract class Bot
         if (is_null($indication) || !$indication->getActionBuy()) {
             return null;
         }
-        return $this->buyNow($user, $baseAmount, $indication, $buyRisk);
+        return $this->buyNow($user, $quoteAmount, $indication, $buyRisk);
     }
 
     public function tryToSellNow(
         User        $user,
-        float       $quoteAmount,
+        float       $baseAmount,
         float       $sellRisk = 0.0,
         ?Indication $indication = null
     ): ?Trade
@@ -255,23 +255,23 @@ abstract class Bot
         if (is_null($indication) || !$indication->getActionSell()) {
             return null;
         }
-        return $this->sellNow($user, $quoteAmount, $indication, $sellRisk);
+        return $this->sellNow($user, $baseAmount, $indication, $sellRisk);
     }
 
     protected function buyNow(
         User       $user,
-        float      $baseAmount,
+        float      $quoteAmount,
         Indication $indication,
         float      $buyRisk = 0.0
     ): ?Trade
     {
-        if (num_eq($buyAmount = $this->calculateBuyAmount($indication, $baseAmount, $buyRisk), 0.0)) {
+        if (num_eq($buyAmount = $this->calculateBuyAmount($indication, $quoteAmount, $buyRisk), 0.0)) {
             return null;
         }
         $marketOrder = $this->exchangeConnector($user)->buyMarket($this->ticker(), $buyAmount);
         return new Trade([
-            'base_amount' => -$marketOrder->getBaseAmount(),
-            'quote_amount' => $marketOrder->getQuoteAmount(),
+            'base_amount' => $marketOrder->getToAmount(),
+            'quote_amount' => -$marketOrder->getFromAmount(),
         ]);
     }
 
@@ -286,18 +286,18 @@ abstract class Bot
 
     protected function sellNow(
         User       $user,
-        float      $quoteAmount,
+        float      $baseAmount,
         Indication $indication,
         float      $sellRisk = 0.0
     ): ?Trade
     {
-        if (num_eq($sellAmount = $this->calculateSellAmount($indication, $quoteAmount, $sellRisk), 0.0)) {
+        if (num_eq($sellAmount = $this->calculateSellAmount($indication, $baseAmount, $sellRisk), 0.0)) {
             return null;
         }
         $marketOrder = $this->exchangeConnector($user)->sellMarket($this->ticker(), $sellAmount);
         return new Trade([
-            'base_amount' => $marketOrder->getQuoteAmount(),
-            'quote_amount' => -$marketOrder->getBaseAmount(),
+            'base_amount' => -$marketOrder->getFromAmount(),
+            'quote_amount' => $marketOrder->getToAmount(),
         ]);
     }
 

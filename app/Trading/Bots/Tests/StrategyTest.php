@@ -3,9 +3,9 @@
 namespace App\Trading\Bots\Tests;
 
 use App\Models\User;
+use App\Support\Client\DateTimer;
 use App\Trading\Bots\Bot;
 use App\Trading\Bots\BotFactory;
-use App\Trading\Bots\Data\Indication;
 use App\Trading\Bots\Exchanges\Binance\Binance;
 use App\Trading\Bots\Exchanges\Interval;
 use App\Trading\Bots\Oscillators\RsiOscillator;
@@ -25,8 +25,8 @@ class StrategyTest
     protected Collection $swaps;
 
     public function __construct(
-        protected float $baseAmount = 500.0,
-        protected float $quoteAmount = 0.0,
+        protected float $baseAmount = 0.0,
+        protected float $quoteAmount = 500.0,
         protected float $buyRisk = 0.0,
         protected float $sellRisk = 0.0,
         string          $buyBotName = 'oscillating_bot',
@@ -51,7 +51,7 @@ class StrategyTest
             static fn(Bot $bot) => $bot->useFakeExchangeConnector()
         );
         if ($this->buyBot->exchange() !== $this->sellBot->exchange()
-            || $this->buyBot->exchange() !== $this->sellBot->exchange()) {
+            || (string)$this->buyBot->ticker() !== (string)$this->sellBot->ticker()) {
             throw new InvalidArgumentException('Buy and sell bot must have the same exchange and ticker');
         }
 
@@ -78,7 +78,7 @@ class StrategyTest
         );
     }
 
-    public function test(?int $startTime = null, ?int $endTime = null): ReportTest
+    public function test(?int $startTime = null, ?int $endTime = null): ResultTest
     {
         $now = Carbon::now();
         if ((!is_null($startTime) && $startTime > $now->getTimestamp())
@@ -148,7 +148,7 @@ class StrategyTest
                     $this->buyBot->exchangeConnector()->setTickerPrice($this->buyBot->ticker(), $indication->getPrice());
                     if (!is_null($trade = $this->buyBot->tryToBuyNow(
                         $fakeUser,
-                        $this->baseAmount(),
+                        $this->quoteAmount(),
                         $this->buyRisk,
                         $indication
                     ))) {
@@ -170,7 +170,7 @@ class StrategyTest
                     $this->sellBot->exchangeConnector()->setTickerPrice($this->sellBot->ticker(), $indication->getPrice());
                     if (!is_null($trade = $this->sellBot->tryToSellNow(
                         $fakeUser,
-                        $this->quoteAmount(),
+                        $this->baseAmount(),
                         $this->sellRisk,
                         $indication
                     ))) {
@@ -189,6 +189,32 @@ class StrategyTest
             $loopTime += $loopingTime;
         }
 
-        return new ReportTest($this->swaps);
+        return new ResultTest(
+            $this->buyBot->exchange(),
+            $this->buyBot->ticker(),
+            $this->buyBot->baseSymbol(),
+            $this->buyBot->quoteSymbol(),
+            $startTime,
+            $endTime,
+            $this->swaps
+        );
+    }
+
+    public function testYearsTillNow(int $years = 1): ResultTest
+    {
+        $now = DateTimer::now(null);
+        return $this->test((clone $now)->subYears($years)->getTimestamp(), $now->getTimestamp());
+    }
+
+    public function testDaysTillNow(int $days = 365): ResultTest
+    {
+        $now = DateTimer::now(null);
+        return $this->test((clone $now)->subDays($days)->getTimestamp(), $now->getTimestamp());
+    }
+
+    public function testHoursTillNow(int $hours = 365 * 24): ResultTest
+    {
+        $now = DateTimer::now(null);
+        return $this->test((clone $now)->subHours($hours)->getTimestamp(), $now->getTimestamp());
     }
 }

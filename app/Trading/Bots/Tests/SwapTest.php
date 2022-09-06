@@ -4,51 +4,47 @@ namespace App\Trading\Bots\Tests;
 
 use App\Support\ArrayReader;
 use App\Trading\Bots\Data\Indication;
-use ArrayAccess;
 
-class SwapTest extends ArrayReader implements ArrayAccess
+class SwapTest extends ArrayReader
 {
     public function __construct(int $time, float $price, float $baseAmount, float $quoteAmount, ?Indication $indication = null)
     {
         parent::__construct([
             'time' => $time,
             'price' => $price,
-            'base_amount' => num_floor($baseAmount, 18),
-            'quote_amount' => num_floor($quoteAmount, 18),
+            'base_amount' => num_floor($baseAmount),
+            'quote_amount' => num_floor($quoteAmount),
             'indication' => $indication,
         ]);
     }
 
-    public function offsetExists(mixed $offset): bool
+    public function getTime(): int
     {
-        return isset($this->data[$offset]);
+        return $this->get('time');
     }
 
-    public function offsetGet(mixed $offset): mixed
+    public function getPrice(): float
     {
-        return $this->data[$offset];
+        return $this->get('price');
     }
 
-    public function offsetSet(mixed $offset, mixed $value): void
+    public function getBaseAmount(): float
     {
+        return $this->get('base_amount');
     }
 
-    public function offsetUnset(mixed $offset): void
+    public function getQuoteAmount(): float
     {
+        return $this->get('quote_amount');
     }
 
-    public function __get(string $name)
+    public function baseSwapped(): bool
     {
-        return $this->offsetGet($name);
+        return $this->getBaseAmount() < 0;
     }
 
-    public function __set(string $name, $value): void
+    public function quoteSwapped(): bool
     {
-        $this->offsetSet($name, $value);
-    }
-
-    public function __isset(string $name): bool
-    {
-        return $this->offsetExists($name);
+        return $this->getQuoteAmount() < 0;
     }
 }

@@ -111,7 +111,7 @@ class AppServiceProvider extends ServiceProvider implements DeferrableProvider
     protected function configureGlobal(): void
     {
         // ext-bcmath
-        bcscale(18);
+        bcscale(BC_DEFAULT_SCALE);
         // ext-mbstring
         mb_detect_order([
             'UTF-8',
