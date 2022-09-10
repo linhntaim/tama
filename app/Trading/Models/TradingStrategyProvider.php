@@ -2,25 +2,53 @@
 
 namespace App\Trading\Models;
 
+use App\Models\User;
 use App\Support\Models\ModelProvider;
+use App\Support\Models\QueryValues\LikeValue;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
+/**
+ * @method TradingStrategy createWithAttributes(array $attributes = [])
+ */
 class TradingStrategyProvider extends ModelProvider
 {
     public string $modelClass = TradingStrategy::class;
 
-    protected function whereByTrading(Builder $query, int|Trading $trading): Builder
+    protected function whereByTrading(Builder $query, int|Trading|LikeValue $trading): Builder
     {
         return $query->where(function ($query) use ($trading) {
-            $tradingId = $this->retrieveKey($trading);
-            $query->where('buy_trading_id', $tradingId)
-                ->orWhere('sell_trading_id', $tradingId);
+            if ($trading instanceof LikeValue) {
+                $query
+                    ->whereHas('buyTrading', function ($query) use ($trading) {
+                        $query->where('slug', 'like', (string)$trading);
+                    })
+                    ->orWhere('sellTrading', function ($query) use ($trading) {
+                        $query->where('slug', 'like', (string)$trading);
+                    });
+            }
+            else {
+                $tradingId = $this->retrieveKey($trading);
+                $query->where('buy_trading_id', $tradingId)
+                    ->orWhere('sell_trading_id', $tradingId);
+            }
         });
     }
 
-    public function allByTrading(int|Trading $trading): Collection
+    public function paginationByUser(int|User $user, ?string $keyword = null, ?int $perPage = null, ?int $page = null): LengthAwarePaginator
     {
-        return $this->all(['trading' => $trading]);
+        return $this->pagination(array_filter([
+            'user_id' => $this->retrieveKey($user),
+            'trading' => is_null($keyword) ? null : LikeValue::create($keyword),
+        ]), $perPage, $page);
+    }
+
+    public function allActiveByTrading(int|Trading $trading): Collection
+    {
+        return $this->all([
+            'trading' => $trading,
+            'status' => TradingStrategy::STATUS_ACTIVE,
+        ]);
     }
 }

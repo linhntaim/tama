@@ -52,6 +52,7 @@ return new class extends Migration {
             $table->bigInteger('trading_id')->unsigned();
             $table->tinyInteger('status')->default(2)
                 ->comment('1=done|2=doing|3=failed');
+            $table->longText('indication');
             $table->timestamp('time')->nullable();
             $table->timestamps();
 

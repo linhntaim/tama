@@ -82,6 +82,11 @@ class Connector extends BaseConnector
             });
     }
 
+    public function tickerPrice(string $ticker): float
+    {
+        return $this->spot->tickerPrice(['symbol' => $ticker])['price'];
+    }
+
     /**
      * @throws MissingArgumentException
      */

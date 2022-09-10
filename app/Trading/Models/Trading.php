@@ -15,11 +15,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $bot
  * @property string $exchange
  * @property string $ticker
+ * @property string $base_symbol
+ * @property string $quote_symbol
  * @property string $interval
  * @property array $options
  * @property User[]|Collection $subscribers
- * @property TradingStrategy[]|Collection $buyingStrategies
- * @property TradingStrategy[]|Collection $sellingStrategies
+ * @property TradingStrategy[]|Collection $buyStrategies
+ * @property TradingStrategy[]|Collection $sellStrategies
  * @property array $botOptions
  */
 class Trading extends Model
@@ -52,12 +54,12 @@ class Trading extends Model
         return $this->belongsToMany(User::class, 'trading_subscribers', 'trading_id', 'user_id');
     }
 
-    public function buyingStrategies(): HasMany
+    public function buyStrategies(): HasMany
     {
         return $this->hasMany(TradingStrategy::class, 'buy_trading_id', 'id');
     }
 
-    public function sellingStrategies(): HasMany
+    public function sellStrategies(): HasMany
     {
         return $this->hasMany(TradingStrategy::class, 'sell_trading_id', 'id');
     }

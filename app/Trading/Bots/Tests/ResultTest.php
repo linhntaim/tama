@@ -56,17 +56,17 @@ class ResultTest
         $this->afterPrice = $swaps->last()->getPrice();
         $this->afterBaseAmount = $swaps->sum('base_amount');
         $this->afterQuoteAmount = $swaps->sum('quote_amount');
-        $this->afterQuoteAmountEquivalent = bcadd($this->afterPrice * $this->afterBaseAmount, $this->afterQuoteAmount);
+        $this->afterQuoteAmountEquivalent = num_add($this->afterPrice * $this->afterBaseAmount, $this->afterQuoteAmount);
         // first swap is initial
         tap($swaps->shift(), function (SwapTest $swap) {
             $this->beforePrice = $swap->getPrice();
             $this->beforeBaseAmount = $swap->getBaseAmount();
             $this->beforeQuoteAmount = $swap->getQuoteAmount();
-            $this->beforeQuoteAmountEquivalent = bcadd($this->beforePrice * $this->beforeBaseAmount, $this->beforeQuoteAmount);
+            $this->beforeQuoteAmountEquivalent = num_add($this->beforePrice * $this->beforeBaseAmount, $this->beforeQuoteAmount);
         });
 
         $this->profit = bcsub($this->afterQuoteAmountEquivalent, $this->beforeQuoteAmountEquivalent);
-        $this->profitPercent = bcmul($this->profit / $this->beforeQuoteAmountEquivalent, 100, 2);
+        $this->profitPercent = num_mul($this->profit / $this->beforeQuoteAmountEquivalent, 100, 2);
         $this->shownProfitPercent = sprintf('%s%%', $this->profitPercent);
         $this->shownStartTime = date(DATE_DEFAULT, $this->startTime);
         $this->shownEndTime = date(DATE_DEFAULT, $this->endTime);

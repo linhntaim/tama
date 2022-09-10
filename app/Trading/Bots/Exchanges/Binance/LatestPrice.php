@@ -14,6 +14,6 @@ class LatestPrice extends BaseLatestPrice
 
     public function getTime(): int
     {
-        return int_exp($this->getPrice()[0] / 1000);
+        return int_floor($this->getPrice()[0] / 1000);
     }
 }

@@ -4,17 +4,19 @@ namespace App\Trading\Bots\Tests;
 
 use App\Support\ArrayReader;
 use App\Trading\Bots\Data\Indication;
+use App\Trading\Bots\Exchanges\MarketOrder;
 
 class SwapTest extends ArrayReader
 {
-    public function __construct(int $time, float $price, float $baseAmount, float $quoteAmount, ?Indication $indication = null)
+    public function __construct(?Indication $indication, int $time, float $price, float $baseAmount, float $quoteAmount, ?MarketOrder $exchangeOrder)
     {
         parent::__construct([
+            'indication' => $indication,
             'time' => $time,
             'price' => $price,
             'base_amount' => num_floor($baseAmount),
             'quote_amount' => num_floor($quoteAmount),
-            'indication' => $indication,
+            'exchange_order' => $exchangeOrder,
         ]);
     }
 

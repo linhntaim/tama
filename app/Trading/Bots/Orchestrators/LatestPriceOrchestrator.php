@@ -28,7 +28,7 @@ class LatestPriceOrchestrator extends Orchestrator
      */
     protected function fetchTradings(): Collection
     {
-        return (new TradingProvider())->allByHavingSubscribers(
+        return (new TradingProvider())->allByRunning(
             $this->latestPrice->getExchange(),
             $this->latestPrice->getTicker(),
             $this->latestPrice->getInterval()

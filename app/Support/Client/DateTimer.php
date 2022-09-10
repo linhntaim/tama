@@ -9,9 +9,6 @@ use Illuminate\Support\Str;
 class DateTimer extends SettingsApplier
 {
     public const DEFAULT_LOCALE = 'en';
-    public const DATABASE_FORMAT_DATE = 'Y-m-d';
-    public const DATABASE_FORMAT_TIME = 'H:i:s';
-    public const DATABASE_FORMAT = DateTimer::DATABASE_FORMAT_DATE . ' ' . DateTimer::DATABASE_FORMAT_TIME;
     public const DAY_TYPE_NONE = 0;
     public const DAY_TYPE_START_NEXT = 1;
     public const DAY_TYPE_START = -1;
@@ -46,12 +43,7 @@ class DateTimer extends SettingsApplier
 
     public static function databaseNow(?bool $set = false): string
     {
-        return static::now($set)->format(static::DATABASE_FORMAT);
-    }
-
-    public static function timeAsDatabase(int|float|string $timestamp): string
-    {
-        return static::timeAs($timestamp, static::DATABASE_FORMAT);
+        return static::now($set)->format(DATE_DATABASE);
     }
 
     public static function timeAs(int|float|string $timestamp, ?string $format = null): Carbon|string
@@ -59,6 +51,11 @@ class DateTimer extends SettingsApplier
         return is_null($format)
             ? Carbon::createFromTimestamp($timestamp, new CarbonTimeZone('UTC'))
             : Carbon::createFromTimestamp($timestamp, new CarbonTimeZone('UTC'))->format($format);
+    }
+
+    public static function timeAsDatabase(int|float|string $timestamp): string
+    {
+        return static::timeAs($timestamp, DATE_DATABASE);
     }
 
     /**
@@ -568,7 +565,7 @@ class DateTimer extends SettingsApplier
 
     public function fromFormatToDatabaseFormat(string $format, string $time, int $dayType = DateTimer::DAY_TYPE_NONE): string
     {
-        return $this->fromFormatToFormat($format, $time, self::DATABASE_FORMAT, $dayType);
+        return $this->fromFormatToFormat($format, $time, DATE_DATABASE, $dayType);
     }
     #endregion
 }

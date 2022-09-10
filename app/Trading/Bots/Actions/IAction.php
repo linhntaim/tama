@@ -3,16 +3,10 @@
 namespace App\Trading\Bots\Actions;
 
 use App\Trading\Bots\Bot;
-use App\Trading\Bots\Data\Indication;
 use App\Trading\Models\Trading;
+use App\Trading\Models\TradingBroadcast;
 
 interface IAction
 {
-    /**
-     * @param Trading $trading
-     * @param Bot $bot
-     * @param Indication $indication
-     * @return void
-     */
-    public function __invoke(Trading $trading, Bot $bot, Indication $indication): void;
+    public function __invoke(Trading $trading, Bot $bot, TradingBroadcast $broadcast): void;
 }

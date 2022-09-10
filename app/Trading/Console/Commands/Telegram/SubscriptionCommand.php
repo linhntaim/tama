@@ -3,7 +3,6 @@
 namespace App\Trading\Console\Commands\Telegram;
 
 use App\Models\User;
-use App\Models\UserProvider;
 use App\Trading\Models\Trading;
 use App\Trading\Models\TradingProvider;
 use App\Trading\Notifications\Telegram\ConsoleNotification;
@@ -12,6 +11,8 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class SubscriptionCommand extends Command
 {
+    use FindUser, PrintList;
+
     public $signature = '{--q= : The keyword for searching.} {--page=1}';
 
     protected $description = 'List all trading subscriptions.';
@@ -24,13 +25,6 @@ class SubscriptionCommand extends Command
     protected function page(): int
     {
         return with((int)($this->option('page') ?? 1), static fn($page) => $page <= 0 ? 1 : $page);
-    }
-
-    protected function findUser(): ?User
-    {
-        return (new UserProvider())
-            ->notStrict()
-            ->firstByProvider('telegram', $this->telegramUpdate->chatId());
     }
 
     protected function handling(): int
@@ -46,26 +40,11 @@ class SubscriptionCommand extends Command
 
     protected function printTradingsBySubscriber(User $user): string
     {
-        return $this->printTradings((new TradingProvider())->paginationBySubscriber($user, $this->keyword(), 10, $this->page()));
-    }
-
-    protected function printTradings(LengthAwarePaginator $tradings): string
-    {
-        if ($tradings->count() === 0) {
-            return 'No subscriptions.';
-        }
-        $lines = ['Trading subscriptions:'];
-        $lines[] = str_repeat('-', 25);
-        foreach ($tradings as $trading) {
-            $lines[] = $this->printTrading($trading);
-        }
-        $lines[] = str_repeat('-', 25);
-        $lines[] = sprintf('Page: %s / %s', $tradings->currentPage(), $tradings->lastPage());
-        return implode(PHP_EOL, $lines);
-    }
-
-    protected function printTrading(Trading $trading): string
-    {
-        return sprintf('#%s:%s', $trading->id, $trading->slug);
+        return $this->printList(
+            (new TradingProvider())->paginationBySubscriber($user, $this->keyword(), 10, $this->page()),
+            fn(Trading $trading): string => sprintf('#%s:%s', $trading->id, $trading->slug),
+            'No subscriptions.',
+            'Trading subscriptions:'
+        );
     }
 }

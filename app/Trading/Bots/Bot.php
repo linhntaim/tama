@@ -5,12 +5,12 @@ namespace App\Trading\Bots;
 use App\Models\User;
 use App\Support\Concerns\ClassHelper;
 use App\Trading\Bots\Data\Indication;
-use App\Trading\Bots\Data\Trade;
 use App\Trading\Bots\Exchanges\BasicTicker;
 use App\Trading\Bots\Exchanges\ConnectorInterface as ExchangeConnector;
 use App\Trading\Bots\Exchanges\Exchanger;
 use App\Trading\Bots\Exchanges\FakeConnector as FakeExchangeConnector;
 use App\Trading\Bots\Exchanges\Interval;
+use App\Trading\Bots\Exchanges\MarketOrder;
 use App\Trading\Bots\Exchanges\PriceCollection;
 use App\Trading\Bots\Exchanges\Ticker;
 use App\Trading\Bots\Reporters\IReport;
@@ -217,7 +217,7 @@ abstract class Bot
         float       $buyRisk = 0.0,
         float       $sellRisk = 0.0,
         ?Indication $indication = null
-    ): ?Trade
+    ): ?MarketOrder
     {
         $indication = $indication ?: $this->indicateNow();
         if (is_null($indication)) {
@@ -235,7 +235,7 @@ abstract class Bot
         float       $quoteAmount,
         float       $buyRisk = 0.0,
         ?Indication $indication = null
-    ): ?Trade
+    ): ?MarketOrder
     {
         $indication = $indication ?: $this->indicateNow();
         if (is_null($indication) || !$indication->getActionBuy()) {
@@ -249,7 +249,7 @@ abstract class Bot
         float       $baseAmount,
         float       $sellRisk = 0.0,
         ?Indication $indication = null
-    ): ?Trade
+    ): ?MarketOrder
     {
         $indication = $indication ?: $this->indicateNow();
         if (is_null($indication) || !$indication->getActionSell()) {
@@ -263,16 +263,12 @@ abstract class Bot
         float      $quoteAmount,
         Indication $indication,
         float      $buyRisk = 0.0
-    ): ?Trade
+    ): ?MarketOrder
     {
         if (num_eq($buyAmount = $this->calculateBuyAmount($indication, $quoteAmount, $buyRisk), 0.0)) {
             return null;
         }
-        $marketOrder = $this->exchangeConnector($user)->buyMarket($this->ticker(), $buyAmount);
-        return new Trade([
-            'base_amount' => $marketOrder->getToAmount(),
-            'quote_amount' => -$marketOrder->getFromAmount(),
-        ]);
+        return $this->exchangeConnector($user)->buyMarket($this->ticker(), $buyAmount);
     }
 
     protected function calculateBuyAmount(Indication $indication, float $amount, float $risk = 0.0): float
@@ -289,16 +285,12 @@ abstract class Bot
         float      $baseAmount,
         Indication $indication,
         float      $sellRisk = 0.0
-    ): ?Trade
+    ): ?MarketOrder
     {
         if (num_eq($sellAmount = $this->calculateSellAmount($indication, $baseAmount, $sellRisk), 0.0)) {
             return null;
         }
-        $marketOrder = $this->exchangeConnector($user)->sellMarket($this->ticker(), $sellAmount);
-        return new Trade([
-            'base_amount' => -$marketOrder->getFromAmount(),
-            'quote_amount' => $marketOrder->getToAmount(),
-        ]);
+        return $this->exchangeConnector($user)->sellMarket($this->ticker(), $sellAmount);
     }
 
     protected function calculateSellAmount(Indication $indication, float $amount, float $risk = 0.0): float

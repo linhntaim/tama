@@ -4,6 +4,7 @@ namespace App\Trading\Console\Commands\Orchestration;
 
 use App\Support\Console\Commands\Command;
 use App\Trading\Bots\Actions\ReportAction;
+use App\Trading\Bots\Actions\TradeAction;
 use App\Trading\Bots\Exchanges\Binance\Binance;
 use App\Trading\Bots\Exchanges\Binance\LatestPrice as BinanceLatestPrice;
 use App\Trading\Bots\Exchanges\LatestPrice;
@@ -39,6 +40,7 @@ class LatestPriceCommand extends Command
         (new LatestPriceOrchestrator(
             $this->createLatestPrice(),
             [
+                new TradeAction(),
                 new ReportAction(),
             ]
         ))->proceed();

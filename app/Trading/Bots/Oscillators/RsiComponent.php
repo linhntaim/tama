@@ -256,21 +256,17 @@ class RsiComponent extends Component
 
     protected function transform(Packet $packet): Packet
     {
-        $priceCollection = $this->getPrices($packet);
-        $latestTime = $priceCollection->latestTime();
         return $packet->set(
             'transformers.rsi',
             $packet->get('analyzers.rsi')
-                ->map(function (Analysis $analysis, $index) use ($priceCollection, $latestTime) {
+                ->map(function (Analysis $analysis) {
                     return new Indication(
                         $value = $analysis->hasSignal('bearish_divergence')
                             ? 1.0
                             : ($analysis->hasSignal('bullish_divergence')
                                 ? -1.0 : 0.0),
-                        $time = $analysis->getTime(),
+                        $analysis->getTime(),
                         $analysis->getPrice(),
-                        $priceCollection->timeAt($index + 1),
-                        $time === $latestTime,
                         num_ne($value, 0.0) ? [
                             new IndicationMetaItem('rsi', $analysis->getSignals(), [
                                 'rsi' => $analysis->get('rsi'),

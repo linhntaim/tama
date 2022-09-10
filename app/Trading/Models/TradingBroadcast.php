@@ -2,10 +2,16 @@
 
 namespace App\Trading\Models;
 
+use App\Support\Models\Casts\Serialize;
 use App\Support\Models\Model;
+use App\Trading\Bots\Data\Indication;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 
 /**
+ * @property int $id
+ * @property int $trading_id
+ * @property string $time
+ * @property Indication $indication
  * @property int $status
  * @property bool $done
  * @property bool $doing
@@ -22,12 +28,14 @@ class TradingBroadcast extends Model
     protected $fillable = [
         'trading_id',
         'time',
+        'indication',
         'status',
     ];
 
     protected $casts = [
         'id' => 'integer',
         'trading_id' => 'integer',
+        'indication' => Serialize::class,
         'status' => 'integer',
     ];
 

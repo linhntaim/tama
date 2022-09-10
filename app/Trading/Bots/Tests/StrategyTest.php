@@ -128,10 +128,12 @@ class StrategyTest
         $priceCollection = $buyIntervalLte ? $buyPriceCollector->get(false) : $sellPriceCollector->get(false);
         $this->swaps->push(
             new SwapTest(
+                null,
                 $priceCollection->latestTime(),
                 $priceCollection->latestPrice(),
                 $this->baseAmount,
-                $this->quoteAmount
+                $this->quoteAmount,
+                null
             )
         );
 
@@ -146,7 +148,7 @@ class StrategyTest
                 $priceCollection = $buyPriceCollector->get();
                 if (!is_null($indication = $this->buyBot->indicatingNow($priceCollection))) {
                     $this->buyBot->exchangeConnector()->setTickerPrice($this->buyBot->ticker(), $indication->getPrice());
-                    if (!is_null($trade = $this->buyBot->tryToBuyNow(
+                    if (!is_null($marketOrder = $this->buyBot->tryToBuyNow(
                         $fakeUser,
                         $this->quoteAmount(),
                         $this->buyRisk,
@@ -154,11 +156,12 @@ class StrategyTest
                     ))) {
                         $this->swaps->push(
                             new SwapTest(
-                                $priceCollection->latestTime(),
-                                $priceCollection->latestPrice(),
-                                $trade->getBaseAmount(),
-                                $trade->getQuoteAmount(),
-                                $indication
+                                $indication,
+                                $marketOrder->getTime(),
+                                $marketOrder->getPrice(),
+                                $marketOrder->getToAmount(),
+                                -$marketOrder->getFromAmount(),
+                                $marketOrder
                             )
                         );
                     }
@@ -168,7 +171,7 @@ class StrategyTest
                 $priceCollection = $sellPriceCollector->get();
                 if (!is_null($indication = $this->sellBot->indicatingNow($priceCollection))) {
                     $this->sellBot->exchangeConnector()->setTickerPrice($this->sellBot->ticker(), $indication->getPrice());
-                    if (!is_null($trade = $this->sellBot->tryToSellNow(
+                    if (!is_null($marketOrder = $this->sellBot->tryToSellNow(
                         $fakeUser,
                         $this->baseAmount(),
                         $this->sellRisk,
@@ -176,10 +179,10 @@ class StrategyTest
                     ))) {
                         $this->swaps->push(
                             new SwapTest(
-                                $priceCollection->latestTime(),
-                                $priceCollection->latestPrice(),
-                                $trade->getBaseAmount(),
-                                $trade->getQuoteAmount(),
+                                $marketOrder->getTime(),
+                                $marketOrder->getPrice(),
+                                -$marketOrder->getFromAmount(),
+                                $marketOrder->getToAmount(),
                                 $indication
                             )
                         );

@@ -13,6 +13,11 @@ class ArrayReader implements ArrayAccess, Arrayable
     {
     }
 
+    public function __sleep(): array
+    {
+        return ['data'];
+    }
+
     public function get(?string $key = null, mixed $default = null): mixed
     {
         return data_get($this->data, $key, $default);

@@ -110,22 +110,22 @@ class Interval
         return with(
             match ($this->getUnit()) {
                 'm' => $carbon
-                    ->subMinutes(int_exp($timestamp / 60) % $this->getNumber())
+                    ->subMinutes(int_floor($timestamp / 60) % $this->getNumber())
                     ->addMinutes($this->getNumber() * $directionIndex)
                     ->second(0),
                 'h' => $carbon
-                    ->subHours(int_exp($timestamp / 3600) % $this->getNumber())
+                    ->subHours(int_floor($timestamp / 3600) % $this->getNumber())
                     ->addHours($this->getNumber() * $directionIndex)
                     ->minute(0)
                     ->second(0),
                 'd' => $carbon
-                    ->subDays(int_exp($timestamp / 3600 * 24) % $this->getNumber())
+                    ->subDays(int_floor($timestamp / 3600 * 24) % $this->getNumber())
                     ->addDays($this->getNumber() * $directionIndex)
                     ->hour(0)
                     ->minute(0)
                     ->second(0),
                 'w' => $carbon
-                    ->subDays(int_exp($timestamp / 3600 * 24) % ($this->getNumber() * 7))
+                    ->subDays(int_floor($timestamp / 3600 * 24) % ($this->getNumber() * 7))
                     ->addDays($this->getNumber() * $directionIndex * 7)
                     ->hour(0)
                     ->minute(0)

@@ -3,6 +3,7 @@
 namespace App\Trading\Bots\Data;
 
 use App\Support\ArrayReader;
+use App\Trading\Bots\Exchanges\Interval;
 
 class Indication extends ArrayReader
 {
@@ -10,16 +11,12 @@ class Indication extends ArrayReader
         float $value,
         int   $time,
         float $price,
-        int   $actionTime,
-        bool  $actionNow = false,
         array $meta = [])
     {
         parent::__construct([
             'value' => $value,
             'time' => $time,
             'price' => $price,
-            'action_time' => $actionTime,
-            'action_now' => $actionNow,
             'meta' => $meta,
         ]);
     }
@@ -39,14 +36,14 @@ class Indication extends ArrayReader
         return $this->get('price');
     }
 
-    public function getActionTime(): int
+    public function getActionTime(Interval $interval): int
     {
-        return $this->get('action_time');
+        return $interval->getNextOpenTimeOfExact($this->getTime());
     }
 
-    public function getActionNow(): bool
+    public function getActionNow(Interval $interval): bool
     {
-        return $this->get('action_now');
+        return $interval->getNextOpenTimeOfExact($this->getTime()) === $interval->getLatestOpenTime();
     }
 
     public function getActionSell(): bool

@@ -56,7 +56,7 @@ abstract class PriceStream
         return (new TradingProvider())
             ->select(['ticker', 'interval'])
             ->group(['ticker', 'interval'])
-            ->allByHavingSubscribers($this->exchange);
+            ->allByRunning($this->exchange);
     }
 
     private function setConnection(ClientSocketConnection $connection): static
@@ -80,7 +80,7 @@ abstract class PriceStream
         $now = DateTimer::now(null);
         return
             (clone $now)->minute(0)->second(0)
-                ->addMinutes(15 * int_exp($now->minute / 15 + 1))
+                ->addMinutes(15 * int_floor($now->minute / 15 + 1))
                 ->getTimestamp()
             - $now->getTimestamp();
     }

@@ -26,7 +26,7 @@ class Orchestrator
      */
     protected function fetchTradings(): Collection
     {
-        return (new TradingProvider())->allByHavingSubscribers(Exchanger::available());
+        return (new TradingProvider())->allByRunning(Exchanger::available());
     }
 
     public function proceed(): void

@@ -313,10 +313,10 @@ if (!function_exists('int_eq')) {
     }
 }
 
-if (!function_exists('int_exp')) {
-    function int_exp(float|int $num, bool $raw = false): int
+if (!function_exists('int_floor')) {
+    function int_floor(float|int $num): int
     {
-        return num_exp($num, $raw);
+        return num_floor($num, 0);
     }
 }
 
@@ -418,59 +418,108 @@ if (!function_exists('nullify_empty_array')) {
     }
 }
 
-if (!function_exists('num_eq')) {
-    function num_eq(float|int $num1, float|int $num2): bool
+if (!function_exists('num_add')) {
+    function num_add(float|int $num1, float|int $num2, ?int $scale = null): float
     {
-        return bccomp($num1, $num2) === 0;
+        return bcadd(num_str($num1), num_str($num2), $scale);
     }
 }
 
-if (!function_exists('num_exp')) {
-    function num_exp(float|int $num, bool $raw = false): float
+if (!function_exists('num_div')) {
+    function num_div(float|int $num1, float|int $num2, ?int $scale = null): float
     {
-        return !$raw ? bcadd($num, 0) : $num;
+        return bcdiv(num_str($num1), num_str($num2), $scale);
+    }
+}
+
+if (!function_exists('num_eq')) {
+    function num_eq(float|int $num1, float|int $num2, ?int $scale = null): bool
+    {
+        return bccomp(num_str($num1), num_str($num2), $scale) === 0;
     }
 }
 
 if (!function_exists('num_floor')) {
     function num_floor(int|float $num, ?int $precision = null): float
     {
-        return bcdiv($num, 1, $precision);
+        return bcadd(num_str($num), 0, $precision);
     }
 }
 
 if (!function_exists('num_gt')) {
-    function num_gt(float|int $num1, float|int $num2): bool
+    function num_gt(float|int $num1, float|int $num2, ?int $scale = null): bool
     {
-        return bccomp($num1, $num2) === 1;
+        return bccomp(num_str($num1), num_str($num2), $scale) === 1;
     }
 }
 
 if (!function_exists('num_gte')) {
-    function num_gte(float|int $num1, float|int $num2): bool
+    function num_gte(float|int $num1, float|int $num2, ?int $scale = null): bool
     {
-        return bccomp($num1, $num2) >= 0;
+        return bccomp(num_str($num1), num_str($num2), $scale) >= 0;
     }
 }
 
 if (!function_exists('num_lt')) {
-    function num_lt(float|int $num1, float|int $num2): bool
+    function num_lt(float|int $num1, float|int $num2, ?int $scale = null): bool
     {
-        return bccomp($num1, $num2) === -1;
+        return bccomp(num_str($num1), num_str($num2), $scale) === -1;
     }
 }
 
 if (!function_exists('num_lte')) {
-    function num_lte(float|int $num1, float|int $num2): bool
+    function num_lte(float|int $num1, float|int $num2, ?int $scale = null): bool
     {
-        return bccomp($num1, $num2) <= 0;
+        return bccomp(num_str($num1), num_str($num2), $scale) <= 0;
+    }
+}
+
+if (!function_exists('num_mod')) {
+    function num_mod(float|int $num1, float|int $num2, ?int $scale = null): float
+    {
+        return bcmod(num_str($num1), num_str($num2), $scale);
+    }
+}
+
+if (!function_exists('num_mul')) {
+    function num_mul(float|int $num1, float|int $num2, ?int $scale = null): float
+    {
+        return bcmul(num_str($num1), num_str($num2), $scale);
+    }
+}
+
+if (!function_exists('num_pow')) {
+    function num_pow(float|int $num, int $exponent, ?int $scale = null): float
+    {
+        return bcpow(num_str($num), $exponent, $scale);
     }
 }
 
 if (!function_exists('num_ne')) {
-    function num_ne(float|int $num1, float|int $num2): bool
+    function num_ne(float|int $num1, float|int $num2, ?int $scale = null): bool
     {
-        return !num_eq($num1, $num2);
+        return !num_eq($num1, $num2, $scale);
+    }
+}
+
+if (!function_exists('num_sqrt')) {
+    function num_sqrt(float|int $num, ?int $scale = null): float
+    {
+        return bcsqrt(num_str($num), $scale);
+    }
+}
+
+if (!function_exists('num_str')) {
+    function num_str(float|int $num, ?int $scale = null): string
+    {
+        return preg_replace('/\.?0+$/', '', number_format($num, $scale ?: BC_DEFAULT_SCALE, '.', ''));
+    }
+}
+
+if (!function_exists('num_sub')) {
+    function num_sub(float|int $num1, float|int $num2, ?int $scale = null): float
+    {
+        return bcsub(num_str($num1), num_str($num2), $scale);
     }
 }
 

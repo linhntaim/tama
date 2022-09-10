@@ -36,6 +36,17 @@ class FakeConnector implements ConnectorInterface
         return $this->originConnector->availableTickers($pattern);
     }
 
+    public function setTickerPrice(string $ticker, float $price): static
+    {
+        $this->currentPrices[$ticker] = $price;
+        return $this;
+    }
+
+    public function tickerPrice(string $ticker): float
+    {
+        return $this->currentPrices[$ticker] ?? 1.0;
+    }
+
     public function pushLatestPrice(LatestPrice $latestPrice): void
     {
         $this->originConnector->pushLatestPrice($latestPrice);
@@ -51,19 +62,13 @@ class FakeConnector implements ConnectorInterface
         return $this->originConnector->finalPrices($ticker, $interval);
     }
 
-    public function setTickerPrice(string $ticker, float $price): static
-    {
-        $this->currentPrices[$ticker] = $price;
-        return $this;
-    }
-
     public function buyMarket(string $ticker, float $amount): MarketOrder
     {
-        return new FakeMarketOrder($amount, bcdiv($amount, $this->currentPrices[$ticker] ?? 1));
+        return new FakeMarketOrder($price = $this->tickerPrice($ticker), $amount, num_div($amount, $price));
     }
 
     public function sellMarket(string $ticker, float $amount): MarketOrder
     {
-        return new FakeMarketOrder($amount, bcmul($amount, $this->currentPrices[$ticker] ?? 1));
+        return new FakeMarketOrder($price = $this->tickerPrice($ticker), $amount, num_mul($amount, $price), false);
     }
 }

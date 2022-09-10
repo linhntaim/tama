@@ -3,7 +3,6 @@
 namespace App\Trading\Console\Commands\Telegram;
 
 use App\Models\User;
-use App\Models\UserProvider;
 use App\Trading\Models\Trading;
 use App\Trading\Models\TradingProvider;
 use App\Trading\Notifications\Telegram\ConsoleNotification;
@@ -13,6 +12,8 @@ use Illuminate\Support\Facades\Redis;
 
 class UnsubscribeCommand extends Command
 {
+    use FindUser;
+
     public $signature = '{id? : The ID or slug of the trading.} {--bot=} {--exchange=} {--ticker=} {--interval=} {--all}';
 
     protected $description = 'Unsubscribe tradings.';
@@ -65,13 +66,6 @@ class UnsubscribeCommand extends Command
         return count($conditions)
             ? (new TradingProvider())->all($conditions + ['subscriber' => $user])
             : null;
-    }
-
-    protected function findUser(): ?User
-    {
-        return (new UserProvider())
-            ->notStrict()
-            ->firstByProvider('telegram', $this->telegramUpdate->chatId());
     }
 
     protected function handling(): int

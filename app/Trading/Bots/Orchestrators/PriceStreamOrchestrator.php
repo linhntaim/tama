@@ -36,7 +36,7 @@ class PriceStreamOrchestrator extends Orchestrator
         return (new TradingProvider())
             ->select('exchange')
             ->group('exchange')
-            ->allByHavingSubscribers(Exchanger::available());
+            ->allByRunning(Exchanger::available());
     }
 
     protected function subscribeTrading(array $trading): void
