@@ -15,7 +15,7 @@ interface ConnectorInterface
 
     public function availableTickers(string|array|null $pattern = null): Collection;
 
-    public function tickerPrice(string $ticker): float;
+    public function tickerPrice(string $ticker): string;
 
     public function pushLatestPrice(LatestPrice $latestPrice): void;
 
@@ -23,7 +23,7 @@ interface ConnectorInterface
 
     public function finalPrices(string $ticker, Interval $interval): PriceCollection;
 
-    public function buyMarket(string $ticker, float $amount): MarketOrder;
+    public function buyMarket(string $ticker, string $amount): MarketOrder;
 
-    public function sellMarket(string $ticker, float $amount): MarketOrder;
+    public function sellMarket(string $ticker, string $amount): MarketOrder;
 }

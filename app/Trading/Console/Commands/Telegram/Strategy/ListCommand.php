@@ -9,6 +9,7 @@ use App\Trading\Console\Commands\Telegram\FindUser;
 use App\Trading\Console\Commands\Telegram\PrintList;
 use App\Trading\Models\TradingStrategy;
 use App\Trading\Models\TradingStrategyProvider;
+use App\Trading\Models\TradingSwap;
 use App\Trading\Notifications\Telegram\ConsoleNotification;
 use App\Trading\Notifications\TelegramUpdateNotifiable;
 
@@ -19,6 +20,15 @@ class ListCommand extends Command
     public $signature = '{--q= : The keyword for searching.} {--page=1}';
 
     protected $description = 'List all strategies.';
+
+    protected array $tickerPrices = [];
+
+    protected function tickerPrice(string $exchange, string $ticker): string
+    {
+        $key = sprintf('%s.%s', $exchange, $ticker);
+        return $this->tickerPrices[$key]
+            ?? $this->tickerPrices[$key] = Exchanger::connector($exchange)->tickerPrice($ticker);
+    }
 
     protected function keyword(): ?string
     {
@@ -46,31 +56,49 @@ class ListCommand extends Command
         return $this->printList(
             (new TradingStrategyProvider())->paginationByUser($user, $this->keyword(), 10, $this->page()),
             function (TradingStrategy $strategy) {
-                $currentPrice = Exchanger::connector($strategy->buyTrading->exchange)->tickerPrice($strategy->buyTrading->ticker);
-                $swap = $strategy->orderedSwaps->first();
-                return implode(PHP_EOL, [
-                    sprintf('{#%d}', $strategy->id),
-                    sprintf('- Buy: {#%d:%s} risk=%s', $strategy->buyTrading->id, $strategy->buyTrading->slug, $strategy->buy_risk),
-                    sprintf('- Sell: {#%d:%s} risk=%s', $strategy->sellTrading->id, $strategy->buyTrading->slug, $strategy->sell_risk),
-                    sprintf(
-                        '- Starting amount: %s%s + %s%s ~ %s%s',
-                        num_str($swap->base_amount),
-                        $strategy->buyTrading->base_symbol,
-                        num_str($swap->quote_amount),
-                        $strategy->buyTrading->quote_symbol,
-                        num_add($swap->price * $swap->base_amount, $swap->quote_amount),
-                        $strategy->buyTrading->quote_symbol,
-                    ),
-                    sprintf(
-                        '- Curren amount: %s%s + %s%s ~ %s%s',
-                        num_str($strategy->baseAmount),
-                        $strategy->buyTrading->base_symbol,
-                        num_str($strategy->quoteAmount),
-                        $strategy->buyTrading->quote_symbol,
-                        num_add($currentPrice * $strategy->baseAmount, $strategy->quoteAmount),
-                        $strategy->buyTrading->quote_symbol,
-                    ),
-                ]);
+                return transform(
+                    $strategy->firstSwap,
+                    function (TradingSwap $swap) use ($strategy) {
+                        return implode(PHP_EOL, [
+                            sprintf('{#%d}', $strategy->id),
+                            sprintf('- Buy: {#%d:%s} risk=%s', $strategy->buyTrading->id, $strategy->buyTrading->slug, $strategy->buy_risk),
+                            sprintf('- Sell: {#%d:%s} risk=%s', $strategy->sellTrading->id, $strategy->buyTrading->slug, $strategy->sell_risk),
+                            sprintf(
+                                '- Starting amount: %s %s + %s %s ~ %s %s',
+                                num_trim($swap->base_amount),
+                                $strategy->buyTrading->base_symbol,
+                                num_trim($swap->quote_amount),
+                                $strategy->buyTrading->quote_symbol,
+                                num_trim($beforeEquivalentQuoteAmount = $swap->equivalentQuoteAmount),
+                                $strategy->buyTrading->quote_symbol,
+                            ),
+                            sprintf(
+                                '- Curren amount: %s%s + %s%s ~ %s%s',
+                                num_trim($strategy->baseAmount),
+                                $strategy->buyTrading->base_symbol,
+                                num_trim($strategy->quoteAmount),
+                                $strategy->buyTrading->quote_symbol,
+                                num_trim(
+                                    $afterEquivalentQuoteAmount = $strategy->calculateEquivalentQuoteAmount(
+                                        $this->tickerPrice(
+                                            $strategy->buyTrading->exchange,
+                                            $strategy->buyTrading->ticker
+                                        )
+                                    )
+                                ),
+                                $strategy->buyTrading->quote_symbol,
+                            ),
+                            sprintf(
+                                '- Trades=%s; Profit=%s %s (%s%%)',
+                                $strategy->trueSwaps->count(),
+                                num_trim($profit = num_sub($afterEquivalentQuoteAmount, $beforeEquivalentQuoteAmount)),
+                                $strategy->buyTrading->quote_symbol,
+                                num_mul(num_div($profit, $beforeEquivalentQuoteAmount), 100, 2)
+                            ),
+                        ]);
+                    },
+                    ''
+                );
             },
             'No strategies.',
             'Trading strategies:'

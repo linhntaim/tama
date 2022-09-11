@@ -8,7 +8,7 @@ use Illuminate\Support\Collection;
 class FakeConnector implements ConnectorInterface
 {
     /**
-     * @var array<string, float>
+     * @var array<string, string>
      */
     protected array $currentPrices = [];
 
@@ -36,15 +36,15 @@ class FakeConnector implements ConnectorInterface
         return $this->originConnector->availableTickers($pattern);
     }
 
-    public function setTickerPrice(string $ticker, float $price): static
+    public function setTickerPrice(string $ticker, string $price): static
     {
         $this->currentPrices[$ticker] = $price;
         return $this;
     }
 
-    public function tickerPrice(string $ticker): float
+    public function tickerPrice(string $ticker): string
     {
-        return $this->currentPrices[$ticker] ?? 1.0;
+        return $this->currentPrices[$ticker] ?? '1.0';
     }
 
     public function pushLatestPrice(LatestPrice $latestPrice): void
@@ -62,12 +62,12 @@ class FakeConnector implements ConnectorInterface
         return $this->originConnector->finalPrices($ticker, $interval);
     }
 
-    public function buyMarket(string $ticker, float $amount): MarketOrder
+    public function buyMarket(string $ticker, string $amount): MarketOrder
     {
         return new FakeMarketOrder($price = $this->tickerPrice($ticker), $amount, num_div($amount, $price));
     }
 
-    public function sellMarket(string $ticker, float $amount): MarketOrder
+    public function sellMarket(string $ticker, string $amount): MarketOrder
     {
         return new FakeMarketOrder($price = $this->tickerPrice($ticker), $amount, num_mul($amount, $price), false);
     }

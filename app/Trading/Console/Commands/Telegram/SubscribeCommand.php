@@ -42,7 +42,7 @@ class SubscribeCommand extends Command
         elseif (is_null($user = $this->createUserFromTelegram())) {
             ConsoleNotification::send(
                 new TelegramUpdateNotifiable($this->telegramUpdate),
-                'Subscription was not supported.'
+                'Action was not supported.'
             );
         }
         else {

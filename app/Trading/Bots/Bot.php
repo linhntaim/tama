@@ -212,8 +212,8 @@ abstract class Bot
 
     public function tradeNow(
         User        $user,
-        float       $baseAmount,
-        float       $quoteAmount,
+        string      $baseAmount,
+        string      $quoteAmount,
         float       $buyRisk = 0.0,
         float       $sellRisk = 0.0,
         ?Indication $indication = null
@@ -232,7 +232,7 @@ abstract class Bot
 
     public function tryToBuyNow(
         User        $user,
-        float       $quoteAmount,
+        string      $quoteAmount,
         float       $buyRisk = 0.0,
         ?Indication $indication = null
     ): ?MarketOrder
@@ -246,7 +246,7 @@ abstract class Bot
 
     public function tryToSellNow(
         User        $user,
-        float       $baseAmount,
+        string      $baseAmount,
         float       $sellRisk = 0.0,
         ?Indication $indication = null
     ): ?MarketOrder
@@ -260,45 +260,45 @@ abstract class Bot
 
     protected function buyNow(
         User       $user,
-        float      $quoteAmount,
+        string     $quoteAmount,
         Indication $indication,
         float      $buyRisk = 0.0
     ): ?MarketOrder
     {
-        if (num_eq($buyAmount = $this->calculateBuyAmount($indication, $quoteAmount, $buyRisk), 0.0)) {
+        if (num_eq($buyAmount = $this->calculateBuyAmount($indication, $quoteAmount, $buyRisk), 0)) {
             return null;
         }
         return $this->exchangeConnector($user)->buyMarket($this->ticker(), $buyAmount);
     }
 
-    protected function calculateBuyAmount(Indication $indication, float $amount, float $risk = 0.0): float
+    protected function calculateBuyAmount(Indication $indication, string $amount, float $risk = 0.0): string
     {
         // Note: value of the indication is less than 0 and greater or equal -1
         if (num_gte(-$indication->getValue(), 1 - $risk)) { // accepted buy risk
             return $amount;
         }
-        return 0.0;
+        return 0;
     }
 
     protected function sellNow(
         User       $user,
-        float      $baseAmount,
+        string     $baseAmount,
         Indication $indication,
         float      $sellRisk = 0.0
     ): ?MarketOrder
     {
-        if (num_eq($sellAmount = $this->calculateSellAmount($indication, $baseAmount, $sellRisk), 0.0)) {
+        if (num_eq($sellAmount = $this->calculateSellAmount($indication, $baseAmount, $sellRisk), 0)) {
             return null;
         }
         return $this->exchangeConnector($user)->sellMarket($this->ticker(), $sellAmount);
     }
 
-    protected function calculateSellAmount(Indication $indication, float $amount, float $risk = 0.0): float
+    protected function calculateSellAmount(Indication $indication, string $amount, float $risk = 0.0): string
     {
         // Note: value of the indication is greater than 0 and less than or equal 1
         if (num_gte($indication->getValue(), $risk)) { // accepted sell risk
             return $amount;
         }
-        return 0.0;
+        return 0;
     }
 }

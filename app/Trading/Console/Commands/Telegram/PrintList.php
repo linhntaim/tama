@@ -14,8 +14,8 @@ trait PrintList
         }
         $lines = [$headlineText];
         $lines[] = str_repeat('-', 25);
-        foreach ($list as $item) {
-            $lines[] = $printItem($item);
+        foreach ($list as $index => $item) {
+            $lines[] = $printItem($item, $index);
         }
         $lines[] = str_repeat('-', 25);
         $lines[] = sprintf('Page: %s / %s', $list->currentPage(), $list->lastPage());

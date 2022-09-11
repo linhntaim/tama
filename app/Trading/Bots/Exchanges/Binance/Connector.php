@@ -6,6 +6,7 @@ use App\Trading\Bots\Exchanges\Connector as BaseConnector;
 use App\Trading\Bots\Exchanges\Exchange;
 use App\Trading\Bots\Exchanges\Interval;
 use App\Trading\Bots\Exchanges\MarketOrder as BaseMarketOrder;
+use App\Trading\Bots\Exchanges\PriceCollection as BasePriceCollection;
 use App\Trading\Bots\Exchanges\Ticker as BaseTicker;
 use App\Trading\Models\UserExchangeOption;
 use Binance\Exception\MissingArgumentException;
@@ -82,7 +83,7 @@ class Connector extends BaseConnector
             });
     }
 
-    public function tickerPrice(string $ticker): float
+    public function tickerPrice(string $ticker): string
     {
         return $this->spot->tickerPrice(['symbol' => $ticker])['price'];
     }
@@ -99,15 +100,15 @@ class Connector extends BaseConnector
         ]));
     }
 
-    protected function priceCollectionClass(): string
+    protected function newPriceCollection(string $ticker, Interval $interval, array $prices, array $times): BasePriceCollection
     {
-        return PriceCollection::class;
+        return new PriceCollection($ticker, $interval, $prices, $times);
     }
 
     /**
      * @throws MissingArgumentException
      */
-    protected function createMarketOrder(string $ticker, float $amount, string $side): BaseMarketOrder
+    protected function createMarketOrder(string $ticker, string $amount, string $side): BaseMarketOrder
     {
         return new MarketOrder(
             $this->spot->newOrder($ticker, $side, static::ORDER_TYPE_MARKET, [

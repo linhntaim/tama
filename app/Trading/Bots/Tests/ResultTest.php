@@ -6,25 +6,25 @@ use Illuminate\Support\Collection;
 
 class ResultTest
 {
-    protected float $beforePrice;
+    protected string $beforePrice;
 
-    protected float $beforeBaseAmount;
+    protected string $beforeBaseAmount;
 
-    protected float $beforeQuoteAmount;
+    protected string $beforeQuoteAmount;
 
-    protected float $beforeQuoteAmountEquivalent;
+    protected string $beforeQuoteAmountEquivalent;
 
-    protected float $afterPrice;
+    protected string $afterPrice;
 
-    protected float $afterBaseAmount;
+    protected string $afterBaseAmount;
 
-    protected float $afterQuoteAmount;
+    protected string $afterQuoteAmount;
 
-    protected float $afterQuoteAmountEquivalent;
+    protected string $afterQuoteAmountEquivalent;
 
-    protected float $profit;
+    protected string $profit;
 
-    protected float $profitPercent;
+    protected string $profitPercent;
 
     protected string $shownProfitPercent;
 
@@ -54,19 +54,29 @@ class ResultTest
     )
     {
         $this->afterPrice = $swaps->last()->getPrice();
-        $this->afterBaseAmount = $swaps->sum('base_amount');
-        $this->afterQuoteAmount = $swaps->sum('quote_amount');
-        $this->afterQuoteAmountEquivalent = num_add($this->afterPrice * $this->afterBaseAmount, $this->afterQuoteAmount);
+        $this->afterBaseAmount = with(0, static function (string $amount) use ($swaps): string {
+            $swaps->each(function (SwapTest $swap) use (&$amount) {
+                $amount = num_add($amount, $swap->getBaseAmount());
+            });
+            return $amount;
+        });
+        $this->afterQuoteAmount = with(0, static function (string $amount) use ($swaps): string {
+            $swaps->each(function (SwapTest $swap) use (&$amount) {
+                $amount = num_add($amount, $swap->getQuoteAmount());
+            });
+            return $amount;
+        });
+        $this->afterQuoteAmountEquivalent = num_add(num_mul($this->afterPrice, $this->afterBaseAmount), $this->afterQuoteAmount);
         // first swap is initial
         tap($swaps->shift(), function (SwapTest $swap) {
             $this->beforePrice = $swap->getPrice();
             $this->beforeBaseAmount = $swap->getBaseAmount();
             $this->beforeQuoteAmount = $swap->getQuoteAmount();
-            $this->beforeQuoteAmountEquivalent = num_add($this->beforePrice * $this->beforeBaseAmount, $this->beforeQuoteAmount);
+            $this->beforeQuoteAmountEquivalent = num_add(num_mul($this->beforePrice, $this->beforeBaseAmount), $this->beforeQuoteAmount);
         });
 
-        $this->profit = bcsub($this->afterQuoteAmountEquivalent, $this->beforeQuoteAmountEquivalent);
-        $this->profitPercent = num_mul($this->profit / $this->beforeQuoteAmountEquivalent, 100, 2);
+        $this->profit = num_sub($this->afterQuoteAmountEquivalent, $this->beforeQuoteAmountEquivalent);
+        $this->profitPercent = num_mul(num_div($this->profit, $this->beforeQuoteAmountEquivalent), 100, 2);
         $this->shownProfitPercent = sprintf('%s%%', $this->profitPercent);
         $this->shownStartTime = date(DATE_DEFAULT, $this->startTime);
         $this->shownEndTime = date(DATE_DEFAULT, $this->endTime);
@@ -76,12 +86,12 @@ class ResultTest
                     date(DATE_DEFAULT, $swap->getTime()),
                     $swap->getBaseAmount(),
                     $this->baseSymbol,
-                    -$swap->getQuoteAmount(),
+                    num_neg($swap->getQuoteAmount()),
                     $this->quoteSymbol,
                     $swap->getPrice())
                 : sprintf('[%s] Sell %s %s to %s %s @ %s',
                     date(DATE_DEFAULT, $swap->getTime()),
-                    -$swap->getBaseAmount(),
+                    num_neg($swap->getBaseAmount()),
                     $this->baseSymbol,
                     $swap->getQuoteAmount(),
                     $this->quoteSymbol,

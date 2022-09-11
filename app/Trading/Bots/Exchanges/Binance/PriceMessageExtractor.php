@@ -22,8 +22,8 @@ class PriceMessageExtractor implements PriceMessageExtract
         $interval = $pricePayload['i'];
         return $pricePayload['x'] // Closed?
             ? new BinanceLatestPrice(
-                $pricePayload['s'],
-                $pricePayload['i'],
+                $ticker,
+                $interval,
                 [
                     $pricePayload['t'], // Open time
                     $pricePayload['o'], // Open

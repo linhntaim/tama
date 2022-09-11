@@ -8,7 +8,7 @@ use App\Trading\Bots\Exchanges\MarketOrder;
 
 class SwapTest extends ArrayReader
 {
-    public function __construct(?Indication $indication, int $time, float $price, float $baseAmount, float $quoteAmount, ?MarketOrder $exchangeOrder)
+    public function __construct(?Indication $indication, int $time, string $price, string $baseAmount, string $quoteAmount, ?MarketOrder $exchangeOrder)
     {
         parent::__construct([
             'indication' => $indication,
@@ -25,28 +25,28 @@ class SwapTest extends ArrayReader
         return $this->get('time');
     }
 
-    public function getPrice(): float
+    public function getPrice(): string
     {
         return $this->get('price');
     }
 
-    public function getBaseAmount(): float
+    public function getBaseAmount(): string
     {
         return $this->get('base_amount');
     }
 
-    public function getQuoteAmount(): float
+    public function getQuoteAmount(): string
     {
         return $this->get('quote_amount');
     }
 
     public function baseSwapped(): bool
     {
-        return $this->getBaseAmount() < 0;
+        return num_lt($this->getBaseAmount(), 0);
     }
 
     public function quoteSwapped(): bool
     {
-        return $this->getQuoteAmount() < 0;
+        return num_lt($this->getQuoteAmount(), 0);
     }
 }

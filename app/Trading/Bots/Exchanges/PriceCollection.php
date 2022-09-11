@@ -9,7 +9,7 @@ abstract class PriceCollection
     protected array $items;
 
     /**
-     * @var float[]
+     * @var string[] Float-valued strings.
      */
     protected array $prices;
 
@@ -31,10 +31,14 @@ abstract class PriceCollection
         $this->items = $prices;
         $this->prices = $this->createPrices();
         $this->times = $times;
-        $this->count = count($this->items);
+        /**
+         * Note: price length = time length <= price limit
+         * @see Exchange::PRICE_LIMIT
+         */
+        $this->count = count($this->prices);
     }
 
-    abstract protected function create(
+    abstract protected function createNew(
         string   $exchange,
         string   $ticker,
         Interval $interval,
@@ -81,7 +85,7 @@ abstract class PriceCollection
 
     public function slice(int $offset, ?int $length = null): static
     {
-        return $this->create(
+        return $this->createNew(
             $this->exchange,
             $this->ticker,
             $this->interval,
@@ -91,7 +95,7 @@ abstract class PriceCollection
     }
 
     /**
-     * @return float[]
+     * @return string[] Float-valued strings.
      */
     abstract protected function createPrices(): array;
 
@@ -106,14 +110,18 @@ abstract class PriceCollection
     }
 
     /**
-     * @return float[]
+     * @return string[] Float-valued strings.
      */
     public function prices(): array
     {
         return $this->prices;
     }
 
-    public function priceAt(int $index = 0): float
+    /**
+     * @param int $index
+     * @return string Float-valued string.
+     */
+    public function priceAt(int $index = 0): string
     {
         return $this->prices()[$index];
     }
@@ -143,7 +151,10 @@ abstract class PriceCollection
         return $this->itemAt($this->count - 1);
     }
 
-    public function latestPrice(): float
+    /**
+     * @return string Float-valued string.
+     */
+    public function latestPrice(): string
     {
         return $this->priceAt($this->count - 1);
     }

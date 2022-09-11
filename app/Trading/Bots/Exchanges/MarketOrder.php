@@ -10,9 +10,9 @@ abstract class MarketOrder extends Order
 
     abstract public function getTime(): int;
 
-    abstract public function getPrice(): float;
+    abstract public function getPrice(): string;
 
-    abstract public function getFromAmount(): float;
+    abstract public function getFromAmount(): string;
 
-    abstract public function getToAmount(): float;
+    abstract public function getToAmount(): string;
 }

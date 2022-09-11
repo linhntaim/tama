@@ -25,12 +25,12 @@ class StrategyTest
     protected Collection $swaps;
 
     public function __construct(
-        protected float $baseAmount = 0.0,
-        protected float $quoteAmount = 500.0,
-        protected float $buyRisk = 0.0,
-        protected float $sellRisk = 0.0,
-        string          $buyBotName = 'oscillating_bot',
-        array           $buyBotOptions = [
+        protected string $baseAmount = '0.0',
+        protected string $quoteAmount = '500.0',
+        protected float  $buyRisk = 0.0,
+        protected float  $sellRisk = 0.0,
+        string           $buyBotName = 'oscillating_bot',
+        array            $buyBotOptions = [
             'exchange' => Binance::NAME,
             'ticker' => Binance::DEFAULT_TICKER,
             'interval' => Binance::DEFAULT_INTERVAL,
@@ -38,8 +38,8 @@ class StrategyTest
                 'name' => RsiOscillator::NAME,
             ],
         ],
-        ?string         $sellBotName = null,
-        ?array          $sellBotOptions = null,
+        ?string          $sellBotName = null,
+        ?array           $sellBotOptions = null,
     )
     {
         $this->buyBot = tap(
@@ -58,14 +58,24 @@ class StrategyTest
         $this->swaps = new Collection();
     }
 
-    protected function baseAmount(): float
+    protected function baseAmount(): string
     {
-        return $this->swaps->sum('base_amount');
+        return with(0, function (string $amount): string {
+            $this->swaps->each(function (SwapTest $swap) use (&$amount) {
+                $amount = num_add($amount, $swap->getBaseAmount());
+            });
+            return $amount;
+        });
     }
 
-    protected function quoteAmount(): float
+    protected function quoteAmount(): string
     {
-        return $this->swaps->sum('quote_amount');
+        return with(0, function (string $amount) {
+            $this->swaps->each(function (SwapTest $swap) use (&$amount) {
+                $amount = num_add($amount, $swap->getQuoteAmount());
+            });
+            return $amount;
+        });
     }
 
     protected function calculateOpenTime(Interval $interval, int $time): int
@@ -157,10 +167,10 @@ class StrategyTest
                         $this->swaps->push(
                             new SwapTest(
                                 $indication,
-                                $marketOrder->getTime(),
+                                $indication->getActionTime($this->buyBot->interval()),
                                 $marketOrder->getPrice(),
                                 $marketOrder->getToAmount(),
-                                -$marketOrder->getFromAmount(),
+                                num_neg($marketOrder->getFromAmount()),
                                 $marketOrder
                             )
                         );
@@ -179,11 +189,12 @@ class StrategyTest
                     ))) {
                         $this->swaps->push(
                             new SwapTest(
-                                $marketOrder->getTime(),
+                                $indication,
+                                $indication->getActionTime($this->buyBot->interval()),
                                 $marketOrder->getPrice(),
-                                -$marketOrder->getFromAmount(),
+                                num_neg($marketOrder->getFromAmount()),
                                 $marketOrder->getToAmount(),
-                                $indication
+                                $marketOrder
                             )
                         );
                     }

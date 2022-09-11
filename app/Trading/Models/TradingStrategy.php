@@ -20,14 +20,19 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $type
  * @property int $status
  *
- * @property float $baseAmount
- * @property float $quoteAmount
+ * @property string $baseAmount
+ * @property string $quoteAmount
  * @property bool $isFake
  * @property User $user
  * @property Trading $buyTrading
  * @property Trading $sellTrading
  * @property Collection<int, TradingSwap> $swaps
  * @property Collection<int, TradingSwap> $orderedSwaps
+ * @property Collection<int, TradingSwap> $trueSwaps
+ * @property TradingSwap|null $firstSwap
+ * @property string $firstPrice
+ * @property TradingSwap|null $lastSwap
+ * @property string $lastPrice
  */
 class TradingStrategy extends Model
 {
@@ -84,18 +89,65 @@ class TradingStrategy extends Model
         return $this->belongsTo(Trading::class, 'sell_trading_id', 'id');
     }
 
+    public function trueSwaps(): Attribute
+    {
+        return Attribute::get(fn(): Collection => $this->orderedSwaps->filter(
+            fn(TradingSwap $swap): bool => num_lt($swap->base_amount, 0) || num_lt($swap->quote_amount, 0)
+        ));
+    }
+
+    public function firstSwap(): Attribute
+    {
+        return Attribute::get(fn(): ?TradingSwap => $this->orderedSwaps->first());
+    }
+
+    public function firstPrice(): Attribute
+    {
+        return Attribute::get(fn(): string => $this->firstSwap?->price ?: 0);
+    }
+
+    public function lastSwap(): Attribute
+    {
+        return Attribute::get(fn(): ?TradingSwap => $this->orderedSwaps->last());
+    }
+
+    public function lastPrice(): Attribute
+    {
+        return Attribute::get(fn(): string => $this->lastSwap?->price ?: 0);
+    }
+
     public function baseAmount(): Attribute
     {
-        return Attribute::get(fn(): float => $this->swaps->sum('base_amount'));
+        return Attribute::get(fn(): string => with(0, function (string $amount): string {
+            $this->swaps->each(function (TradingSwap $swap) use (&$amount) {
+                $amount = num_add($amount, $swap->base_amount);
+            });
+            return $amount;
+        }));
     }
 
     public function quoteAmount(): Attribute
     {
-        return Attribute::get(fn(): float => $this->swaps->sum('quote_amount'));
+        return Attribute::get(fn(): string => with(0, function (string $amount): string {
+            $this->swaps->each(function (TradingSwap $swap) use (&$amount) {
+                $amount = num_add($amount, $swap->quote_amount);
+            });
+            return $amount;
+        }));
+    }
+
+    public function equivalentQuoteAmount(): Attribute
+    {
+        return Attribute::get(fn(): string => $this->calculateEquivalentQuoteAmount());
     }
 
     public function isFake(): Attribute
     {
         return Attribute::get(fn(): bool => $this->type === self::TYPE_FAKE);
+    }
+
+    public function calculateEquivalentQuoteAmount(?string $price = null): string
+    {
+        return num_add(num_mul($price ?: $this->lastPrice, $this->baseAmount), $this->quoteAmount);
     }
 }

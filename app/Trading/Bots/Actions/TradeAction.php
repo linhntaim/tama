@@ -44,9 +44,9 @@ class TradeAction implements IAction
                     ]
                     + ($marketOrder->buy() ? [
                         'base_amount' => $marketOrder->getToAmount(),
-                        'quote_amount' => -$marketOrder->getFromAmount(),
+                        'quote_amount' => num_neg($marketOrder->getFromAmount()),
                     ] : [
-                        'base_amount' => -$marketOrder->getFromAmount(),
+                        'base_amount' => num_neg($marketOrder->getFromAmount()),
                         'quote_amount' => $marketOrder->getToAmount(),
                     ])
                 );

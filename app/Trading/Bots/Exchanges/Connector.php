@@ -100,6 +100,7 @@ abstract class Connector implements ConnectorInterface
     protected function recentCachedPrices(string $ticker, Interval $interval, int $matchingLatestTime, ?array &$cachedRecentPrices = []): bool
     {
         if (is_null($cache = $this->recentPricesFromCache($ticker, $interval))) {
+            $cachedRecentPrices = [];
             return false;
         }
         $cachedLatestTime = $cache['latest_time'] ?? 0;
@@ -124,7 +125,9 @@ abstract class Connector implements ConnectorInterface
             $interval->getPreviousOpenTimeOfExact($latestTime = $latestPrice->getTime()),
             $cachedRecentPrices
         )) {
-            array_shift($cachedRecentPrices);
+            if (count($cachedRecentPrices) >= Exchange::PRICE_LIMIT) {
+                array_shift($cachedRecentPrices);
+            }
             $cachedRecentPrices[] = $latestPrice->getPrice();
             $this->recentPricesToCache(
                 $ticker,
@@ -137,16 +140,17 @@ abstract class Connector implements ConnectorInterface
 
     abstract protected function fetchPrices(string $ticker, Interval $interval, int $startTime = null, int $endTime = null, int $limit = Exchange::PRICE_LIMIT): array;
 
-    abstract protected function priceCollectionClass(): string;
-
     protected function createPriceCollection(string $ticker, Interval $interval, array $prices, ?int $time = null): PriceCollection
     {
-        $times = $interval->getRecentOpenTimes(count($prices), $time);
-        return transform(
-            $this->priceCollectionClass(),
-            static fn($class) => new $class($ticker, $interval, $prices, $times)
+        return $this->newPriceCollection(
+            $ticker,
+            $interval,
+            $prices,
+            $interval->getRecentOpenTimes(count($prices), $time)
         );
     }
+
+    abstract protected function newPriceCollection(string $ticker, Interval $interval, array $prices, array $times): PriceCollection;
 
     public function recentPricesAt(string $ticker, Interval $interval, ?int $time = null, int $limit = Exchange::PRICE_LIMIT): PriceCollection
     {
@@ -177,14 +181,14 @@ abstract class Connector implements ConnectorInterface
         });
     }
 
-    abstract protected function createMarketOrder(string $ticker, float $amount, string $side): MarketOrder;
+    abstract protected function createMarketOrder(string $ticker, string $amount, string $side): MarketOrder;
 
-    public function buyMarket(string $ticker, float $amount): MarketOrder
+    public function buyMarket(string $ticker, string $amount): MarketOrder
     {
         return $this->createMarketOrder($ticker, $amount, static::ORDER_SIDE_BUY);
     }
 
-    public function sellMarket(string $ticker, float $amount): MarketOrder
+    public function sellMarket(string $ticker, string $amount): MarketOrder
     {
         return $this->createMarketOrder($ticker, $amount, static::ORDER_SIDE_SELL);
     }

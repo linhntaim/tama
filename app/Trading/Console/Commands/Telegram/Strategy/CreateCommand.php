@@ -12,6 +12,7 @@ use App\Trading\Models\Trading;
 use App\Trading\Models\TradingProvider;
 use App\Trading\Models\TradingStrategy;
 use App\Trading\Models\TradingStrategyProvider;
+use App\Trading\Models\TradingSwap;
 use App\Trading\Models\TradingSwapProvider;
 use App\Trading\Notifications\Telegram\ConsoleNotification;
 use App\Trading\Notifications\TelegramUpdateNotifiable;
@@ -26,6 +27,14 @@ class CreateCommand extends Command
 
     public $signature = '{buy_trading_id} {sell_trading_id?} {--base-amount=0.0} {--quote-amount=500.0} {--buy_risk=0.0} {--sell_risk=0.0}';
 
+    protected string $baseAmount;
+
+    protected string $quoteAmount;
+
+    protected string $buyRisk;
+
+    protected string $sellRisk;
+
     protected function buyTradingId(): int
     {
         return $this->argument('buy_trading_id');
@@ -36,24 +45,24 @@ class CreateCommand extends Command
         return $this->argument('buy_trading_id');
     }
 
-    protected function baseAmount(): float
+    protected function baseAmount(): string
     {
-        return $this->option('base-amount');
+        return $this->baseAmount ?? $this->baseAmount = $this->option('base-amount');
     }
 
-    protected function quoteAmount(): float
+    protected function quoteAmount(): string
     {
-        return $this->option('quote-amount');
+        return $this->quoteAmount ?? $this->quoteAmount = $this->option('quote-amount');
     }
 
     protected function buyRisk(): float
     {
-        return $this->option('buy_risk');
+        return $this->buyRisk ?? $this->buyRisk = $this->option('buy_risk');
     }
 
     protected function sellRisk(): float
     {
-        return $this->option('sell_risk');
+        return $this->sellRisk ?? $this->sellRisk = $this->option('sell_risk');
     }
 
     /**
@@ -64,7 +73,17 @@ class CreateCommand extends Command
         if (is_null($user = $this->createUserFromTelegram())) {
             ConsoleNotification::send(
                 new TelegramUpdateNotifiable($this->telegramUpdate),
-                'Subscription was not supported.'
+                'Action was not supported.'
+            );
+        }
+        elseif (num_lt($this->baseAmount(), 0)
+            || num_lt($this->quoteAmount(), 0)
+            || num_lt($this->buyRisk(), 0)
+            || num_lt($this->sellRisk(), 0)
+            || (num_eq($this->baseAmount(), 0) && num_eq($this->quoteAmount(), 0))) {
+            ConsoleNotification::send(
+                new TelegramUpdateNotifiable($this->telegramUpdate),
+                'Invalid argument(s).'
             );
         }
         else {
@@ -83,24 +102,25 @@ class CreateCommand extends Command
             }
             else {
                 $strategy = $this->createStrategy($user, $buyTrading, $sellTrading);
-                $swap = $strategy->orderedSwaps->first();
-                ConsoleNotification::send(
-                    new TelegramUpdateNotifiable($this->telegramUpdate),
-                    implode(PHP_EOL, [
-                        sprintf('The strategy {#%d} has been created.', $strategy->id),
-                        sprintf('- Buy: {#%d:%s} risk=%s', $buyTrading->id, $buyTrading->slug, $strategy->buy_risk),
-                        sprintf('- Sell: {#%d:%s} risk=%s', $sellTrading->id, $sellTrading->slug, $strategy->sell_risk),
-                        sprintf(
-                            '- Starting amount: %s%s + %s%s ~ %s%s',
-                            num_str($swap->base_amount),
-                            $strategy->buyTrading->base_symbol,
-                            num_str($swap->quote_amount),
-                            $strategy->buyTrading->quote_symbol,
-                            num_add($swap->price * $swap->base_amount, $swap->quote_amount),
-                            $strategy->buyTrading->quote_symbol,
-                        ),
-                    ])
-                );
+                transform($strategy->firstSwap, function (TradingSwap $swap) use ($strategy, $buyTrading, $sellTrading) {
+                    ConsoleNotification::send(
+                        new TelegramUpdateNotifiable($this->telegramUpdate),
+                        implode(PHP_EOL, [
+                            sprintf('The strategy {#%d} has been created.', $strategy->id),
+                            sprintf('- Buy: {#%d:%s} risk=%s', $buyTrading->id, $buyTrading->slug, $strategy->buy_risk),
+                            sprintf('- Sell: {#%d:%s} risk=%s', $sellTrading->id, $sellTrading->slug, $strategy->sell_risk),
+                            sprintf(
+                                '- Starting amount: %s %s + %s %s ~ %s %s',
+                                num_trim($swap->base_amount),
+                                $strategy->buyTrading->base_symbol,
+                                num_trim($swap->quote_amount),
+                                $strategy->buyTrading->quote_symbol,
+                                num_trim($swap->equivalentQuoteAmount),
+                                $strategy->buyTrading->quote_symbol,
+                            ),
+                        ])
+                    );
+                });
             }
         }
         return $this->exitSuccess();

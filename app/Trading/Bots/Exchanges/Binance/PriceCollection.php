@@ -12,16 +12,16 @@ class PriceCollection extends BasePriceCollection
         parent::__construct(Binance::NAME, $ticker, $interval, $prices, $times);
     }
 
-    protected function create(string $exchange, string $ticker, Interval $interval, array $prices, array $times): static
+    protected function createNew(string $exchange, string $ticker, Interval $interval, array $prices, array $times): static
     {
         return new static($ticker, $interval, $prices, $times);
     }
 
     /**
-     * @return float[]
+     * @return string[]
      */
     protected function createPrices(): array
     {
-        return array_map(static fn($item) => (float)$item[4], $this->items);
+        return array_map(static fn($item) => $item[4], $this->items);
     }
 }

@@ -210,10 +210,8 @@ if (!function_exists('dd_with_headers')) {
             }
         }
 
-        foreach ($vars as $v) {
-            VarDumper::dump($v);
-        }
-        exit();
+        out(...$vars);
+        exit(1);
     }
 }
 
@@ -419,107 +417,148 @@ if (!function_exists('nullify_empty_array')) {
 }
 
 if (!function_exists('num_add')) {
-    function num_add(float|int $num1, float|int $num2, ?int $scale = null): float
+    function num_add(float|int|string $num1, float|int|string $num2, ?int $scale = null): string
     {
-        return bcadd(num_str($num1), num_str($num2), $scale);
+        return bcadd(num_std($num1), num_std($num2), $scale);
+    }
+}
+
+if (!function_exists('num_comp')) {
+    function num_comp(float|int|string $num1, float|int|string $num2, ?int $scale = null): int
+    {
+        return bccomp(num_std($num1), num_std($num2), $scale);
     }
 }
 
 if (!function_exists('num_div')) {
-    function num_div(float|int $num1, float|int $num2, ?int $scale = null): float
+    function num_div(float|int|string $num1, float|int|string $num2, ?int $scale = null): string
     {
-        return bcdiv(num_str($num1), num_str($num2), $scale);
+        return bcdiv(num_std($num1), num_std($num2), $scale);
     }
 }
 
 if (!function_exists('num_eq')) {
-    function num_eq(float|int $num1, float|int $num2, ?int $scale = null): bool
+    function num_eq(float|int|string $num1, float|int|string $num2, ?int $scale = null): bool
     {
-        return bccomp(num_str($num1), num_str($num2), $scale) === 0;
+        return num_comp($num1, $num2, $scale) === 0;
     }
 }
 
 if (!function_exists('num_floor')) {
-    function num_floor(int|float $num, ?int $precision = null): float
+    function num_floor(int|float|string $num, ?int $precision = null): string
     {
-        return bcadd(num_str($num), 0, $precision);
+        return bcadd(num_std($num), 0, $precision);
     }
 }
 
 if (!function_exists('num_gt')) {
-    function num_gt(float|int $num1, float|int $num2, ?int $scale = null): bool
+    function num_gt(float|int|string $num1, float|int|string $num2, ?int $scale = null): bool
     {
-        return bccomp(num_str($num1), num_str($num2), $scale) === 1;
+        return num_comp($num1, $num2, $scale) === 1;
     }
 }
 
 if (!function_exists('num_gte')) {
-    function num_gte(float|int $num1, float|int $num2, ?int $scale = null): bool
+    function num_gte(float|int|string $num1, float|int|string $num2, ?int $scale = null): bool
     {
-        return bccomp(num_str($num1), num_str($num2), $scale) >= 0;
+        return num_comp($num1, $num2, $scale) >= 0;
     }
 }
 
 if (!function_exists('num_lt')) {
-    function num_lt(float|int $num1, float|int $num2, ?int $scale = null): bool
+    function num_lt(float|int|string $num1, float|int|string $num2, ?int $scale = null): bool
     {
-        return bccomp(num_str($num1), num_str($num2), $scale) === -1;
+        return num_comp($num1, $num2, $scale) === -1;
     }
 }
 
 if (!function_exists('num_lte')) {
-    function num_lte(float|int $num1, float|int $num2, ?int $scale = null): bool
+    function num_lte(float|int|string $num1, float|int|string $num2, ?int $scale = null): bool
     {
-        return bccomp(num_str($num1), num_str($num2), $scale) <= 0;
+        return num_comp($num1, $num2, $scale) <= 0;
+    }
+}
+
+if (!function_exists('num_max')) {
+    function num_max(float|int|string $num1, float|int|string $num2, ?int $scale = null): string
+    {
+        return num_gte($num1, $num2, $scale) ? $num1 : $num2;
+    }
+}
+
+if (!function_exists('num_min')) {
+    function num_min(float|int|string $num1, float|int|string $num2, ?int $scale = null): string
+    {
+        return num_lte($num1, $num2, $scale) ? $num1 : $num2;
     }
 }
 
 if (!function_exists('num_mod')) {
-    function num_mod(float|int $num1, float|int $num2, ?int $scale = null): float
+    function num_mod(float|int|string $num1, float|int|string $num2, ?int $scale = null): string
     {
-        return bcmod(num_str($num1), num_str($num2), $scale);
+        return bcmod(num_std($num1), num_std($num2), $scale);
     }
 }
 
 if (!function_exists('num_mul')) {
-    function num_mul(float|int $num1, float|int $num2, ?int $scale = null): float
+    function num_mul(float|int|string $num1, float|int|string $num2, ?int $scale = null): string
     {
-        return bcmul(num_str($num1), num_str($num2), $scale);
-    }
-}
-
-if (!function_exists('num_pow')) {
-    function num_pow(float|int $num, int $exponent, ?int $scale = null): float
-    {
-        return bcpow(num_str($num), $exponent, $scale);
+        return bcmul(num_std($num1), num_std($num2), $scale);
     }
 }
 
 if (!function_exists('num_ne')) {
-    function num_ne(float|int $num1, float|int $num2, ?int $scale = null): bool
+    function num_ne(float|int|string $num1, float|int|string $num2, ?int $scale = null): bool
     {
         return !num_eq($num1, $num2, $scale);
     }
 }
 
-if (!function_exists('num_sqrt')) {
-    function num_sqrt(float|int $num, ?int $scale = null): float
+if (!function_exists('num_neg')) {
+    function num_neg(float|int|string $num, ?int $scale = null): string
     {
-        return bcsqrt(num_str($num), $scale);
+        return num_sub(0, num_std($num), $scale);
     }
 }
 
-if (!function_exists('num_str')) {
-    function num_str(float|int $num, ?int $scale = null): string
+if (!function_exists('num_pow')) {
+    function num_pow(float|int|string $num, int $exponent, ?int $scale = null): string
     {
-        return preg_replace('/\.?0+$/', '', number_format($num, $scale ?: BC_DEFAULT_SCALE, '.', ''));
+        return bcpow(num_std($num), $exponent, $scale);
+    }
+}
+
+if (!function_exists('num_sqrt')) {
+    function num_sqrt(float|int|string $num, ?int $scale = null): string
+    {
+        return bcsqrt(num_std($num), $scale);
+    }
+}
+
+if (!function_exists('num_std')) {
+    function num_std(float|int|string $num, ?int $scale = null): string
+    {
+        $num = (string)$num;
+        $scale = $scale ?: BC_DEFAULT_SCALE;
+        return preg_match('/^[+-]?\d*(\.\d*)?$/', $num) === 1
+            ? $num
+            : sprintf("%.{$scale}F", $num); // TODO: Fix that $num will be rounded-up
     }
 }
 
 if (!function_exists('num_sub')) {
-    function num_sub(float|int $num1, float|int $num2, ?int $scale = null): float
+    function num_sub(float|int|string $num1, float|int|string $num2, ?int $scale = null): string
     {
-        return bcsub(num_str($num1), num_str($num2), $scale);
+        return bcsub(num_std($num1), num_std($num2), $scale);
+    }
+}
+
+if (!function_exists('num_trim')) {
+    function num_trim(float|int|string $num1, ?int $scale = null): string
+    {
+        return str_contains(num_std($num1, $scale), '.')
+            ? preg_replace('/\.?0+$/', '', num_std($num1, $scale))
+            : $num1;
     }
 }
 
@@ -527,6 +566,15 @@ if (!function_exists('number_formatter')) {
     function number_formatter(): NumberFormatter
     {
         return Client::numberFormatter();
+    }
+}
+
+if (!function_exists('out')) {
+    function out(...$vars): void
+    {
+        foreach ($vars as $v) {
+            VarDumper::dump($v);
+        }
     }
 }
 
