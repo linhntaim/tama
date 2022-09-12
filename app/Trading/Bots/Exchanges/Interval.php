@@ -103,9 +103,11 @@ class Interval
 
     public function findOpenTimeOf(Carbon|int|null $time = null, int $directionIndex = 0, bool $asInt = true): int|Carbon
     {
-        $carbon = is_null($time)
-            ? Carbon::now()
-            : ($time instanceof Carbon ? $time : Carbon::createFromTimestamp($time));
+        $carbon = match (true) {
+            is_null($time) => Carbon::now(),
+            $time instanceof Carbon => $time,
+            default => Carbon::createFromTimestamp($time),
+        };
         $timestamp = $carbon->getTimestamp() + 62135596800; // full timestamp from 01/01/0001 00:00:00
         return with(
             match ($this->getUnit()) {
@@ -158,9 +160,9 @@ class Interval
         return $this->getLatestOpenTime(-1, $asInt);
     }
 
-    public function getPreviousOpenTimeOf(Carbon|int|null $time = null, bool $asInt = true): int|Carbon
+    public function getPreviousOpenTimeOf(Carbon|int|null $time = null, int $index = 0, bool $asInt = true): int|Carbon
     {
-        return $this->findOpenTimeOf($time, -1, $asInt);
+        return $this->findOpenTimeOf($time, -($index + 1), $asInt);
     }
 
     public function getPreviousOpenTimeOfExact(int $openTime, int $index = 0): int
@@ -176,9 +178,9 @@ class Interval
         })->getTimestamp();
     }
 
-    public function getNextOpenTimeOf(Carbon|int|null $time = null, bool $asInt = true): int|Carbon
+    public function getNextOpenTimeOf(Carbon|int|null $time = null, int $index = 0, bool $asInt = true): int|Carbon
     {
-        return $this->findOpenTimeOf($time, 1, $asInt);
+        return $this->findOpenTimeOf($time, $index + 1, $asInt);
     }
 
     public function getNextOpenTimeOfExact(int $openTime, int $index = 0): int
@@ -215,6 +217,9 @@ class Interval
      */
     public function getRecentOpenTimes(int $limit, Carbon|int|null $time = null, int $directionIndex = 0, bool $asInt = true): array
     {
+        if ($limit <= 0) {
+            return [];
+        }
         $transform = static fn(Carbon $openTime) => $asInt ? $openTime->getTimestamp() : $openTime;
         $openTime = $this->findOpenTimeOf($time, $directionIndex, false);
         $openTimes = [$transform($openTime)];

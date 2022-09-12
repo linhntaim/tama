@@ -5,11 +5,8 @@ namespace App\Trading\Console\Commands\Orchestration;
 use App\Support\Console\Commands\Command;
 use App\Trading\Bots\Actions\ReportAction;
 use App\Trading\Bots\Actions\TradeAction;
-use App\Trading\Bots\Exchanges\Binance\Binance;
-use App\Trading\Bots\Exchanges\Binance\LatestPrice as BinanceLatestPrice;
-use App\Trading\Bots\Exchanges\LatestPrice;
+use App\Trading\Bots\Exchanges\Exchanger;
 use App\Trading\Bots\Orchestrators\LatestPriceOrchestrator;
-use InvalidArgumentException;
 
 class LatestPriceCommand extends Command
 {
@@ -38,28 +35,16 @@ class LatestPriceCommand extends Command
     protected function handling(): int
     {
         (new LatestPriceOrchestrator(
-            $this->createLatestPrice(),
+            Exchanger::exchange($this->exchange())->createLatestPrice(
+                $this->ticker(),
+                $this->interval(),
+                $this->price()
+            ),
             [
                 new TradeAction(),
                 new ReportAction(),
             ]
         ))->proceed();
         return $this->exitSuccess();
-    }
-
-    public function createLatestPrice(): LatestPrice
-    {
-        return transform(
-            $this->latestPriceClass(),
-            fn($class) => new $class($this->ticker(), $this->interval(), $this->price())
-        );
-    }
-
-    protected function latestPriceClass(): string
-    {
-        return match ($this->exchange()) {
-            Binance::NAME => BinanceLatestPrice::class,
-            default => throw new InvalidArgumentException(sprintf('Latest price for the exchange "%s" does not exists.', $this->exchange()))
-        };
     }
 }

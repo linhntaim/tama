@@ -120,87 +120,105 @@ class StrategyTest
             throw new InvalidArgumentException('Start and end time must be in different interval zones.');
         }
 
-        $buyPriceCollector = new PriceCollectorTest(
-            $this->buyBot->exchangeConnector(),
-            $this->buyBot->ticker(),
-            $buyInterval,
-            $buyStartOpenTime,
-            $buyEndOpenTime,
-        );
-        $sellPriceCollector = new PriceCollectorTest(
-            $this->sellBot->exchangeConnector(),
-            $this->sellBot->ticker(),
-            $sellInterval,
-            $sellStartOpenTime,
-            $sellEndOpenTime
-        );
-
-        $priceCollection = $buyIntervalLte ? $buyPriceCollector->get(false) : $sellPriceCollector->get(false);
-        $this->swaps->push(
-            new SwapTest(
-                null,
-                $priceCollection->latestTime(),
-                $priceCollection->latestPrice(),
-                $this->baseAmount,
-                $this->quoteAmount,
-                null
+        $hasPrices = $buyIntervalLte
+            ? $this->sellBot->exchangeConnector()->hasPricesAt(
+                $this->sellBot->ticker(),
+                $sellInterval,
+                $sellStartOpenTime
             )
-        );
+            : $this->buyBot->exchangeConnector()->hasPricesAt(
+                $this->buyBot->ticker(),
+                $buyInterval,
+                $buyStartOpenTime
+            );
+        if ($hasPrices !== false) {
+            if (is_int($hasPrices)) {
+                $buyStartOpenTime = $sellStartOpenTime = $hasPrices;
+            }
+            if ($buyStartOpenTime < $buyEndOpenTime && $sellStartOpenTime < $sellEndOpenTime) {
+                $buyPriceCollector = new PriceCollectorTest(
+                    $this->buyBot->exchangeConnector(),
+                    $this->buyBot->ticker(),
+                    $buyInterval,
+                    $buyStartOpenTime,
+                    $buyEndOpenTime,
+                );
+                $sellPriceCollector = new PriceCollectorTest(
+                    $this->sellBot->exchangeConnector(),
+                    $this->sellBot->ticker(),
+                    $sellInterval,
+                    $sellStartOpenTime,
+                    $sellEndOpenTime
+                );
 
-        $fakeUser = new User();
-        $loopTime = ($buyInterval->lte($sellInterval) ? $buyInterval : $sellInterval)->getNextOpenTimeOfExact($buyStartOpenTime);
-        $loopingTime = $buyInterval->gcd($sellInterval);
-        $loopEndTime = $buyIntervalLte
-            ? $buyInterval->getNextOpenTimeOfExact($buyEndOpenTime)
-            : $sellInterval->getNextOpenTimeOfExact($sellEndOpenTime);
-        while ($loopTime <= $loopEndTime) {
-            if ($buyInterval->isExact($loopTime)) {
-                $priceCollection = $buyPriceCollector->get();
-                if (!is_null($indication = $this->buyBot->indicatingNow($priceCollection))) {
-                    $this->buyBot->exchangeConnector()->setTickerPrice($this->buyBot->ticker(), $indication->getPrice());
-                    if (!is_null($marketOrder = $this->buyBot->tryToBuyNow(
-                        $fakeUser,
-                        $this->quoteAmount(),
-                        $this->buyRisk,
-                        $indication
-                    ))) {
-                        $this->swaps->push(
-                            new SwapTest(
-                                $indication,
-                                $indication->getActionTime($this->buyBot->interval()),
-                                $marketOrder->getPrice(),
-                                $marketOrder->getToAmount(),
-                                num_neg($marketOrder->getFromAmount()),
-                                $marketOrder
-                            )
-                        );
+                $priceCollection = $buyIntervalLte ? $buyPriceCollector->get(false) : $sellPriceCollector->get(false);
+                $this->swaps->push(
+                    new SwapTest(
+                        null,
+                        $priceCollection->latestTime(),
+                        $priceCollection->latestPrice(),
+                        $this->baseAmount,
+                        $this->quoteAmount,
+                        null
+                    )
+                );
+
+                $fakeUser = new User();
+                $loopTime = ($buyInterval->lte($sellInterval) ? $buyInterval : $sellInterval)->getNextOpenTimeOfExact($buyStartOpenTime);
+                $loopingTime = $buyInterval->gcd($sellInterval);
+                $loopEndTime = $buyIntervalLte
+                    ? $buyInterval->getNextOpenTimeOfExact($buyEndOpenTime)
+                    : $sellInterval->getNextOpenTimeOfExact($sellEndOpenTime);
+                while ($loopTime <= $loopEndTime) {
+                    if ($buyInterval->isExact($loopTime)) {
+                        $priceCollection = $buyPriceCollector->get();
+                        if (!is_null($indication = $this->buyBot->indicatingNow($priceCollection))) {
+                            $this->buyBot->exchangeConnector()->setTickerPrice($this->buyBot->ticker(), $indication->getPrice());
+                            if (!is_null($marketOrder = $this->buyBot->tryToBuyNow(
+                                $fakeUser,
+                                $this->quoteAmount(),
+                                $this->buyRisk,
+                                $indication
+                            ))) {
+                                $this->swaps->push(
+                                    new SwapTest(
+                                        $indication,
+                                        $indication->getActionTime($this->buyBot->interval()),
+                                        $marketOrder->getPrice(),
+                                        $marketOrder->getToAmount(),
+                                        num_neg($marketOrder->getFromAmount()),
+                                        $marketOrder
+                                    )
+                                );
+                            }
+                        }
                     }
+                    if ($sellInterval->isExact($loopTime)) {
+                        $priceCollection = $sellPriceCollector->get();
+                        if (!is_null($indication = $this->sellBot->indicatingNow($priceCollection))) {
+                            $this->sellBot->exchangeConnector()->setTickerPrice($this->sellBot->ticker(), $indication->getPrice());
+                            if (!is_null($marketOrder = $this->sellBot->tryToSellNow(
+                                $fakeUser,
+                                $this->baseAmount(),
+                                $this->sellRisk,
+                                $indication
+                            ))) {
+                                $this->swaps->push(
+                                    new SwapTest(
+                                        $indication,
+                                        $indication->getActionTime($this->buyBot->interval()),
+                                        $marketOrder->getPrice(),
+                                        num_neg($marketOrder->getFromAmount()),
+                                        $marketOrder->getToAmount(),
+                                        $marketOrder
+                                    )
+                                );
+                            }
+                        }
+                    }
+                    $loopTime += $loopingTime;
                 }
             }
-            if ($sellInterval->isExact($loopTime)) {
-                $priceCollection = $sellPriceCollector->get();
-                if (!is_null($indication = $this->sellBot->indicatingNow($priceCollection))) {
-                    $this->sellBot->exchangeConnector()->setTickerPrice($this->sellBot->ticker(), $indication->getPrice());
-                    if (!is_null($marketOrder = $this->sellBot->tryToSellNow(
-                        $fakeUser,
-                        $this->baseAmount(),
-                        $this->sellRisk,
-                        $indication
-                    ))) {
-                        $this->swaps->push(
-                            new SwapTest(
-                                $indication,
-                                $indication->getActionTime($this->buyBot->interval()),
-                                $marketOrder->getPrice(),
-                                num_neg($marketOrder->getFromAmount()),
-                                $marketOrder->getToAmount(),
-                                $marketOrder
-                            )
-                        );
-                    }
-                }
-            }
-            $loopTime += $loopingTime;
         }
 
         return new ResultTest(

@@ -8,8 +8,8 @@ class TradingStrategyTest extends StrategyTest
 {
     public function __construct(
         TradingStrategy $strategy,
-        float           $baseAmount = 500.0,
-        float           $quoteAmount = 0.0,
+        string          $baseAmount = '0.0',
+        string          $quoteAmount = '500.0',
     )
     {
         parent::__construct(

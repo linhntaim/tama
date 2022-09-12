@@ -27,7 +27,7 @@ class TestCommand extends Command
                         'name' => RsiOscillator::NAME,
                     ],
                 ],
-            ))->testYearsTillNow(2)
+            ))->testYearsTillNow(6)
         );
         return $this->exitSuccess();
     }

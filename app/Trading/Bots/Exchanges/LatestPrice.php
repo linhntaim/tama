@@ -12,7 +12,7 @@ abstract class LatestPrice extends ArrayReader
             'exchange' => $exchange,
             'ticker' => $ticker,
             'interval' => $interval instanceof Interval ? $interval : new Interval($interval),
-            'price' => $price,
+            'price' => Exchanger::exchange($exchange)->createPrice($price),
         ]);
     }
 
@@ -31,10 +31,8 @@ abstract class LatestPrice extends ArrayReader
         return $this->get('interval');
     }
 
-    public function getPrice(): array
+    public function getPrice(): Price
     {
         return $this->get('price');
     }
-
-    abstract public function getTime(): int; // timestamp seconds
 }

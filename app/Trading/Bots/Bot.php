@@ -175,14 +175,18 @@ abstract class Bot
      */
     public function indicate(int $latest = 0): Collection
     {
-        return $this->indicating($this->fetchPrices(), $latest);
+        return ($priceCollection = $this->fetchPrices())->count() === 0
+            ? new Collection()
+            : $this->indicating($priceCollection, $latest);
     }
 
     abstract public function indicatingNow(PriceCollection $prices): ?Indication;
 
     public function indicateNow(): ?Indication
     {
-        return $this->indicatingNow($this->fetchPrices());
+        return ($priceCollection = $this->fetchPrices())->count() === 0
+            ? null
+            : $this->indicatingNow($priceCollection);
     }
 
     protected function reporter(): IReport

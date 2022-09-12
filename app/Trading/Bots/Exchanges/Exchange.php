@@ -15,4 +15,8 @@ abstract class Exchange
     abstract public function createConnector(array $options = [], CacheRepository|string|null $cache = 'redis'): Connector;
 
     abstract public function createPriceStream(LoopInterface $loop): PriceStream;
+
+    abstract public function createPrice(array $price): Price;
+
+    abstract public function createLatestPrice(string $ticker, Interval|string $interval, array $price): LatestPrice;
 }

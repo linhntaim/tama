@@ -11,9 +11,4 @@ class LatestPrice extends BaseLatestPrice
     {
         parent::__construct(Binance::NAME, $ticker, $interval, $price);
     }
-
-    public function getTime(): int
-    {
-        return int_floor($this->getPrice()[0] / 1000);
-    }
 }

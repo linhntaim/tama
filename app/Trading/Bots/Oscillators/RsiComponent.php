@@ -58,42 +58,48 @@ class RsiComponent extends Component
 
     protected function convert(Packet $packet): Packet
     {
-        return $packet->set('converters.rsi', new Values(Trader::rsi($this->getPrices($packet)->prices(), $this->timePeriod())));
+        return $packet->set(
+            'converters.rsi',
+            ($rsi = Trader::rsi($this->getPrices($packet)->prices(), $this->timePeriod())) !== false
+                ? new Values($rsi) : false
+        );
     }
 
-    protected function getRsiValues(Packet $packet): Values
+    protected function getRsiValues(Packet $packet): Values|false
     {
         return $packet->get('converters.rsi');
     }
 
     protected function analyze(Packet $packet, bool|int $latest = true): Packet
     {
-        $limit = is_int($latest) ? max(0, $latest) : -1;
         $data = [];
-        $dataCount = 0;
         $rsiValues = $this->getRsiValues($packet);
-        $priceCollection = $this->getPrices($packet);
-        $priceValues = $priceCollection->prices();
-        $timeValues = $priceCollection->times();
-        $i = $priceCollection->count();
-        while (--$i >= 0) {
-            if ($i < $this->timePeriod() + 1) {
-                break;
-            }
-
-            if (($signals = $this->createSignals($timeValues, $priceValues, $rsiValues, $i - 1))->count()) {
-                $data[$i] = $this->createAnalysis(
-                    $timeValues[$i],
-                    $priceValues[$i],
-                    $rsiValues->value($i),
-                    $signals
-                );
-                if (++$dataCount === $limit) {
+        if ($rsiValues !== false) {
+            $limit = is_int($latest) ? max(0, $latest) : -1;
+            $dataCount = 0;
+            $priceCollection = $this->getPrices($packet);
+            $priceValues = $priceCollection->prices();
+            $timeValues = $priceCollection->times();
+            $i = $priceCollection->count();
+            while (--$i >= 0) {
+                if ($i < $this->timePeriod() + 1) {
                     break;
                 }
-            }
-            if ($latest === true) {
-                break;
+
+                if (($signals = $this->createSignals($timeValues, $priceValues, $rsiValues, $i - 1))->count()) {
+                    $data[$i] = $this->createAnalysis(
+                        $timeValues[$i],
+                        $priceValues[$i],
+                        $rsiValues->value($i),
+                        $signals
+                    );
+                    if (++$dataCount === $limit) {
+                        break;
+                    }
+                }
+                if ($latest === true) {
+                    break;
+                }
             }
         }
 

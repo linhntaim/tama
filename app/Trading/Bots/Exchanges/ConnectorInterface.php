@@ -19,6 +19,8 @@ interface ConnectorInterface
 
     public function pushLatestPrice(LatestPrice $latestPrice): void;
 
+    public function hasPricesAt(string $ticker, Interval $interval, ?int $time = null): bool|int;
+
     public function recentPricesAt(string $ticker, Interval $interval, ?int $time = null, int $limit = Exchange::PRICE_LIMIT): PriceCollection;
 
     public function finalPrices(string $ticker, Interval $interval): PriceCollection;

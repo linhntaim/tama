@@ -281,7 +281,7 @@ abstract class PriceStream
                         $latestPrice->getExchange(),
                         $latestPrice->getTicker(),
                         $latestPrice->getInterval(),
-                        base64_encode(json_encode_readable($latestPrice->getPrice())),
+                        base64_encode(json_encode_readable($latestPrice->getPrice()->toArray())),
                         Command::PARAMETER_OFF_SHOUT_OUT
                     ),
                     null,

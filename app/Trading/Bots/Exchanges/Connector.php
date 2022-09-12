@@ -119,16 +119,17 @@ abstract class Connector implements ConnectorInterface
      */
     public function pushLatestPrice(LatestPrice $latestPrice): void
     {
+        $price = $latestPrice->getPrice();
         if ($this->recentCachedPrices(
             $ticker = $latestPrice->getTicker(),
             $interval = $latestPrice->getInterval(),
-            $interval->getPreviousOpenTimeOfExact($latestTime = $latestPrice->getTime()),
+            $interval->getPreviousOpenTimeOfExact($latestTime = $price->getOpenTime()),
             $cachedRecentPrices
         )) {
             if (count($cachedRecentPrices) >= Exchange::PRICE_LIMIT) {
                 array_shift($cachedRecentPrices);
             }
-            $cachedRecentPrices[] = $latestPrice->getPrice();
+            $cachedRecentPrices[] = $price->toArray();
             $this->recentPricesToCache(
                 $ticker,
                 $interval,
@@ -151,6 +152,21 @@ abstract class Connector implements ConnectorInterface
     }
 
     abstract protected function newPriceCollection(string $ticker, Interval $interval, array $prices, array $times): PriceCollection;
+
+    public function hasPricesAt(string $ticker, Interval $interval, ?int $time = null): bool|int
+    {
+        $openTime = $interval->findOpenTimeOf($time);
+        if (count($this->fetchPrices($ticker, $interval, null, $openTime, 1)) > 0) {
+            return true;
+        }
+        if ($openTime >= $interval->findOpenTimeOf()) {
+            return false;
+        }
+        if (count($fetched = $this->fetchPrices($ticker, $interval, $openTime, null, 1)) > 0) {
+            return Exchanger::exchange($this->exchange)->createPrice($fetched[0])->getOpenTime();
+        }
+        return false;
+    }
 
     public function recentPricesAt(string $ticker, Interval $interval, ?int $time = null, int $limit = Exchange::PRICE_LIMIT): PriceCollection
     {
