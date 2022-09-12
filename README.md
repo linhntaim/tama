@@ -7,58 +7,71 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
-## About Laravel
+<p align="center">
+<a href="https://github.com/linhntaim/laravel-9-starter" target="_blank">Laravel 9 Starter</a><br>
+<a href="https://www.ta-lib.org/" target="_blank">TA-Lib</a>
+(<a href="https://www.php.net/manual/en/book.trader.php" target="_blank">Trader PHP Extension</a>)<br>
+<a href="https://github.com/binance/binance-connector-php" target="_blank">Binance Connector PHP</a><br>
+<a href="https://reactphp.org/" target="_blank">ReactPHP</a><br>
+<a href="https://github.com/ratchetphp/Ratchet" target="_blank">Ratchet</a><br>
+<a href="https://github.com/laravel-notification-channels/telegram" target="_blank">Telegram Notifications Channel for Laravel</a><br>
+</p>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## About "tama"
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+"tama" is the codename of the project which aims to create a crypto bot that:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- Provide trading information.
+- Test/Run automated trading strategies.
 
-## Learning Laravel
+## Installation
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Requirements
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- [Laravel > Server Requirements](https://laravel.com/docs/9.x/deployment#server-requirements)
+- PHP >= 8.1
+- [Trader PHP Extension](https://pecl.php.net/package/trader) 
+- [Redis PHP Extension](https://pecl.php.net/package/redis) _(recommended)_ or [predis package](https://github.com/predis/predis)
+  - See: https://laravel.com/docs/9.x/redis
+- MySQL 8.x / MariaDB 10.x
+- Redis 7.x
+- Telegram > Bots
 
-## Laravel Sponsors
+### Sourcecode
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+After cloning the sourcecode, run following commands at the root directory:
 
-### Premium Partners
+```shell
+# Install packages
+composer install
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+# Setup the .env file if none exists
+php artisan setup
 
-## Contributing
+# Again, setup the sourcecode (incl. database migration and seeding)
+php artisan setup
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Others
 
-## Code of Conduct
+#### [Telegram Bot](https://core.telegram.org/bots)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
 
-## Security Vulnerabilities
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+[Create a bot](https://core.telegram.org/bots#3-how-do-i-create-a-bot) and fill its information 
+in the .env file.
 
-## License
+```dotenv
+TELEGRAM_BOT_NAME=
+TELEGRAM_BOT_USERNAME=
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_BOT_WEBHOOK_SECRET=
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+`TELEGRAM_BOT_NAME` & `TELEGRAM_BOT_USERNAME` is the name & username of the bot and `TELEGRAM_BOT_TOKEN` is the authentication token generated after creating the bot.
+
+See: https://core.telegram.org/bots#creating-a-new-bot.
+
+`TELEGRAM_BOT_WEBHOOK_SECRET` is the secret token used to create the webhook.
+
+See: https://core.telegram.org/bots/api#setwebhook.
