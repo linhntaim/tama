@@ -13,7 +13,19 @@ interface ConnectorInterface
 
     public function isIntervalValid(Interval $interval): bool;
 
-    public function availableTickers(string|array|null $pattern = null): Collection;
+    /**
+     * @param string|string[]|null $quoteSymbol
+     * @param string|string[]|null $baseSymbol
+     * @param string|string[]|null $exceptQuoteSymbol
+     * @param string|string[]|null $exceptBaseSymbol
+     * @return Collection<int, Ticker>
+     */
+    public function availableTickers(
+        string|array|null $quoteSymbol = null,
+        string|array|null $baseSymbol = null,
+        string|array|null $exceptQuoteSymbol = null,
+        string|array|null $exceptBaseSymbol = null
+    ): Collection;
 
     public function tickerPrice(string $ticker): string;
 

@@ -18,6 +18,35 @@ use React\EventLoop\LoopInterface;
  */
 class Exchanger extends Facade
 {
+    /**
+     * @see https://coinmarketcap.com/view/stablecoin/
+     */
+    public const STABLECOIN_SYMBOLS = [
+        'USDT',
+        'USDC',
+        'BUSD',
+        'DAI',
+        'USDP',
+        'TUSD',
+        'USDD',
+        'USDN',
+        'FEI',
+        'GUSD',
+        'FRAX',
+        'LUSD',
+        'HUSD',
+    ];
+    /**
+     * @see https://coinmarketcap.com/view/tokenized-gold/
+     */
+    public const GOLDCOIN_SYMBOLS = [
+        'PAXG',
+        'XAUT',
+        'PMGT',
+        'DGX',
+        'AWG',
+    ];
+
     protected static function getFacadeAccessor(): string
     {
         return ExchangeManager::class;

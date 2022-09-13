@@ -70,13 +70,21 @@ class Connector extends BaseConnector
         }
     }
 
-    public function availableTickers(string|array|null $pattern = null): Collection
+    public function availableTickers(
+        string|array|null $quoteSymbol = null,
+        string|array|null $baseSymbol = null,
+        string|array|null $exceptQuoteSymbol = null,
+        string|array|null $exceptBaseSymbol = null
+    ): Collection
     {
         return collect($this->spot->exchangeInfo()['symbols'])
-            ->filter(function ($ticker) use ($pattern) {
+            ->filter(function ($ticker) use ($quoteSymbol, $baseSymbol, $exceptQuoteSymbol, $exceptBaseSymbol) {
                 return $ticker['status'] === 'TRADING'
                     && in_array('SPOT', $ticker['permissions'], true)
-                    && (is_null($pattern) || Str::is($pattern, $ticker['symbol']));
+                    && (is_null($quoteSymbol) || in_array($ticker['quoteAsset'], (array)$quoteSymbol, true))
+                    && (is_null($baseSymbol) || in_array($ticker['baseAsset'], (array)$baseSymbol, true))
+                    && (is_null($exceptQuoteSymbol) || !in_array($ticker['quoteAsset'], (array)$exceptQuoteSymbol, true))
+                    && (is_null($exceptBaseSymbol) || !in_array($ticker['baseAsset'], (array)$exceptBaseSymbol, true));
             })
             ->map(function (array $ticker) {
                 return new Ticker($ticker);

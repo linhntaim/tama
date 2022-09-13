@@ -64,11 +64,12 @@ abstract class Connector implements ConnectorInterface
         ], true);
     }
 
-    /**
-     * @param string|array|null $pattern
-     * @return Collection<int, Ticker>
-     */
-    public function availableTickers(string|array|null $pattern = null): Collection
+    public function availableTickers(
+        string|array|null $quoteSymbol = null,
+        string|array|null $baseSymbol = null,
+        string|array|null $exceptQuoteSymbol = null,
+        string|array|null $exceptBaseSymbol = null
+    ): Collection
     {
         return collect([]);
     }

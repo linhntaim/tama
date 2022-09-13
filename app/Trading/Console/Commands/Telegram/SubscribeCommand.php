@@ -5,12 +5,10 @@ namespace App\Trading\Console\Commands\Telegram;
 use App\Models\User;
 use App\Support\Client\DateTimer;
 use App\Trading\Bots\Exchanges\Exchanger;
-use App\Trading\Bots\Exchanges\Ticker;
 use App\Trading\Models\Trading;
 use App\Trading\Notifications\Telegram\ConsoleNotification;
 use App\Trading\Notifications\TelegramUpdateNotifiable;
 use App\Trading\Trader;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Redis;
 
 class SubscribeCommand extends Command
@@ -48,7 +46,13 @@ class SubscribeCommand extends Command
         else {
             $redis = Redis::connection(trading_cfg_redis_pubsub_connection());
             if ($this->ticker()[0] === '*') {
-                $tickers = $this->fetchTickers();
+                $tickers = Exchanger::connector($this->exchange())
+                    ->availableTickers(
+                        substr($this->ticker(), 1),
+                        null,
+                        null,
+                        array_merge(Exchanger::STABLECOIN_SYMBOLS, Exchanger::GOLDCOIN_SYMBOLS)
+                    );
                 foreach ($tickers as $ticker) {
                     $this->subscribe($user, $this->createTrading([
                         'ticker' => $ticker->getSymbol(),
@@ -71,14 +75,6 @@ class SubscribeCommand extends Command
             }
         }
         return $this->exitSuccess();
-    }
-
-    /**
-     * @return Collection<int, Ticker>
-     */
-    protected function fetchTickers(): Collection
-    {
-        return Exchanger::connector($this->exchange())->availableTickers($this->ticker());
     }
 
     protected function subscribe(User $user, Trading $trading, $redis): void
