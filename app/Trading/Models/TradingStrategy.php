@@ -28,7 +28,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property Trading $sellTrading
  * @property Collection<int, TradingSwap> $swaps
  * @property Collection<int, TradingSwap> $orderedSwaps
- * @property Collection<int, TradingSwap> $trueSwaps
+ * @property Collection<int, TradingSwap> $tradeSwaps
+ * @property Collection<int, TradingSwap> $buySwaps
+ * @property Collection<int, TradingSwap> $sellSwaps
  * @property TradingSwap|null $firstSwap
  * @property string $firstPrice
  * @property TradingSwap|null $lastSwap
@@ -89,10 +91,24 @@ class TradingStrategy extends Model
         return $this->belongsTo(Trading::class, 'sell_trading_id', 'id');
     }
 
-    public function trueSwaps(): Attribute
+    public function tradeSwaps(): Attribute
     {
         return Attribute::get(fn(): Collection => $this->orderedSwaps->filter(
-            fn(TradingSwap $swap): bool => num_lt($swap->base_amount, 0) || num_lt($swap->quote_amount, 0)
+            fn(TradingSwap $swap): bool => num_lt($swap->quote_amount, 0) || num_lt($swap->base_amount, 0)
+        ));
+    }
+
+    public function buySwaps(): Attribute
+    {
+        return Attribute::get(fn(): Collection => $this->orderedSwaps->filter(
+            fn(TradingSwap $swap): bool => num_lt($swap->quote_amount, 0)
+        ));
+    }
+
+    public function sellSwaps(): Attribute
+    {
+        return Attribute::get(fn(): Collection => $this->orderedSwaps->filter(
+            fn(TradingSwap $swap): bool => num_lt($swap->base_amount, 0)
         ));
     }
 

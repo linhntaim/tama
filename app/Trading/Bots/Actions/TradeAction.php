@@ -8,6 +8,7 @@ use App\Trading\Models\TradingBroadcast;
 use App\Trading\Models\TradingStrategy;
 use App\Trading\Models\TradingStrategyProvider;
 use App\Trading\Models\TradingSwapProvider;
+use App\Trading\Notifications\Telegram\ConsoleNotification;
 use Throwable;
 
 class TradeAction implements IAction
@@ -21,10 +22,11 @@ class TradeAction implements IAction
 
     protected function invokeTrading(Bot $bot, TradingBroadcast $broadcast, TradingStrategy $strategy): void
     {
+        $indication = $broadcast->indication;
         try {
             if ($strategy->isFake) {
                 $bot->useFakeExchangeConnector();
-                $bot->exchangeConnector()->setTickerPrice($bot->ticker(), $broadcast->indication->getPrice());
+                $bot->exchangeConnector()->setTickerPrice($bot->ticker(), $indication->getPrice());
             }
             if (!is_null($marketOrder = $bot->tradeNow(
                 $strategy->user,
@@ -48,6 +50,35 @@ class TradeAction implements IAction
                     ] : [
                         'base_amount' => num_neg($marketOrder->getFromAmount()),
                         'quote_amount' => $marketOrder->getToAmount(),
+                    ])
+                );
+
+                $label = sprintf('STRATEGY #%d: %s %s %s', $strategy->id, $indication->getAction(), $bot->ticker(), $bot->interval());
+                ConsoleNotification::send(
+                    $strategy->user->load('socials'),
+                    implode(PHP_EOL, [
+                        $label,
+                        str_repeat('‾', strlen($label)),
+                        'TRADE:',
+                        '*************************',
+                        $indication->getActionBuy()
+                            ? sprintf('BOUGHT %s %s from %s %s at %s',
+                            num_trim($marketOrder->getToAmount()),
+                            $bot->baseSymbol(),
+                            num_trim($marketOrder->getFromAmount()),
+                            $bot->quoteSymbol(),
+                            $marketOrder->getPrice())
+                            : sprintf(
+                            'SOLD %s %s to %s %s at %s',
+                            num_trim($marketOrder->getFromAmount()),
+                            $bot->baseSymbol(),
+                            num_trim($marketOrder->getToAmount()),
+                            $bot->quoteSymbol(),
+                            $marketOrder->getPrice()),
+                        '',
+                        'INDICATION:',
+                        '*************************',
+                        $bot->reportNow($indication),
                     ])
                 );
             }

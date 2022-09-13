@@ -3,6 +3,7 @@
 namespace App\Trading\Models;
 
 use App\Models\User;
+use App\Support\Models\Model;
 use App\Support\Models\ModelProvider;
 use App\Support\Models\QueryValues\LikeValue;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -11,6 +12,8 @@ use Illuminate\Database\Eloquent\Collection;
 
 /**
  * @method TradingStrategy createWithAttributes(array $attributes = [])
+ * @method TradingStrategy|null first(array $conditions = [])
+ * @method TradingStrategy|null firstByKey(int|string $key)
  */
 class TradingStrategyProvider extends ModelProvider
 {
@@ -24,7 +27,7 @@ class TradingStrategyProvider extends ModelProvider
                     ->whereHas('buyTrading', function ($query) use ($trading) {
                         $query->where('slug', 'like', (string)$trading);
                     })
-                    ->orWhere('sellTrading', function ($query) use ($trading) {
+                    ->orWhereHas('sellTrading', function ($query) use ($trading) {
                         $query->where('slug', 'like', (string)$trading);
                     });
             }

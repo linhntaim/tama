@@ -6,33 +6,33 @@ use Illuminate\Support\Collection;
 
 class ResultTest
 {
-    protected string $beforePrice;
+    public string $beforePrice;
 
-    protected string $beforeBaseAmount;
+    public string $beforeBaseAmount;
 
-    protected string $beforeQuoteAmount;
+    public string $beforeQuoteAmount;
 
-    protected string $beforeQuoteAmountEquivalent;
+    public string $beforeQuoteAmountEquivalent;
 
-    protected string $afterPrice;
+    public string $afterPrice;
 
-    protected string $afterBaseAmount;
+    public string $afterBaseAmount;
 
-    protected string $afterQuoteAmount;
+    public string $afterQuoteAmount;
 
-    protected string $afterQuoteAmountEquivalent;
+    public string $afterQuoteAmountEquivalent;
 
-    protected string $profit;
+    public string $profit;
 
-    protected string $profitPercent;
+    public string $profitPercent;
 
-    protected string $shownProfitPercent;
+    public string $shownProfitPercent;
 
-    protected string $shownStartTime;
+    public string $shownStartTime;
 
-    protected string $shownEndTime;
+    public string $shownEndTime;
 
-    protected array $trades;
+    public Collection $swaps;
 
     /**
      * @param string $exchange
@@ -44,13 +44,15 @@ class ResultTest
      * @param Collection $swaps
      */
     public function __construct(
-        protected string $exchange,
-        protected string $ticker,
-        protected string $baseSymbol,
-        protected string $quoteSymbol,
-        protected int    $startTime,
-        protected int    $endTime,
-        Collection       $swaps
+        public string $exchange,
+        public string $ticker,
+        public string $baseSymbol,
+        public string $quoteSymbol,
+        public float  $buyRisk,
+        public float  $sellRisk,
+        public int    $startTime,
+        public int    $endTime,
+        Collection    $swaps
     )
     {
         $this->afterPrice = $swaps->last()->getPrice();
@@ -68,7 +70,7 @@ class ResultTest
         });
         $this->afterQuoteAmountEquivalent = num_add(num_mul($this->afterPrice, $this->afterBaseAmount), $this->afterQuoteAmount);
         // first swap is initial
-        tap($swaps->shift(), function (SwapTest $swap) {
+        tap($swaps->first(), function (SwapTest $swap) {
             $this->beforePrice = $swap->getPrice();
             $this->beforeBaseAmount = $swap->getBaseAmount();
             $this->beforeQuoteAmount = $swap->getQuoteAmount();
@@ -80,22 +82,21 @@ class ResultTest
         $this->shownProfitPercent = sprintf('%s%%', $this->profitPercent);
         $this->shownStartTime = date(DATE_DEFAULT, $this->startTime);
         $this->shownEndTime = date(DATE_DEFAULT, $this->endTime);
-        $this->trades = $swaps->map(function (SwapTest $swap) {
-            return $swap->quoteSwapped()
-                ? sprintf('[%s] Buy %s %s from %s %s @ %s',
-                    date(DATE_DEFAULT, $swap->getTime()),
-                    $swap->getBaseAmount(),
-                    $this->baseSymbol,
-                    num_neg($swap->getQuoteAmount()),
-                    $this->quoteSymbol,
-                    $swap->getPrice())
-                : sprintf('[%s] Sell %s %s to %s %s @ %s',
-                    date(DATE_DEFAULT, $swap->getTime()),
-                    num_neg($swap->getBaseAmount()),
-                    $this->baseSymbol,
-                    $swap->getQuoteAmount(),
-                    $this->quoteSymbol,
-                    $swap->getPrice());
-        })->all();
+        $this->swaps = $swaps;
+    }
+
+    public function tradeSwaps(): Collection
+    {
+        return $this->swaps->filter(fn(SwapTest $swap): bool => num_lt($swap->getQuoteAmount(), 0) || num_lt($swap->getBaseAmount(), 0));
+    }
+
+    public function buySwaps(): Collection
+    {
+        return $this->swaps->filter(fn(SwapTest $swap): bool => num_lt($swap->getQuoteAmount(), 0));
+    }
+
+    public function sellSwaps(): Collection
+    {
+        return $this->swaps->filter(fn(SwapTest $swap): bool => num_lt($swap->getBaseAmount(), 0));
     }
 }

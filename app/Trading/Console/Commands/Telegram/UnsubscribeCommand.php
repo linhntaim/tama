@@ -48,14 +48,17 @@ class UnsubscribeCommand extends Command
         return $this->option('interval');
     }
 
-    protected function findTrading(): ?Trading
+    protected function findTrading(User $user): ?Trading
     {
         return is_null($id = $this->id()) ? null : (new TradingProvider())
             ->notStrict()
-            ->firstByUnique($id);
+            ->first([
+                'id' => $id,
+                'subscriber' => $user,
+            ]);
     }
 
-    protected function findTradings($user): ?Collection
+    protected function findTradings(User $user): ?Collection
     {
         $conditions = array_filter([
             'bot' => $this->bot(),
@@ -72,7 +75,7 @@ class UnsubscribeCommand extends Command
     {
         if (!is_null($user = $this->findUser())) {
             $redis = Redis::connection(trading_cfg_redis_pubsub_connection());
-            if (!is_null($trading = $this->findTrading())) {
+            if (!is_null($trading = $this->findTrading($user))) {
                 $this->unsubscribe($user, $trading, $redis);
                 ConsoleNotification::send(
                     new TelegramUpdateNotifiable($this->telegramUpdate),

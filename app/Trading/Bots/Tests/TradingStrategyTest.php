@@ -10,13 +10,15 @@ class TradingStrategyTest extends StrategyTest
         TradingStrategy $strategy,
         string          $baseAmount = '0.0',
         string          $quoteAmount = '500.0',
+        ?float          $buyRisk = null,
+        ?float          $sellRisk = null,
     )
     {
         parent::__construct(
             $baseAmount,
             $quoteAmount,
-            $strategy->buy_risk,
-            $strategy->sell_risk,
+            $buyRisk ?: $strategy->buy_risk,
+            $sellRisk ?: $strategy->sell_risk,
             $strategy->buyTrading->bot,
             $strategy->buyTrading->botOptions,
             $strategy->sellTrading->bot,

@@ -1,4 +1,4 @@
-<p align="center"><a href="https://tama.linhntaim.com" target="_blank"><img src="https://raw.githubusercontent.com/linhntaim/tama-art/master/logo.text.black.png" width="400" alt="tama Logo"></a></p>
+<p align="center"><a href="https://tama.linhntaim.com" target="_blank"><img src="https://raw.githubusercontent.com/linhntaim/tama-art/master/logo.text.color.png" width="400" alt="tama Logo"></a></p>
 
 <p align="center">
 Powered by:<br>
@@ -28,7 +28,7 @@ The project is still in progress.
     3. Orchestration: Bot => Indication => Broadcast
     4. Chatbot: Message => Execute
 2. Phase 1:
-    1. Exchange supported: Binance
+    1. Exchange supported: Binance (Spot market)
     2. Indication supported: RSI divergences
     3. Orchestration supported:
         1. On-demand (use exchange API)
@@ -43,15 +43,17 @@ The project is still in progress.
         1. Platform supported:
             1. Telegram via Webhook
         2. Execution supported:
-           1. Provide system information
-           2. Provide trading information
-           3. Manage trading subscriptions
+            1. Provide system information
+            2. Provide trading information
+            3. Manage trading subscriptions
 3. Phase 2 _(current)_:
     1. Automated trading strategy: Capital/Risk/Bot => Indication => Buy|Sell => Exchange
-        1. Tool for testing trading strategy with historical data
-        2. Add a "Trade" action to broadcast
-        3. Support to run fake trading strategies to test in the real world
-        4. Support chatbot
+        1. Order type support:
+            1. Market
+        2. Tool for testing trading strategy with historical data
+        3. Add a "Trade" action to broadcast
+        4. Support to run fake trading strategies to test in the real world
+        5. Support chatbot
     2. Better indication from more oscillators/indicators
 4. Phase 3:
     1. Run automated trading strategies in the real world
@@ -101,7 +103,7 @@ TELEGRAM_BOT_TOKEN=
 TELEGRAM_BOT_WEBHOOK_SECRET=
 ```
 
-`TELEGRAM_BOT_NAME` & `TELEGRAM_BOT_USERNAME` is the name & username of the bot 
+`TELEGRAM_BOT_NAME` & `TELEGRAM_BOT_USERNAME` is the name & username of the bot
 and `TELEGRAM_BOT_TOKEN` is the authentication token generated after creating the bot.
 
 See: https://core.telegram.org/bots#creating-a-new-bot.

@@ -16,10 +16,11 @@ class ReportAction implements IAction
             $label = sprintf('%s %s %s', $indication->getAction(), $bot->ticker(), $bot->interval());
             ConsoleNotification::send(
                 $subscribers,
-                '.' . str_repeat('_', strlen($label) + 2) . '.' . PHP_EOL
-                . '| ' . $label . ' |' . PHP_EOL
-                . '˙' . str_repeat('‾', strlen($label) + 2) . '˙' . PHP_EOL
-                . $bot->reportNow($indication)
+                implode(PHP_EOL, [
+                    $label,
+                    str_repeat('‾', strlen($label)),
+                    $bot->reportNow($indication),
+                ])
             );
         }
     }

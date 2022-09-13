@@ -27,6 +27,8 @@ class CreateCommand extends Command
 
     public $signature = '{buy_trading_id} {sell_trading_id?} {--base-amount=0.0} {--quote-amount=500.0} {--buy_risk=0.0} {--sell_risk=0.0}';
 
+    protected $description = 'Create a strategy.';
+
     protected string $baseAmount;
 
     protected string $quoteAmount;
@@ -73,7 +75,7 @@ class CreateCommand extends Command
         if (is_null($user = $this->createUserFromTelegram())) {
             ConsoleNotification::send(
                 new TelegramUpdateNotifiable($this->telegramUpdate),
-                'Action was not supported.'
+                'Action is not supported.'
             );
         }
         elseif (num_lt($this->baseAmount(), 0)

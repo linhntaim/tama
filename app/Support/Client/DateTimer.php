@@ -58,6 +58,11 @@ class DateTimer extends SettingsApplier
         return static::timeAs($timestamp, DATE_DATABASE);
     }
 
+    public static function parse(string $time): Carbon
+    {
+        return Carbon::parse($time, new CarbonTimeZone('UTC'));
+    }
+
     /**
      * @return float[]
      */

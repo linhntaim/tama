@@ -22,12 +22,12 @@ class TestCommand extends Command
                 [
                     'exchange' => Binance::NAME,
                     'ticker' => Binance::DEFAULT_TICKER,
-                    'interval' => Trader::INTERVAL_1_DAY,
+                    'interval' => Trader::INTERVAL_1_HOUR,
                     'oscillator' => [
                         'name' => RsiOscillator::NAME,
                     ],
                 ],
-            ))->testYearsTillNow(6)
+            ))->testYearsTillNow()
         );
         return $this->exitSuccess();
     }

@@ -9,7 +9,6 @@ use App\Trading\Bots\BotFactory;
 use App\Trading\Bots\Exchanges\Binance\Binance;
 use App\Trading\Bots\Exchanges\Interval;
 use App\Trading\Bots\Oscillators\RsiOscillator;
-use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
 
@@ -88,9 +87,34 @@ class StrategyTest
         );
     }
 
-    public function test(?int $startTime = null, ?int $endTime = null): ResultTest
+    protected function toTime(string $timeString): int
     {
-        $now = Carbon::now();
+        $number = (int)$timeString;
+        if ((string)$number === $timeString) {
+            return $number;
+        }
+
+        $now = DateTimer::now(null);
+        return (match (substr($timeString, -1)) {
+            'Y', 'y' => $now->subYears($number),
+            'M', 'm' => $now->subMonths($number),
+            'W', 'w' => $now->subWeeks($number),
+            'D', 'd' => $now->subDays($number),
+            'H', 'h' => $now->subHours($number),
+            default => DateTimer::parse($timeString)
+        })->getTimestamp();
+    }
+
+    public function test(string|int|null $startTime = null, string|int|null $endTime = null): ResultTest
+    {
+        if (is_string($startTime)) {
+            $startTime = $this->toTime($startTime);
+        }
+        if (is_string($endTime)) {
+            $endTime = $this->toTime($endTime);
+        }
+
+        $now = DateTimer::now(null);
         if ((!is_null($startTime) && $startTime > $now->getTimestamp())
             || (!is_null($endTime) && $endTime > $now->getTimestamp())) {
             throw new InvalidArgumentException('Start/End time must be in the past.');
@@ -226,6 +250,8 @@ class StrategyTest
             $this->buyBot->ticker(),
             $this->buyBot->baseSymbol(),
             $this->buyBot->quoteSymbol(),
+            $this->buyRisk,
+            $this->sellRisk,
             $startTime,
             $endTime,
             $this->swaps
@@ -234,19 +260,26 @@ class StrategyTest
 
     public function testYearsTillNow(int $years = 1): ResultTest
     {
-        $now = DateTimer::now(null);
-        return $this->test((clone $now)->subYears($years)->getTimestamp(), $now->getTimestamp());
+        return $this->test(sprintf('%dY', $years));
+    }
+
+    public function testMonthsTillNow(int $months = 12): ResultTest
+    {
+        return $this->test(sprintf('%dM', $months));
+    }
+
+    public function testWeeksTillNow(int $weeks = 52): ResultTest
+    {
+        return $this->test(sprintf('%dW', $weeks));
     }
 
     public function testDaysTillNow(int $days = 365): ResultTest
     {
-        $now = DateTimer::now(null);
-        return $this->test((clone $now)->subDays($days)->getTimestamp(), $now->getTimestamp());
+        return $this->test(sprintf('%dD', $days));
     }
 
     public function testHoursTillNow(int $hours = 365 * 24): ResultTest
     {
-        $now = DateTimer::now(null);
-        return $this->test((clone $now)->subHours($hours)->getTimestamp(), $now->getTimestamp());
+        return $this->test(sprintf('%dH', $hours));
     }
 }
