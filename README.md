@@ -1,13 +1,7 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+<p align="center"><a href="https://tama.linhntaim.com" target="_blank"><img src="https://raw.githubusercontent.com/linhntaim/tama-art/master/logo.text.color.png" width="400" alt="tama Logo"></a></p>
 
 <p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
-
-<p align="center">
+Powered by:<br>
 <a href="https://github.com/linhntaim/laravel-9-starter" target="_blank">Laravel 9 Starter</a><br>
 <a href="https://www.ta-lib.org/" target="_blank">TA-Lib</a>
 (<a href="https://www.php.net/manual/en/book.trader.php" target="_blank">Trader PHP Extension</a>)<br>
@@ -35,7 +29,6 @@
   - See: https://laravel.com/docs/9.x/redis
 - MySQL 8.x / MariaDB 10.x
 - Redis 7.x
-- Telegram > Bots
 
 ### Sourcecode
 
