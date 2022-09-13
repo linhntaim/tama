@@ -2,8 +2,6 @@
 
 namespace App\Trading\Console\Commands\Telegram;
 
-use App\Trading\Notifications\Telegram\ConsoleNotification;
-use App\Trading\Notifications\TelegramUpdateNotifiable;
 use Symfony\Component\Console\Helper\DescriptorHelper;
 use Symfony\Component\Console\Output\BufferedOutput;
 
@@ -24,7 +22,7 @@ class HelpCommand extends Command
         else {
             $this->describe($output, $this->getApplication()->find('telegram:' . $commandName));
         }
-        ConsoleNotification::send(new TelegramUpdateNotifiable($this->telegramUpdate), $output->fetch());
+        $this->sendConsoleNotification($output->fetch());
         return $this->exitSuccess();
     }
 

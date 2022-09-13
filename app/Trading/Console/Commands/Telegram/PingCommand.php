@@ -3,7 +3,6 @@
 namespace App\Trading\Console\Commands\Telegram;
 
 use App\Trading\Notifications\Telegram\PingNotification;
-use App\Trading\Notifications\TelegramUpdateNotifiable;
 
 class PingCommand extends Command
 {
@@ -11,7 +10,7 @@ class PingCommand extends Command
 
     protected function handling(): int
     {
-        PingNotification::send(new TelegramUpdateNotifiable($this->telegramUpdate));
+        PingNotification::send($this->getTelegramNotifiable());
         return $this->exitSuccess();
     }
 }

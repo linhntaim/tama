@@ -6,13 +6,66 @@ use App\Models\User;
 use App\Models\UserProvider;
 use App\Models\UserSocialProvider;
 use App\Support\Client\DateTimer;
+use App\Trading\Notifications\Telegram\ConsoleNotification;
+use App\Trading\Notifications\TelegramUpdateNotifiable;
+use App\Trading\Services\Telegram\Update as TelegramUpdate;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 
-trait CreateUser
+trait InteractsWithUser
 {
+    protected TelegramUpdate $telegramUpdate;
+
+    protected function getTelegramUpdate(): TelegramUpdate
+    {
+        return $this->telegramUpdate
+            ?? $this->telegramUpdate = new TelegramUpdate(
+                json_decode_array(
+                    base64_decode(
+                        tap(
+                            $this->option('telegram-update'),
+                            static function ($telegram) {
+                                if (is_null($telegram)) {
+                                    throw new InvalidArgumentException('Telegram update option must be provided.');
+                                }
+                            }
+                        )
+                    )
+                )
+            );
+    }
+
+    protected function getTelegramNotifiable(): TelegramUpdateNotifiable
+    {
+        return new TelegramUpdateNotifiable($this->getTelegramUpdate());
+    }
+
+    protected function sendConsoleNotification(string $text): void
+    {
+        ConsoleNotification::send($this->getTelegramNotifiable(), $text);
+    }
+
+    protected function validateCreatingUser(): User|bool
+    {
+        if (is_null($user = $this->createUserFromTelegram())) {
+            $this->sendConsoleNotification('Action is  not supported.');
+            return false;
+        }
+        return $user;
+    }
+
+    protected function validateFindingUser(): User|bool
+    {
+        if (is_null($user = $this->findUser())) {
+            $this->sendConsoleNotification('Action is  not supported.');
+            return false;
+        }
+        return $user;
+    }
+
     protected function createUserFromTelegram(): ?User
     {
-        if (is_null($chat = $this->telegramUpdate->getChat())) {
+        if (is_null($chat = $this->getTelegramUpdate()->getChat())) {
             return null;
         }
         return match ($chat['type']) {
@@ -64,5 +117,12 @@ trait CreateUser
                     }
                 );
             });
+    }
+
+    protected function findUser(): ?User
+    {
+        return (new UserProvider())
+            ->notStrict()
+            ->firstByProvider('telegram', $this->getTelegramUpdate()->chatId());
     }
 }

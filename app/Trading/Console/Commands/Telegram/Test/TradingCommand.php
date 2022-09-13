@@ -6,8 +6,6 @@ use App\Trading\Bots\Tests\ResultTest;
 use App\Trading\Bots\Tests\TradingTest;
 use App\Trading\Models\Trading;
 use App\Trading\Models\TradingProvider;
-use App\Trading\Notifications\Telegram\ConsoleNotification;
-use App\Trading\Notifications\TelegramUpdateNotifiable;
 
 class TradingCommand extends Command
 {
@@ -31,26 +29,17 @@ class TradingCommand extends Command
         if (is_null($buyTrading = $tradingProvider
             ->notStrict()
             ->firstByKey($this->buyTradingId()))) {
-            ConsoleNotification::send(
-                new TelegramUpdateNotifiable($this->telegramUpdate),
-                'Buy trading not found.'
-            );
+            $this->sendConsoleNotification('Buy trading not found.');
         }
         else {
             $sellTrading = is_null($sellTradingId = $this->sellTradingId()) ? $buyTrading : $tradingProvider
                 ->notStrict()
                 ->firstByKey($sellTradingId);
             if (is_null($sellTrading)) {
-                ConsoleNotification::send(
-                    new TelegramUpdateNotifiable($this->telegramUpdate),
-                    'Sell Trading not found.'
-                );
+                $this->sendConsoleNotification('Sell trading not found.');
             }
             else {
-                ConsoleNotification::send(
-                    new TelegramUpdateNotifiable($this->telegramUpdate),
-                    $this->printTestTrading($buyTrading, $sellTrading)
-                );
+                $this->sendConsoleNotification($this->printTestTrading($buyTrading, $sellTrading));
             }
         }
         return $this->exitSuccess();

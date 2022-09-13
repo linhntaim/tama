@@ -5,17 +5,14 @@ namespace App\Trading\Console\Commands\Telegram\Strategy;
 use App\Models\User;
 use App\Trading\Bots\Exchanges\Exchanger;
 use App\Trading\Console\Commands\Telegram\Command;
-use App\Trading\Console\Commands\Telegram\FindUser;
-use App\Trading\Console\Commands\Telegram\PrintList;
+use App\Trading\Console\Commands\Telegram\InteractsWithListing;
 use App\Trading\Models\TradingStrategy;
 use App\Trading\Models\TradingStrategyProvider;
 use App\Trading\Models\TradingSwap;
-use App\Trading\Notifications\Telegram\ConsoleNotification;
-use App\Trading\Notifications\TelegramUpdateNotifiable;
 
 class ListCommand extends Command
 {
-    use FindUser, PrintList;
+    use InteractsWithListing;
 
     public $signature = '{--q= : The keyword for searching.} {--page=1}';
 
@@ -30,24 +27,11 @@ class ListCommand extends Command
             ?? $this->tickerPrices[$key] = Exchanger::connector($exchange)->tickerPrice($ticker);
     }
 
-    protected function keyword(): ?string
-    {
-        return $this->option('q');
-    }
-
-    protected function page(): int
-    {
-        return with((int)($this->option('page') ?? 1), static fn($page) => $page <= 0 ? 1 : $page);
-    }
-
     protected function handling(): int
     {
-        ConsoleNotification::send(
-            new TelegramUpdateNotifiable($this->telegramUpdate),
-            !is_null($user = $this->findUser())
-                ? $this->printStrategiesBySubscriber($user)
-                : 'No subscriptions.'
-        );
+        if (($user = $this->validateFindingUser()) !== false) {
+            $this->sendConsoleNotification($this->printStrategiesBySubscriber($user));
+        }
         return $this->exitSuccess();
     }
 

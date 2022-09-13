@@ -7,23 +7,20 @@ use App\Support\Client\DateTimer;
 use App\Support\Database\Concerns\DatabaseTransaction;
 use App\Trading\Bots\Exchanges\Exchanger;
 use App\Trading\Console\Commands\Telegram\Command;
-use App\Trading\Console\Commands\Telegram\CreateUser;
+use App\Trading\Console\Commands\Telegram\InteractsWithPriceStream;
 use App\Trading\Models\Trading;
 use App\Trading\Models\TradingProvider;
 use App\Trading\Models\TradingStrategy;
 use App\Trading\Models\TradingStrategyProvider;
 use App\Trading\Models\TradingSwap;
 use App\Trading\Models\TradingSwapProvider;
-use App\Trading\Notifications\Telegram\ConsoleNotification;
-use App\Trading\Notifications\TelegramUpdateNotifiable;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Redis;
 use InvalidArgumentException;
 use Throwable;
 
 class CreateCommand extends Command
 {
-    use DatabaseTransaction, CreateUser;
+    use DatabaseTransaction, InteractsWithPriceStream;
 
     public $signature = '{buy_trading_id} {sell_trading_id?} {--base-amount=0.0} {--quote-amount=500.0} {--buy_risk=0.0} {--sell_risk=0.0}';
 
@@ -67,28 +64,25 @@ class CreateCommand extends Command
         return $this->sellRisk ?? $this->sellRisk = $this->option('sell_risk');
     }
 
+    protected function validateInputs(): bool
+    {
+        if (num_lt($this->baseAmount(), 0)
+            || num_lt($this->quoteAmount(), 0)
+            || num_lt($this->buyRisk(), 0)
+            || num_lt($this->sellRisk(), 0)
+            || (num_eq($this->baseAmount(), 0) && num_eq($this->quoteAmount(), 0))) {
+            $this->sendConsoleNotification('Invalid argument(s).');
+            return false;
+        }
+        return true;
+    }
+
     /**
      * @throws Throwable
      */
     protected function handling(): int
     {
-        if (is_null($user = $this->createUserFromTelegram())) {
-            ConsoleNotification::send(
-                new TelegramUpdateNotifiable($this->telegramUpdate),
-                'Action is not supported.'
-            );
-        }
-        elseif (num_lt($this->baseAmount(), 0)
-            || num_lt($this->quoteAmount(), 0)
-            || num_lt($this->buyRisk(), 0)
-            || num_lt($this->sellRisk(), 0)
-            || (num_eq($this->baseAmount(), 0) && num_eq($this->quoteAmount(), 0))) {
-            ConsoleNotification::send(
-                new TelegramUpdateNotifiable($this->telegramUpdate),
-                'Invalid argument(s).'
-            );
-        }
-        else {
+        if ($this->validateInputs() && ($user = $this->validateCreatingUser()) !== false) {
             [$buyTrading, $sellTrading] = $this->getTradings();
             $strategyProvider = new TradingStrategyProvider();
             if ($strategyProvider->has([
@@ -97,16 +91,12 @@ class CreateCommand extends Command
                 'sell_trading_id' => $sellTrading->id,
                 'type' => TradingStrategy::TYPE_FAKE,
             ])) {
-                ConsoleNotification::send(
-                    new TelegramUpdateNotifiable($this->telegramUpdate),
-                    'The strategy has already existed.'
-                );
+                $this->sendConsoleNotification('The strategy has already existed.');
             }
             else {
                 $strategy = $this->createStrategy($user, $buyTrading, $sellTrading);
                 transform($strategy->firstSwap, function (TradingSwap $swap) use ($strategy, $buyTrading, $sellTrading) {
-                    ConsoleNotification::send(
-                        new TelegramUpdateNotifiable($this->telegramUpdate),
+                    $this->sendConsoleNotification(
                         implode(PHP_EOL, [
                             sprintf('The strategy {#%d} has been created.', $strategy->id),
                             sprintf('- Buy: {#%d:%s} risk=%s', $buyTrading->id, $buyTrading->slug, $strategy->buy_risk),
@@ -175,20 +165,10 @@ class CreateCommand extends Command
                     ]));
                 }
             );
-            tap(Redis::connection(trading_cfg_redis_pubsub_connection()), static function ($redis) use ($buyTrading, $sellTrading) {
-                $redis->publish('price-stream:subscribe', json_encode_readable([
-                    'exchange' => $buyTrading->exchange,
-                    'ticker' => $buyTrading->ticker,
-                    'interval' => $buyTrading->interval,
-                ]));
-                if ($sellTrading->id !== $buyTrading->id) {
-                    $redis->publish('price-stream:subscribe', json_encode_readable([
-                        'exchange' => $sellTrading->exchange,
-                        'ticker' => $sellTrading->ticker,
-                        'interval' => $sellTrading->interval,
-                    ]));
-                }
-            });
+            $this->subscribePriceStream($buyTrading);
+            if ($sellTrading->id !== $buyTrading->id) {
+                $this->subscribePriceStream($sellTrading);
+            }
             $this->transactionComplete();
             return $strategy;
         }

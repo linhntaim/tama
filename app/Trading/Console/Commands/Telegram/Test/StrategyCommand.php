@@ -4,16 +4,11 @@ namespace App\Trading\Console\Commands\Telegram\Test;
 
 use App\Trading\Bots\Tests\ResultTest;
 use App\Trading\Bots\Tests\TradingStrategyTest;
-use App\Trading\Console\Commands\Telegram\FindUser;
 use App\Trading\Models\TradingStrategy;
 use App\Trading\Models\TradingStrategyProvider;
-use App\Trading\Notifications\Telegram\ConsoleNotification;
-use App\Trading\Notifications\TelegramUpdateNotifiable;
 
 class StrategyCommand extends Command
 {
-    use FindUser;
-
     public $signature = '{id} {--base-amount=0.0} {--quote-amount=500.0} {--buy-risk=} {--sell-risk=} {--start-time=1Y} {--end-time=}';
 
     protected $description = 'Test an existing trading strategy.';
@@ -25,25 +20,15 @@ class StrategyCommand extends Command
 
     protected function handling(): int
     {
-        if (is_null($user = $this->findUser())) {
-            ConsoleNotification::send(
-                new TelegramUpdateNotifiable($this->telegramUpdate),
-                'Action is not supported.'
-            );
-        }
-        elseif (is_null($strategy = (new TradingStrategyProvider())
-                ->notStrict()
-                ->firstByKey($this->id())) || $strategy->user_id !== $user->id) {
-            ConsoleNotification::send(
-                new TelegramUpdateNotifiable($this->telegramUpdate),
-                'Strategy not found.'
-            );
-        }
-        else {
-            ConsoleNotification::send(
-                new TelegramUpdateNotifiable($this->telegramUpdate),
-                $this->printTestStrategy($strategy)
-            );
+        if (($user = $this->validateFindingUser()) !== false) {
+            if (is_null($strategy = (new TradingStrategyProvider())
+                    ->notStrict()
+                    ->firstByKey($this->id())) || $strategy->user_id !== $user->id) {
+                $this->sendConsoleNotification('Strategy not found.');
+            }
+            else {
+                $this->sendConsoleNotification($this->printTestStrategy($strategy));
+            }
         }
         return $this->exitSuccess();
     }

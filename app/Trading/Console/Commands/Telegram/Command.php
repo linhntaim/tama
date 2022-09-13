@@ -3,18 +3,16 @@
 namespace App\Trading\Console\Commands\Telegram;
 
 use App\Support\Console\Commands\Command as BaseCommand;
-use App\Trading\Services\Telegram\Update as TelegramUpdate;
-use InvalidArgumentException;
 use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputOption;
 
 abstract class Command extends BaseCommand
 {
+    use InteractsWithUser;
+
     private array $synopsisForDescriptor = [];
 
     private InputDefinition $definitionForDescriptor;
-
-    protected TelegramUpdate $telegramUpdate;
 
     protected function getDefaultOptions(): array
     {
@@ -25,11 +23,7 @@ abstract class Command extends BaseCommand
 
     protected function handleBefore(): void
     {
-        if (is_null($telegram = $this->option('telegram-update'))) {
-            throw new InvalidArgumentException('Telegram update option must be provided.');
-        }
-        $this->telegramUpdate = new TelegramUpdate(json_decode_array(base64_decode($telegram)));
-
+        $this->getTelegramUpdate();
         parent::handleBefore();
     }
 
