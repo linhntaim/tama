@@ -188,7 +188,7 @@ abstract class Connector implements ConnectorInterface
         if ($this->recentCachedPrices($ticker, $interval, $openTime, $cachedRecentPrices)) {
             return $this->createPriceCollection($ticker, $interval, $cachedRecentPrices, $openTime);
         }
-        return tap($this->recentPricesAt($ticker, $interval, $openTime), function (PriceCollection $recent) use ($ticker, $interval, $openTime) {
+        return take($this->recentPricesAt($ticker, $interval, $openTime), function (PriceCollection $recent) use ($ticker, $interval, $openTime) {
             $this->recentPricesToCache(
                 $ticker,
                 $interval,

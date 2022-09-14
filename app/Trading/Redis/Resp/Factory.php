@@ -17,7 +17,7 @@ class Factory
     protected function read(): ?string
     {
         return ($pos = mb_strpos($this->data, RespData::CRLF)) !== false
-            ? tap(substr($this->data, 0, $pos), fn() => $this->data = substr($this->data, $pos + 2))
+            ? take(substr($this->data, 0, $pos), fn() => $this->data = substr($this->data, $pos + 2))
             : null;
     }
 
