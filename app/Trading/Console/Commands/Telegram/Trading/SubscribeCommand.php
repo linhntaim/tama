@@ -32,7 +32,7 @@ class SubscribeCommand extends Command
                     $this->subscribe($user, $trading);
                 }
                 if ($count === 1) {
-                    tap(
+                    take(
                         $tradings->first(),
                         fn(Trading $trading) => $this->sendConsoleNotification(
                             sprintf('Subscription to the trading {#%s:%s} was created successfully.', $trading->id, $trading->slug)

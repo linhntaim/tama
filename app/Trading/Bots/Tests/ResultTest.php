@@ -72,7 +72,7 @@ class ResultTest
         });
         $this->afterQuoteAmountEquivalent = num_add(num_mul($this->afterPrice, $this->afterBaseAmount), $this->afterQuoteAmount);
         // first swap is initial
-        tap($swaps->first(), function (SwapTest $swap) {
+        take($swaps->first(), function (SwapTest $swap) {
             $this->beforePrice = $swap->getPrice();
             $this->beforeBaseAmount = $swap->getBaseAmount();
             $this->beforeQuoteAmount = $swap->getQuoteAmount();

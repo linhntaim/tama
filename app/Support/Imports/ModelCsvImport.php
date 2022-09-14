@@ -20,8 +20,8 @@ abstract class ModelCsvImport extends CsvImport
 
     public function __construct()
     {
-        tap($this->modelProviderClass(), function ($class) {
-            tap(new $class, function (ModelProvider $modelProvider) {
+        take($this->modelProviderClass(), function ($class) {
+            take(new $class, function (ModelProvider $modelProvider) {
                 $this->modelProvider = $modelProvider;
             });
         });
