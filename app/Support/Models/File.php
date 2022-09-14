@@ -86,7 +86,10 @@ class File extends Model
     public function url(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->public ? ($this->filer->getUrl() ?: route('file.show', ['id' => $this->id, '_download' => 1])) : null
+            get: fn() => match (true) {
+                $this->public => $this->filer->getUrl() ?: route('file.show', ['id' => $this->id, '_download' => 1]),
+                default => null,
+            }
         );
     }
 

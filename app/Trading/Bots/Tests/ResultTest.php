@@ -39,6 +39,8 @@ class ResultTest
      * @param string $ticker
      * @param string $baseSymbol
      * @param string $quoteSymbol
+     * @param float $buyRisk
+     * @param float $sellRisk
      * @param int $startTime
      * @param int $endTime
      * @param Collection $swaps
