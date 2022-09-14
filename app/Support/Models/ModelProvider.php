@@ -125,9 +125,11 @@ abstract class ModelProvider
     public function with(string|array $relations, string|Closure|null $callback = null): static
     {
         $this->wheres[] = new WithCondition(
-            $callback instanceof Closure
-                ? [$relations => $callback]
-                : (is_string($relations) ? func_get_args() : $relations)
+            match (true) {
+                $callback instanceof Closure => [$relations => $callback],
+                is_string($relations) => func_get_args(),
+                default => $relations,
+            }
         );
         return $this;
     }

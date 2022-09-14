@@ -15,7 +15,6 @@ use Illuminate\Contracts\Support\DeferrableProvider;
 use Illuminate\Notifications\ChannelManager as BaseChannelManager;
 use Illuminate\Support\Facades\Facade;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Psr\Container\ContainerExceptionInterface;

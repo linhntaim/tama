@@ -71,7 +71,7 @@ trait Responses
                 match (true) {
                     $data instanceof Arrayable => $data->toArray(),
                     $data instanceof JsonSerializable => $data->jsonSerialize(),
-                    default => $data ?? []
+                    default => $data ?? [],
                 },
                 $status,
                 $headers,
