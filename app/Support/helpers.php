@@ -634,6 +634,23 @@ if (!function_exists('stringable')) {
     }
 }
 
+if (!function_exists('take')) {
+    /**
+     * @template TValue
+     * @param TValue $value
+     * @param callable|null $callback
+     * @return TValue
+     */
+    function take(mixed $value, callable $callback = null)
+    {
+        if (!is_null($callback)) {
+            $callback($value);
+        }
+
+        return $value;
+    }
+}
+
 if (!function_exists('trim_more')) {
     function trim_more(string $string, string $characters = ''): string
     {
