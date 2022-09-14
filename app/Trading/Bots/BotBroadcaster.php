@@ -35,7 +35,7 @@ class BotBroadcaster
 
     public function broadcast(): void
     {
-        if (is_null($indication = tap($this->bot->indicateNow(), function (?Indication $indication) {
+        if (is_null($indication = take($this->bot->indicateNow(), function (?Indication $indication) {
                 if (!is_null($indication)) {
                     [$this->actionNow, $this->actionTime] = [
                         $indication->getActionNow($this->bot->interval()),

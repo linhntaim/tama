@@ -48,7 +48,7 @@ class RateLimiter extends BaseRateLimiter
             sleep($this->availableIn($key));
         }
 
-        return tap($callback() ?: true, function () use ($key, $decaySeconds) {
+        return take($callback() ?: true, function () use ($key, $decaySeconds) {
             $this->hit($key, $decaySeconds);
         });
     }
@@ -66,7 +66,7 @@ class RateLimiter extends BaseRateLimiter
             return false;
         }
 
-        return tap($callback() ?: true, function () use ($key, $decaySeconds) {
+        return take($callback() ?: true, function () use ($key, $decaySeconds) {
             $this->hit($key, $decaySeconds);
         });
     }

@@ -78,7 +78,7 @@ abstract class Bot
         if ($exchangeConnector instanceof FakeExchangeConnector) {
             return $exchangeConnector;
         }
-        return tap(
+        return take(
             new FakeExchangeConnector($exchangeConnector),
             fn(ExchangeConnector $connector) => $this->exchangeConnector = $connector
         );
