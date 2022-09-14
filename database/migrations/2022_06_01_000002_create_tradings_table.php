@@ -20,7 +20,6 @@ return new class extends Migration {
             $table->string('ticker');
             $table->string('base_symbol');
             $table->string('quote_symbol');
-            $table->string('ticker');
             $table->string('interval');
             $table->json('options')->nullable();
             $table->timestamps();
