@@ -7,6 +7,7 @@ use App\Support\Models\Concerns\HasProtected;
 use App\Support\Models\Contracts\HasProtected as HasProtectedContract;
 use App\Support\Models\SanctumUser;
 use App\Trading\Models\Trading;
+use App\Trading\Models\UserExchangeOption;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
@@ -20,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $email
  * @property UserSocial[]|Collection $socials
  * @property Trading[]|Collection $tradings
+ * @property UserExchangeOption[]|Collection $exchangeOptions
  */
 class User extends SanctumUser implements MustWelcomeEmail, HasProtectedContract
 {
@@ -125,5 +127,15 @@ class User extends SanctumUser implements MustWelcomeEmail, HasProtectedContract
     public function tradings(): BelongsToMany
     {
         return $this->belongsToMany(Trading::class, 'trading_subscribers', 'user_id', 'trading_id');
+    }
+
+    public function exchangeOptions(): HasMany
+    {
+        return $this->hasMany(UserExchangeOption::class, 'user_id', 'id');
+    }
+
+    public function exchangeOption(string $exchange): ?UserExchangeOption
+    {
+        return $this->exchangeOptions->firstWhere('exchange', $exchange);
     }
 }

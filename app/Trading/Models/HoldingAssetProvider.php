@@ -3,17 +3,16 @@
 namespace App\Trading\Models;
 
 use App\Models\User;
-use App\Support\Models\Model;
 use App\Support\Models\ModelProvider;
 use App\Support\Models\QueryConditions\WhereCondition;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
  * @property HoldingAsset|null $model
- * @method HoldingAsset|null model(Model|callable|int|string $model = null, bool $byUnique = true)
- * @method HoldingAsset|null first(array $conditions = [])
+ * @method HoldingAsset|null model(HoldingAsset|callable|int|string $model = null, bool $byUnique = true)
  * @method HoldingAsset updateOrCreateWithAttributes(array $attributes, array $values = [])
  * @method HoldingAsset updateWithAttributes(array $attributes = [])
+ * @method HoldingAsset|null first(array $conditions = [])
  */
 class HoldingAssetProvider extends ModelProvider
 {

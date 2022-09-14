@@ -20,7 +20,7 @@ class OscillatingBotReporter extends PlainTextReporter
     protected function headlineMetaItem(IndicationMetaItem $metaItem): string
     {
         if ($metaItem->getType() === 'rsi') {
-            return sprintf('{RSI=%s}', $metaItem->get('rsi'));
+            return sprintf('{RSI=%s}', $metaItem->get('rsi.value'));
         }
         return parent::headlineMetaItem($metaItem);
     }
@@ -34,13 +34,13 @@ class OscillatingBotReporter extends PlainTextReporter
                 $lines[] = sprintf(
                     'D1: [%s] (rsi=%s) (price=%s)',
                     DateTimer::timeAs($signal->get('divergence_1.time'), 'Y-m-d H:i:s'),
-                    $signal->get('divergence_1.rsi'),
+                    $signal->get('divergence_1.rsi.value'),
                     $signal->get('divergence_1.price')
                 );
                 $lines[] = sprintf(
                     'D2: [%s] (rsi=%s) (price=%s)',
                     DateTimer::timeAs($signal->get('divergence_2.time'), 'Y-m-d H:i:s'),
-                    $signal->get('divergence_2.rsi'),
+                    $signal->get('divergence_2.rsi.value'),
                     $signal->get('divergence_2.price')
                 );
                 break;

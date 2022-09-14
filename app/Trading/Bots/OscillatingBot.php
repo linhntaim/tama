@@ -3,9 +3,10 @@
 namespace App\Trading\Bots;
 
 use App\Trading\Bots\Data\Indication;
+use App\Trading\Bots\Exchanges\PriceCollection;
 use App\Trading\Bots\Oscillators\Factory as OscillatorFactory;
 use App\Trading\Bots\Oscillators\Oscillator;
-use App\Trading\Bots\Pricing\PriceCollection;
+use App\Trading\Bots\Reporters\IReport;
 use Illuminate\Support\Collection;
 
 class OscillatingBot extends Bot
@@ -35,19 +36,21 @@ class OscillatingBot extends Bot
 
     protected function optionsAsSlug(): string
     {
-        return $this->slugConcat(...with(array_values(parent::options()), function ($options) {
-            $options[] = $this->oscillator()->asSlug();
-            return $options;
-        }));
+        return $this->slugConcat(parent::optionsAsSlug(), $this->oscillator()->asSlug());
     }
 
-    protected function indicating(PriceCollection $prices, int $latest = 0): Collection
+    public function indicating(PriceCollection $prices, int $latest = 0): Collection
     {
         return $this->oscillator()->run($prices, $latest);
     }
 
-    protected function indicatingNow(PriceCollection $prices): ?Indication
+    public function indicatingNow(PriceCollection $prices): ?Indication
     {
         return $this->oscillator()->run($prices)->first();
+    }
+
+    protected function reporter(): IReport
+    {
+        return new OscillatingBotReporter();
     }
 }
