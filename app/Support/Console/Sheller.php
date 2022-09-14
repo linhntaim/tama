@@ -61,15 +61,16 @@ class Sheller
 
     public function successful(): bool
     {
-        return $this->exitCode == 0;
+        return $this->exitCode === 0;
     }
 
     public function output(): ?string
     {
-        return (fn($output) => $output ? trim($output) : $output)(
-            $this->successful()
-                ? $this->getProcess()?->getOutput()
-                : ($this->getProcess()?->getErrorOutput() ?: $this->getProcess()?->getOutput())
+        return (static fn($output) => $output ? trim($output) : $output)(
+            match (true) {
+                $this->successful() => $this->getProcess()?->getOutput(),
+                default => $this->getProcess()?->getErrorOutput() ?: $this->getProcess()?->getOutput(),
+            }
         );
     }
 }

@@ -37,6 +37,7 @@ return [
 
     'telegram-bot-api' => [
         'name' => env('TELEGRAM_BOT_NAME'),
+        'username' => env('TELEGRAM_BOT_USERNAME'),
         'token' => env('TELEGRAM_BOT_TOKEN'),
         'webhook_secret' => env('TELEGRAM_BOT_WEBHOOK_SECRET'),
     ],

@@ -21,7 +21,7 @@ class Kernel extends ConsoleKernel
      * @param ConsoleSchedule $schedule
      * @return void
      */
-    protected function makeByScheduler(ConsoleSchedule $schedule)
+    protected function schedule(ConsoleSchedule $schedule): void
     {
         (new Scheduler())($this->getArtisan(), $schedule);
     }
@@ -39,10 +39,10 @@ class Kernel extends ConsoleKernel
 
     public function call($command, array $parameters = [], $outputBuffer = null): int
     {
-        if (!is_subclass_of($command, SymfonyCommand::class) && ($pos = mb_strpos($command, ' ')) !== false && empty($parameters)) {
+        if (empty($parameters) && !is_subclass_of($command, SymfonyCommand::class) && ($pos = mb_strpos($command, ' ')) !== false) {
             if ($this->commandsLoaded) {
                 $settingsParameters = [];
-                foreach ($this->lastRunningCommand()->settingsParameters() as $name => $value) {
+                foreach ($this->lastRunningCommand()?->settingsParameters() as $name => $value) {
                     $settingsParameters[] = sprintf('%s=%s', $name, $value);
                 }
                 $command = mb_substr($command, 0, $pos) . ' ' . implode(' ', $settingsParameters) . mb_substr($command, $pos);
@@ -52,7 +52,7 @@ class Kernel extends ConsoleKernel
         else {
             $parameters[Command::PARAMETER_OFF_SHOUT_OUT] = true;
             if ($this->commandsLoaded) {
-                $parameters = array_merge($this->lastRunningCommand()->settingsParameters(), $parameters);
+                $parameters = array_merge($this->lastRunningCommand()?->settingsParameters(), $parameters);
             }
         }
         return parent::call($command, $parameters, $outputBuffer);
@@ -68,7 +68,7 @@ class Kernel extends ConsoleKernel
         return $this->getArtisan()->lastRunningCommand();
     }
 
-    public function renderThrowable(Throwable $e, $output)
+    public function renderThrowable(Throwable $e, $output): void
     {
         $this->getArtisan()->renderThrowable($e, $output);
     }

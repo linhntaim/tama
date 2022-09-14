@@ -1,24 +1,25 @@
 <?php
 
 use App\Http\Controllers\Api\Account\AccountController;
-use App\Http\Controllers\Api\Account\HoldingAssetController as AccountHoldingAssetController;
-use App\Http\Controllers\Api\Account\HoldingController as AccountHoldingController;
 use App\Http\Controllers\Api\Auth\NewPasswordController;
 use App\Http\Controllers\Api\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Api\Auth\RegisteredUserController;
 use App\Http\Controllers\Api\Auth\Sanctum\AuthenticatedTokenController as SanctumAuthenticatedTokenController;
 use App\Http\Controllers\Api\DataExportController;
 use App\Http\Controllers\Api\EncryptController;
-use App\Http\Controllers\Api\ExchangeController;
 use App\Http\Controllers\Api\FileController;
 use App\Http\Controllers\Api\PrerequisiteController;
-use App\Http\Controllers\Api\SwingTradeController;
 use App\Http\Controllers\Api\Trial\EventController as TrialEventController;
 use App\Http\Controllers\Api\Trial\FileController as TrialFileController;
 use App\Http\Controllers\Api\Trial\JobController as TrialJobController;
 use App\Http\Controllers\Api\Trial\UserController as TrialUserController;
 use App\Http\Controllers\Api\WelcomeController;
+use App\Support\Http\Middleware\DisableInProduction;
+use App\Trading\Http\Controllers\Api\Account\HoldingAssetController as AccountHoldingAssetController;
+use App\Trading\Http\Controllers\Api\Account\HoldingController as AccountHoldingController;
+use App\Trading\Http\Controllers\Api\ExchangeController;
 use App\Trading\Http\Controllers\Api\Integration\Telegram\BotController as TelegramBotController;
+use App\Trading\Http\Controllers\Api\SwingTradeController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -39,27 +40,30 @@ Route::get('file/{id}', [FileController::class, 'show'])->name('file.show');
 Route::get('data-export/{id}', [DataExportController::class, 'show'])->name('data-export.show');
 
 //
-// Route::group([
-//     'prefix' => 'trial',
-// ], function () {
-//     Route::post('job', [TrialJobController::class, 'store']);
-//     Route::post('event', [TrialEventController::class, 'store']);
-//     Route::group([
-//         'prefix' => 'file',
-//     ], function () {
-//         Route::post('/', [TrialFileController::class, 'store']);
-//         Route::get('{id}', [TrialFileController::class, 'show']);
-//     });
-//     Route::group([
-//         'prefix' => 'user',
-//     ], function () {
-//         Route::get('/', [TrialUserController::class, 'index']);
-//         Route::post('/', [TrialUserController::class, 'store']);
-//         Route::get('{id}', [TrialUserController::class, 'show']);
-//         Route::post('{id}', [TrialUserController::class, 'update']);
-//         Route::delete('{id}', [TrialUserController::class, 'destroy']);
-//     });
-// });
+
+// Should be commented while developing a true application
+Route::group([
+    'prefix' => 'trial',
+    'middleware' => DisableInProduction::class,
+], function () {
+    Route::post('job', [TrialJobController::class, 'store']);
+    Route::post('event', [TrialEventController::class, 'store']);
+    Route::group([
+        'prefix' => 'file',
+    ], function () {
+        Route::post('/', [TrialFileController::class, 'store']);
+        Route::get('{id}', [TrialFileController::class, 'show']);
+    });
+    Route::group([
+        'prefix' => 'user',
+    ], function () {
+        Route::get('/', [TrialUserController::class, 'index']);
+        Route::post('/', [TrialUserController::class, 'store']);
+        Route::get('{id}', [TrialUserController::class, 'show']);
+        Route::post('{id}', [TrialUserController::class, 'update']);
+        Route::delete('{id}', [TrialUserController::class, 'destroy']);
+    });
+});
 
 Route::group([
     'prefix' => 'auth',
@@ -68,6 +72,7 @@ Route::group([
     Route::post('register', [RegisteredUserController::class, 'store']);
     Route::post('forgot-password', [PasswordResetLinkController::class, 'store']);
     Route::post('reset-password', [NewPasswordController::class, 'store']);
+    //
 });
 
 Route::group([
@@ -83,7 +88,6 @@ Route::group([
         'prefix' => 'account',
     ], function () {
         Route::get('current', [AccountController::class, 'current']);
-
         //
         Route::group([
             'prefix' => 'holding',
@@ -102,6 +106,7 @@ Route::group([
     });
 });
 
+//
 Route::group([
     'prefix' => 'exchange',
 ], function () {

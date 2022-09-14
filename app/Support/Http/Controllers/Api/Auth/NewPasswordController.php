@@ -32,7 +32,7 @@ class NewPasswordController extends ApiController
             }
         );
 
-        return $status == Password::PASSWORD_RESET
+        return $status === Password::PASSWORD_RESET
             ? app(PasswordResetResponse::class, ['status' => $status])
             : app(FailedPasswordResetResponse::class, ['status' => $status]);
     }

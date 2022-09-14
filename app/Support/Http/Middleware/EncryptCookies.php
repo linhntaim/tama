@@ -4,6 +4,7 @@ namespace App\Support\Http\Middleware;
 
 use Closure;
 use Illuminate\Cookie\Middleware\EncryptCookies as Middleware;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class EncryptCookies extends Middleware
 {
@@ -14,7 +15,7 @@ class EncryptCookies extends Middleware
         return self::$ran;
     }
 
-    public function handle($request, Closure $next)
+    public function handle($request, Closure $next): SymfonyResponse
     {
         self::$ran = true;
         return parent::handle($request, $next);

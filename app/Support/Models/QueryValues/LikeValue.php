@@ -17,6 +17,6 @@ class LikeValue implements Stringable
 
     public function __toString(): string
     {
-        return sprintf('%%s%', $this->string);
+        return sprintf('%%%s%%', $this->string);
     }
 }

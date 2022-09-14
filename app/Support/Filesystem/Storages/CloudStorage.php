@@ -2,13 +2,18 @@
 
 namespace App\Support\Filesystem\Storages;
 
+use App\Support\Filesystem\Storages\Concerns\HasUrlDiskStorage;
+use App\Support\Filesystem\Storages\Contracts\EditableStorage as EditableStorageContract;
+use App\Support\Filesystem\Storages\Contracts\HasExternalStorage as HasExternalStorageContract;
+use App\Support\Filesystem\Storages\Contracts\HasUrlDiskStorage as HasUrlDiskStorageContract;
+use App\Support\Filesystem\Storages\Contracts\PublicPublishableStorage as PublicPublishableStorageContract;
 use Illuminate\Support\Str;
 use SplFileInfo;
 
-class CloudStorage extends DiskStorage implements IHasUrlDiskStorage,
-                                                  IHasExternalStorage,
-                                                  IPublicPublishableStorage,
-                                                  IEditableStorage
+class CloudStorage extends DiskStorage implements HasUrlDiskStorageContract,
+                                                  HasExternalStorageContract,
+                                                  PublicPublishableStorageContract,
+                                                  EditableStorageContract
 {
     use HasUrlDiskStorage;
 

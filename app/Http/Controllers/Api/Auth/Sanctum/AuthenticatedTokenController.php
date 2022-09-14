@@ -20,12 +20,12 @@ class AuthenticatedTokenController extends BaseAuthenticatedTokenController
     #endregion
 
     #region Logout
-    public function destroyAllTokens(Request $request)
+    protected function destroyAllTokens(Request $request): void
     {
         $request->user()->tokens()->delete();
     }
 
-    public function destroyToken(Request $request, $token)
+    protected function destroyToken(Request $request, $token): void
     {
         $request->user()->tokens()
             ->where('id', $token)

@@ -2,8 +2,6 @@
 
 namespace App\Trading\Console\Commands\Telegram;
 
-use App\Trading\Notifications\Telegram\ConsoleNotification;
-use App\Trading\Notifications\TelegramUpdateNotifiable;
 use Symfony\Component\Console\Helper\DescriptorHelper;
 use Symfony\Component\Console\Output\BufferedOutput;
 
@@ -24,11 +22,11 @@ class HelpCommand extends Command
         else {
             $this->describe($output, $this->getApplication()->find('telegram:' . $commandName));
         }
-        ConsoleNotification::send(new TelegramUpdateNotifiable($this->telegramUpdate), $output->fetch());
+        $this->sendConsoleNotification($output->fetch());
         return $this->exitSuccess();
     }
 
-    protected function describeAvailableCommands(BufferedOutput $output)
+    protected function describeAvailableCommands(BufferedOutput $output): void
     {
         $output->writeln('Available commands:');
         $commands = collect($this->getApplication()->findByNamespaces('telegram'))
@@ -55,7 +53,7 @@ class HelpCommand extends Command
         }
     }
 
-    protected function describe(BufferedOutput $output, $command)
+    protected function describe(BufferedOutput $output, $command): void
     {
         $helper = (new DescriptorHelper())->register('telegram_txt', new TextDescriptor());
         $helper->describe($output, $command, [

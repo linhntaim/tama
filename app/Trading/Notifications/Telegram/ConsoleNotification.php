@@ -2,12 +2,12 @@
 
 namespace App\Trading\Notifications\Telegram;
 
-use App\Support\Notifications\INotifiable;
-use App\Trading\Telegram\MarkdownConsole;
+use App\Support\Notifications\Contracts\Notifiable as NotifiableContract;
+use App\Trading\Services\Telegram\MarkdownConsole;
 
 class ConsoleNotification extends TextNotification
 {
-    protected function getText(INotifiable $notifiable): string
+    protected function getText(NotifiableContract $notifiable): string
     {
         return new MarkdownConsole($this->text);
     }

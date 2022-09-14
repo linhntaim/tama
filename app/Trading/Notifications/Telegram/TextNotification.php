@@ -2,8 +2,8 @@
 
 namespace App\Trading\Notifications\Telegram;
 
-use App\Support\Notifications\INotifiable;
-use App\Support\Notifications\INotifier;
+use App\Support\Notifications\Contracts\Notifiable as NotifiableContract;
+use App\Support\Notifications\Contracts\Notifier as NotifierContract;
 use App\Support\Notifications\Notification;
 use App\Trading\Notifications\HasViaTelegram;
 use App\Trading\Notifications\ViaTelegram;
@@ -15,18 +15,18 @@ class TextNotification extends Notification implements ViaTelegram
 
     public function __construct(
         protected string $text,
-        ?INotifier       $notifier = null
+        ?NotifierContract       $notifier = null
     )
     {
         parent::__construct($notifier);
     }
 
-    protected function getText(INotifiable $notifiable): string
+    protected function getText(NotifiableContract $notifiable): string
     {
         return $this->text;
     }
 
-    public function dataTelegram(INotifiable $notifiable): TelegramMessage
+    public function dataTelegram(NotifiableContract $notifiable): TelegramMessage
     {
         return TelegramMessage::create($this->getText($notifiable));
     }

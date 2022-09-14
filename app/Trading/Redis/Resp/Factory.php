@@ -17,7 +17,7 @@ class Factory
     protected function read(): ?string
     {
         return ($pos = mb_strpos($this->data, RespData::CRLF)) !== false
-            ? take(substr($this->data, 0, $pos), fn() => $this->data = substr($this->data, $pos + 2))
+            ? tap(substr($this->data, 0, $pos), fn() => $this->data = substr($this->data, $pos + 2))
             : null;
     }
 
@@ -45,7 +45,7 @@ class Factory
                 switch (true) {
                     case $count < 0:
                         return null;
-                    case $count == 0:
+                    case $count === 0:
                         return new RespArray([]);
                     default:
                         $data = [];

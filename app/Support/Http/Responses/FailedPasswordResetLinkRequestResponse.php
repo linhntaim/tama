@@ -2,8 +2,9 @@
 
 namespace App\Support\Http\Responses;
 
-use App\Support\Http\Requests;
-use App\Support\Http\Responses;
+use App\Support\Http\Concerns\Requests;
+use App\Support\Http\Concerns\Responses;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Http\Responses\FailedPasswordResetLinkRequestResponse as BaseFailedPasswordResetLinkRequestResponse;
 
@@ -14,7 +15,7 @@ class FailedPasswordResetLinkRequestResponse extends BaseFailedPasswordResetLink
     /**
      * @throws ValidationException
      */
-    public function toResponse($request)
+    public function toResponse($request): RedirectResponse
     {
         if ($this->advancedRequest()->expectsJson()) {
             throw ValidationException::withMessages([

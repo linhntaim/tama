@@ -17,7 +17,7 @@ use InvalidArgumentException;
  * @method static array macd(array $real, ?int $fastPeriod = null, ?int $slowPeriod = null, ?int $signalPeriod = null)
  *
  * @see https://www.php.net/manual/en/function.trader-rsi.php
- * @method static array rsi(array $real, ?int $timePeriod = null)
+ * @method static array|false rsi(array $real, ?int $timePeriod = null)
  *
  * @see https://www.php.net/manual/en/function.trader-stochrsi.php
  * @method static array stochrsi(array $real, ?int $timePeriod = null, ?int $fastKPeriod = null, ?int $fastDPeriod = null, ?int $fastDMAType = null)
@@ -63,6 +63,6 @@ class Trader
         if (!function_exists($function = 'trader_' . Str::snake($name))) {
             throw new BadMethodCallException('Method does not exist.');
         }
-        return call_user_func($function, ...$arguments);
+        return $function(...$arguments);
     }
 }

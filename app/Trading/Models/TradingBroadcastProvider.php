@@ -5,6 +5,7 @@ namespace App\Trading\Models;
 use App\Support\Models\ModelProvider;
 
 /**
+ * @method TradingBroadcast|null model(TradingBroadcast|callable|int|string $model = null, bool $byUnique = true)
  * @method TradingBroadcast createWithAttributes(array $attributes = [])
  * @method TradingBroadcast updateWithAttributes(array $attributes = [])
  * @method TradingBroadcast|null first(array $conditions = [])

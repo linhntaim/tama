@@ -29,26 +29,26 @@ class DatabaseNotification extends Model
 
     public function markAsRead()
     {
-        if (is_null($this->read_at)) {
+        if (is_null($this->attributes['read_at'])) {
             $this->forceFill(['read_at' => $this->freshTimestamp()])->save();
         }
     }
 
     public function markAsUnread()
     {
-        if (! is_null($this->read_at)) {
+        if (!is_null($this->attributes['read_at'])) {
             $this->forceFill(['read_at' => null])->save();
         }
     }
 
     public function read(): bool
     {
-        return $this->read_at !== null;
+        return !$this->unread();
     }
 
     public function unread(): bool
     {
-        return $this->read_at === null;
+        return is_null($this->attributes['read_at'] ?? null);
     }
 
     public function scopeRead(Builder $query): Builder

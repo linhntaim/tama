@@ -2,13 +2,13 @@
 
 namespace App\Notifications\Trial;
 
-use App\Support\Notifications\INotifiable;
+use App\Support\Notifications\Contracts\Notifiable as NotifiableContract;
+use App\Support\Notifications\Contracts\ViaBroadcast;
 use App\Support\Notifications\Notification;
-use App\Support\Notifications\ViaBroadcast;
 
 class BroadcastNotification extends Notification implements ViaBroadcast
 {
-    protected function dataBroadcast(INotifiable $notifiable): array
+    protected function dataBroadcast(NotifiableContract $notifiable): array
     {
         return [
             'date' => date_timer()->compound('longDate', ' ', 'longTime'),

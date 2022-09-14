@@ -3,11 +3,9 @@
 namespace App\Support\Filesystem\Filers;
 
 use App\Support\Exceptions\FileException;
-use RuntimeException;
-use SplFileObject;
 
 /**
- * @method static writeAll(array $data, bool $close = true)
+ * @method $this writeAll(array[] $data, bool $close = true)
  */
 class CsvFiler extends Filer
 {
@@ -39,7 +37,7 @@ class CsvFiler extends Filer
      * @return static
      * @throws FileException
      */
-    public function write($data): static
+    public function write(mixed $data): static
     {
         ++$this->writingLine;
         if ($this->openingFile->fputcsv($data) === false) {
@@ -53,7 +51,7 @@ class CsvFiler extends Filer
      * @return static
      * @throws FileException
      */
-    public function writeln($data): static
+    public function writeln(mixed $data): static
     {
         return $this->write($data);
     }
@@ -86,9 +84,7 @@ class CsvFiler extends Filer
                         throw new FileException(sprintf('Could not read at line %d.', $this->readingLine()));
                     }
                     if ($this->skipEmpty
-                        && [] === array_filter($read, function ($value) {
-                            return !null_or_empty_string($value);
-                        })) {
+                        && [] === array_filter($read, static fn($value) => !null_or_empty_string($value))) {
                         continue;
                     }
                     $this->headers = $read;
@@ -111,7 +107,7 @@ class CsvFiler extends Filer
      * @return array|null
      * @throws FileException
      */
-    public function read()
+    public function read(): ?array
     {
         $this->readHeaders();
 
@@ -123,9 +119,7 @@ class CsvFiler extends Filer
             throw new FileException(sprintf('Could not read at line %d.', $this->readingLine()));
         }
         if ($this->skipEmpty
-            && [] === array_filter($read, function ($value) {
-                return !null_or_empty_string($value);
-            })) {
+            && [] === array_filter($read, static fn($value) => !null_or_empty_string($value))) {
             return $this->read();
         }
         if ($this->withHeaders) {

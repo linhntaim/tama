@@ -11,7 +11,7 @@ class DefaultUsersSeeder extends Seeder
 {
     protected string $defaultPassword = '12345678';
 
-    public function run()
+    public function run(...$parameters): void
     {
         $this->createUser(config_starter('database.seeders.users.system'), 'System');
         $this->createUser(config_starter('database.seeders.users.owner'), 'Owner');
@@ -22,15 +22,15 @@ class DefaultUsersSeeder extends Seeder
         return Str::random(8);
     }
 
-    protected function createUser(array $attributes, string $defaultName = 'User')
+    protected function createUser(array $attributes, string $defaultName = 'User'): void
     {
-        (new UserProvider())->updateOrCreateWithAttributes([
+        (new UserProvider())->skipProtected()->updateOrCreateWithAttributes([
             'email' => $email = ($attributes['email'] ?? Str::snake($defaultName) . '@' . parse_url(config('app.url'), PHP_URL_HOST)),
         ], [
             'name' => $name = ($attributes['name'] ?? Str::ucfirst($defaultName)),
-            'password' => $password = ($attributes['password'] ?? (App::runningInProduction() ? $this->randomPassword() : $this->defaultPassword)),
+            'password' => $password = ($attributes['password'] ?? (App::isProduction() ? $this->randomPassword() : $this->defaultPassword)),
             'email_verified_at' => DateTimer::databaseNow(),
         ]);
-        $this->command->line(sprintf('<comment>%s</comment>: %s / %s', $name, $email, $password));
+        $this->command->line(sprintf('  - <comment>%s</comment>: %s / %s', $name, $email, $password));
     }
 }

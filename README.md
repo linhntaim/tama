@@ -1,64 +1,113 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
+<p align="center"><a href="https://tama.linhntaim.com" target="_blank"><img src="https://raw.githubusercontent.com/linhntaim/tama-art/master/logo.text.color.png" width="400" alt="tama Logo"></a></p>
 
 <p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+Powered by:<br>
+<a href="https://github.com/linhntaim/laravel-9-starter" target="_blank">Laravel 9 Starter</a><br>
+<a href="https://www.ta-lib.org/" target="_blank">TA-Lib</a>
+(<a href="https://www.php.net/manual/en/book.trader.php" target="_blank">Trader PHP Extension</a>)<br>
+<a href="https://github.com/binance/binance-connector-php" target="_blank">Binance Connector PHP</a><br>
+<a href="https://reactphp.org/" target="_blank">ReactPHP</a><br>
+<a href="https://github.com/ratchetphp/Ratchet" target="_blank">Ratchet</a><br>
+<a href="https://github.com/laravel-notification-channels/telegram" target="_blank">Telegram Notifications Channel for Laravel</a><br>
 </p>
 
-## About Laravel
+## About "tama"
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+"tama" is the codename of the project which aims to create a crypto bot that:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- Provide trading information.
+- Test/Run automated trading strategies.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+The project is still in progress.
 
-## Learning Laravel
+## Roadmap
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+1. Launch:
+    1. Bot: Exchange/Ticker/Interval => Price => Indication
+    2. Broadcast: Indication => Actions
+    3. Orchestration: Bot => Indication => Broadcast
+    4. Chatbot: Message => Execute
+2. Phase 1:
+    1. Exchange supported: Binance (Spot market)
+    2. Indication supported: RSI divergences
+    3. Orchestration supported:
+        1. On-demand (use exchange API)
+        2. Real-time (use exchange websocket connection)
+    4. Action supported:
+        1. Report:
+            1. Type:
+                1. Plaintext
+            2. To:
+                1. Telegram
+    5. Chatbot:
+        1. Platform supported:
+            1. Telegram via Webhook
+        2. Execution supported:
+            1. Provide system information
+            2. Provide trading information
+            3. Manage trading subscriptions
+3. Phase 2 _(current)_:
+    1. Automated trading strategy: Capital/Risk/Bot => Indication => Buy|Sell => Exchange
+        1. Order type support:
+            1. Market
+        2. Tool for testing trading strategy with historical data
+        3. Add a "Trade" action to broadcast
+        4. Support to run fake trading strategies to test in the real world
+        5. Support chatbot
+    2. Better indication from more oscillators/indicators
+4. Phase 3:
+    1. Run automated trading strategies in the real world
+5. Phase 4:
+    1. AI integration for better indication & risk management based on testing with historical data
+    2. Support more exchanges
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Installation
 
-## Laravel Sponsors
+### Requirements
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+- [Laravel > Server Requirements](https://laravel.com/docs/9.x/deployment#server-requirements)
+- PHP >= 8.1
+- [Trader PHP Extension](https://pecl.php.net/package/trader)
+- [Redis PHP Extension](https://pecl.php.net/package/redis) _(recommended)_
+  or [predis package](https://github.com/predis/predis)
+    - See: https://laravel.com/docs/9.x/redis
+- MySQL 8.x / MariaDB 10.x
+- Redis 7.x
 
-### Premium Partners
+### Sourcecode
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+After cloning the sourcecode, run following commands at the root directory:
 
-## Contributing
+```shell
+# Install packages
+composer install
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# Setup the .env file if none exists
+php artisan setup
 
-## Code of Conduct
+# Again, setup the sourcecode (incl. database migration and seeding)
+php artisan setup
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Others
 
-## Security Vulnerabilities
+#### [Telegram Bot](https://core.telegram.org/bots)
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+[Create a bot](https://core.telegram.org/bots#3-how-do-i-create-a-bot) and fill its information
+in the .env file.
 
-## License
+```dotenv
+TELEGRAM_BOT_NAME=
+TELEGRAM_BOT_USERNAME=
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_BOT_WEBHOOK_SECRET=
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+`TELEGRAM_BOT_NAME` & `TELEGRAM_BOT_USERNAME` is the name & username of the bot
+and `TELEGRAM_BOT_TOKEN` is the authentication token generated after creating the bot.
+
+See: https://core.telegram.org/bots#creating-a-new-bot.
+
+`TELEGRAM_BOT_WEBHOOK_SECRET` is the secret token used to create the webhook.
+
+See: https://core.telegram.org/bots/api#setwebhook.

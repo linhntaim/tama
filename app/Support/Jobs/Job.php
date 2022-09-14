@@ -2,8 +2,8 @@
 
 namespace App\Support\Jobs;
 
-use App\Support\ClassTrait;
-use App\Support\Client\InternalSettings;
+use App\Support\Client\Concerns\InternalSettings;
+use App\Support\Concerns\ClassHelper;
 use App\Support\Facades\App;
 use App\Support\Facades\Artisan;
 use App\Support\Foundation\Bus\Dispatchable;
@@ -12,34 +12,30 @@ use Throwable;
 
 abstract class Job
 {
-    use ClassTrait, Dispatchable, InternalSettings;
+    use ClassHelper, Dispatchable, InternalSettings;
 
     public function __construct()
     {
         $this->captureCurrentSettings();
-        if (App::runningSolelyInConsole()) {
-            if ($runningCommand = Artisan::lastRunningCommand()) {
-                $this->setForcedInternalSettings($runningCommand->settings());
-            }
+        if (App::runningSolelyInConsole() && !is_null($runningCommand = Artisan::lastRunningCommand())) {
+            $this->setForcedInternalSettings($runningCommand->settings());
         }
     }
 
-    protected function handleBefore()
+    protected function handleBefore(): void
     {
     }
 
-    protected function handleAfter()
+    protected function handleAfter(): void
     {
     }
 
-    protected abstract function handling();
+    abstract protected function handling(): void;
 
-    final public function handle()
+    final public function handle(): void
     {
-        if (App::runningSolelyInConsole()) {
-            if ($runningCommand = Artisan::lastRunningCommand()) {
-                $this->setForcedInternalSettings($runningCommand->settings());
-            }
+        if (App::runningSolelyInConsole() && is_null($runningCommand = Artisan::lastRunningCommand())) {
+            $this->setForcedInternalSettings($runningCommand->settings());
         }
         $this->withInternalSettings(function () {
             Log::info(sprintf('Job [%s] started.', $this->className()));
@@ -50,7 +46,7 @@ abstract class Job
         });
     }
 
-    public function failed(?Throwable $e = null)
+    public function failed(?Throwable $e = null): void
     {
     }
 }

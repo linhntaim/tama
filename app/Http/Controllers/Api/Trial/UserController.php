@@ -9,6 +9,7 @@ use App\Models\UserProvider;
 use App\Support\Client\DateTimer;
 use App\Support\Facades\Client;
 use App\Support\Http\Controllers\ModelApiController;
+use App\Support\Models\QueryValues\LikeValue;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -22,31 +23,21 @@ class UserController extends ModelApiController
     {
         $dateTimer = Client::dateTimer();
         return [
-            'email',
-            'name',
+            'email' => fn($input) => LikeValue::create($input),
+            'name' => fn($input) => LikeValue::create($input),
             'created_from' => function ($input) use ($dateTimer) {
-                try {
-                    return $dateTimer->fromFormatToDatabaseFormat(
-                        $dateTimer->compoundFormat('shortDate', ' ', 'shortTime'),
-                        $input,
-                        DateTimer::DAY_TYPE_MINUTE_START
-                    );
-                }
-                finally {
-                    return null;
-                }
+                return $dateTimer->fromFormatToDatabaseFormat(
+                    $dateTimer->compoundFormat('shortDate', ' ', 'shortTime'),
+                    $input,
+                    DateTimer::DAY_TYPE_MINUTE_START
+                );
             },
             'created_to' => function ($input) use ($dateTimer) {
-                try {
-                    return $dateTimer->fromFormatToDatabaseFormat(
-                        $dateTimer->compoundFormat('shortDate', ' ', 'shortTime'),
-                        $input,
-                        DateTimer::DAY_TYPE_MINUTE_END
-                    );
-                }
-                finally {
-                    return null;
-                }
+                return $dateTimer->fromFormatToDatabaseFormat(
+                    $dateTimer->compoundFormat('shortDate', ' ', 'shortTime'),
+                    $input,
+                    DateTimer::DAY_TYPE_MINUTE_END
+                );
             },
         ];
     }

@@ -2,10 +2,13 @@
 
 namespace App\Trading\Bots\Oscillators;
 
-use App\Trading\Bots\Pricing\PriceCollection;
+use App\Trading\Bots\BotSlug;
+use App\Trading\Bots\Exchanges\PriceCollection;
 
 abstract class Component
 {
+    use BotSlug;
+
     public const NAME = '';
 
     /**
@@ -17,7 +20,7 @@ abstract class Component
     {
     }
 
-    public final function getName(): string
+    final public function getName(): string
     {
         return static::NAME;
     }
@@ -35,12 +38,17 @@ abstract class Component
         ];
     }
 
+    protected function optionsAsSlug(): string
+    {
+        return $this->slugConcat(...$this->options());
+    }
+
     public function asSlug(): string
     {
-        return implode('-', [
+        return $this->slugConcat(
             $this->getName(),
-            ...$this->options(),
-        ]);
+            $this->optionsAsSlug(),
+        );
     }
 
     public function transmit(Packet $packet, bool|int $latest = true): Packet
@@ -58,9 +66,9 @@ abstract class Component
         return $packet->get('inputs.prices');
     }
 
-    protected abstract function convert(Packet $packet): Packet;
+    abstract protected function convert(Packet $packet): Packet;
 
-    protected abstract function analyze(Packet $packet, bool|int $latest = true): Packet;
+    abstract protected function analyze(Packet $packet, bool|int $latest = true): Packet;
 
-    protected abstract function transform(Packet $packet): Packet;
+    abstract protected function transform(Packet $packet): Packet;
 }

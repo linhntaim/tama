@@ -4,8 +4,13 @@ namespace App\Support\Imports;
 
 use App\Support\Exceptions\FileException;
 use App\Support\Filesystem\Filers\CsvFiler;
+use App\Support\Filesystem\Filers\Filer;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * @method array|null data(CsvFiler $filer)
+ * @method void import(CsvFiler $filer)
+ */
 abstract class CsvImport extends Import
 {
     protected bool $hasHeaders = true;
@@ -19,9 +24,10 @@ abstract class CsvImport extends Import
 
     /**
      * @param CsvFiler $filer
+     * @return void
      * @throws FileException
      */
-    protected function importBefore($filer)
+    protected function importBefore(Filer $filer): void
     {
         parent::importBefore($filer);
         $filer
@@ -37,7 +43,7 @@ abstract class CsvImport extends Import
     /**
      * @throws ValidationException
      */
-    protected function dataValidate(array $data)
+    protected function dataValidate(array $data): void
     {
         $this->validateData($data, $this->dataValidationRules());
     }
@@ -48,15 +54,17 @@ abstract class CsvImport extends Import
     }
 
     /**
+     * @param array $data
+     * @return void
      * @throws ValidationException
      */
-    protected function store($data)
+    protected function store($data): void
     {
-        take($this->dataMap($data), function (array $data) {
+        tap($this->dataMap($data), function (array $data) {
             $this->dataValidate($data);
             $this->dataImport($data);
         });
     }
 
-    protected abstract function dataImport(array $data);
+    abstract protected function dataImport(array $data): void;
 }

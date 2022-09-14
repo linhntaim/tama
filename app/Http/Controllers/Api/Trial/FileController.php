@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api\Trial;
 
 use App\Http\Controllers\Api\FileController as BaseFileController;
-use App\Models\File;
 use App\Support\Filesystem\Filers\Filer;
+use App\Support\Models\File;
 use Illuminate\Http\Request;
 
 class FileController extends BaseFileController
@@ -29,14 +29,14 @@ class FileController extends BaseFileController
 
     protected function showFile(Request $request, $id)
     {
-        return with($this->modelProvider()->model($id), function (File $file) {
+        return with($this->modelProvider()->model($id), static function (File $file) {
             return $file->responseFile();
         });
     }
 
     protected function showDownload(Request $request, $id)
     {
-        return with($this->modelProvider()->model($id), function (File $file) {
+        return with($this->modelProvider()->model($id), static function (File $file) {
             return $file->responseDownload();
         });
     }

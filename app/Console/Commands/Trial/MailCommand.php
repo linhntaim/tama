@@ -9,14 +9,14 @@ use App\Mail\Trial\QueueableMailable as TrialQueueableMailable;
 use App\Mail\Trial\ViewMailable as TrialViewMailable;
 use App\Mail\Trial\ViewQueueableMailable as TrialViewQueueableMailable;
 use App\Support\Console\Commands\Command;
-use App\Support\Mail\SendMail;
+use App\Support\Mail\Concerns\SendMail;
 use App\Support\Mail\SimpleEmailAddress;
 
 class MailCommand extends Command
 {
-    public $signature = '{to} {--name=}';
-
     use SendMail;
+
+    public $signature = '{to} {--name=}';
 
     protected function handling(): int
     {

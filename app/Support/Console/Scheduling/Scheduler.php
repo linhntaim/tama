@@ -68,7 +68,7 @@ class Scheduler
                 }
                 return $commandParams;
             };
-            $composeCommandParamsDescription = function (array $commandParams): string {
+            $composeCommandParamsDescription = static function (array $commandParams): string {
                 $commandArgs = [];
                 foreach ($commandParams as $name => $value) {
                     $commandArgs[] = Str::startsWith($name, '--')
@@ -105,9 +105,9 @@ class Scheduler
             }
             else {
                 $commandName = strstr($scheduleCaller, ' ', true) ?: $scheduleCaller;
-                if (in_array($commandName, $this->commandNames)) {
+                if (in_array($commandName, $this->commandNames, true)) {
                     $commandParamsDescription = $composeCommandParamsDescription(
-                        $commandParams = $composeCommandParams($commandName == $scheduleCaller ? $scheduleCallerParams : [])
+                        $commandParams = $composeCommandParams($commandName === $scheduleCaller ? $scheduleCallerParams : [])
                     );
                     $this
                         ->setName('command')
@@ -156,10 +156,8 @@ class Scheduler
     {
         $this->schedule = $schedule;
         $this->commandNames = array_keys($application->all());
-        if (App::runningSolelyInConsole()) {
-            if ($runningCommand = $application->lastRunningCommand()) {
-                $this->forcedInternalSettings = $runningCommand->settings();
-            }
+        if (App::runningSolelyInConsole() && !is_null($runningCommand = $application->lastRunningCommand())) {
+            $this->forcedInternalSettings = $runningCommand->settings();
         }
 
         foreach (config_starter('console.schedules.definitions') as $scheduleDefinition) {

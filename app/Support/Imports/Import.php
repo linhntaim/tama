@@ -2,12 +2,12 @@
 
 namespace App\Support\Imports;
 
-use App\Models\File;
+use App\Support\Concerns\UnlimitedResource;
 use App\Support\Exceptions\FileException;
 use App\Support\Exports\Export;
 use App\Support\Filesystem\Filers\Filer;
 use App\Support\Foundation\Validation\Validates;
-use App\Support\UnlimitedResource;
+use App\Support\Models\File;
 use InvalidArgumentException;
 
 abstract class Import
@@ -16,7 +16,7 @@ abstract class Import
 
     public const NAME = 'import';
 
-    public abstract static function sample(): Export;
+    abstract public static function sample(): Export;
 
     protected int $count = 0;
 
@@ -60,7 +60,7 @@ abstract class Import
 
     public function chunkEnable(): bool
     {
-        return !!$this->chunkSize;
+        return (bool)$this->chunkSize;
     }
 
     public function chunkEnded(): bool
@@ -73,34 +73,29 @@ abstract class Import
      * @return string|null
      * @throws FileException
      */
-    protected function data($filer)
+    protected function data(Filer $filer)
     {
         return $filer->read();
     }
 
     /**
-     * @param Filer $filer
      * @throws FileException
      */
-    protected function importBefore($filer)
+    protected function importBefore(Filer $filer): void
     {
         $filer->openForReading()
             ->seekingLine($this->dataIndex + 1);
     }
 
-    /**
-     * @param Filer $filer
-     */
-    protected function importAfter($filer)
+    protected function importAfter(Filer $filer): void
     {
         $filer->close();
     }
 
     /**
-     * @param Filer $filer
      * @throws FileException
      */
-    protected function import($filer)
+    protected function import(Filer $filer): void
     {
         $this->chunkDataIndex = -1;
         while (!is_null($data = $this->data($filer))) {
@@ -117,7 +112,11 @@ abstract class Import
         $this->chunkEnded = true;
     }
 
-    protected abstract function store($data);
+    /**
+     * @param string $data
+     * @return void
+     */
+    abstract protected function store($data): void;
 
     public function count(): int
     {

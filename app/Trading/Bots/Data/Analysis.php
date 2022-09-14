@@ -13,7 +13,7 @@ class Analysis extends ArrayReader
      * @param Collection<int, Signal> $signals
      * @param array $additional
      */
-    public function __construct(int $time, float $price, Collection $signals, array $additional = [])
+    public function __construct(int $time, string $price, Collection $signals, array $additional = [])
     {
         parent::__construct(array_merge([
             'time' => $time,
@@ -27,7 +27,7 @@ class Analysis extends ArrayReader
         return $this->get('time');
     }
 
-    public function getPrice(): float
+    public function getPrice(): string
     {
         return $this->get('price');
     }
@@ -44,7 +44,7 @@ class Analysis extends ArrayReader
     {
         $types = array_merge((array)$types, $moreTypes);
         return $this->getSignals()->contains(function (Signal $signal) use ($types) {
-            return in_array($signal->getType(), (array)$types);
+            return in_array($signal->getType(), $types, true);
         });
     }
 }

@@ -4,6 +4,7 @@ namespace App\Support\Imports;
 
 use App\Support\Exceptions\FileException;
 use App\Support\Filesystem\Filers\CsvFiler;
+use App\Support\Filesystem\Filers\Filer;
 
 abstract class BatchModelCsvImport extends ModelCsvImport
 {
@@ -19,13 +20,13 @@ abstract class BatchModelCsvImport extends ModelCsvImport
         $this->writeIgnore = $writeIgnore;
     }
 
-    public function perWrite(mixed $perWrite): static
+    public function perWrite(int $perWrite): static
     {
         $this->perWrite = $perWrite;
         return $this;
     }
 
-    public function writeIgnore(mixed $writeIgnore): static
+    public function writeIgnore(bool $writeIgnore): static
     {
         $this->writeIgnore = $writeIgnore;
         return $this;
@@ -33,9 +34,10 @@ abstract class BatchModelCsvImport extends ModelCsvImport
 
     /**
      * @param CsvFiler $filer
+     * @return void
      * @throws FileException
      */
-    protected function importBefore($filer)
+    protected function importBefore(Filer $filer): void
     {
         parent::importBefore($filer);
         $this->modelProvider->writeStart($this->perWrite, $this->writeIgnore);
@@ -43,14 +45,15 @@ abstract class BatchModelCsvImport extends ModelCsvImport
 
     /**
      * @param CsvFiler $filer
+     * @return void
      */
-    protected function importAfter($filer)
+    protected function importAfter(Filer $filer): void
     {
         $this->modelProvider->writeEnd();
         parent::importAfter($filer);
     }
 
-    protected function dataImport(array $data)
+    protected function dataImport(array $data): void
     {
         $this->modelProvider->write($data);
     }

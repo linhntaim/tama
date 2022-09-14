@@ -2,7 +2,7 @@
 
 namespace App\Support\Events;
 
-use App\Support\Client\InternalSettings;
+use App\Support\Client\Concerns\InternalSettings;
 use App\Support\Facades\App;
 use App\Support\Facades\Artisan;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -16,10 +16,8 @@ abstract class Event
     public function __construct()
     {
         $this->captureCurrentSettings();
-        if (App::runningSolelyInConsole()) {
-            if ($runningCommand = Artisan::lastRunningCommand()) {
-                $this->setForcedInternalSettings($runningCommand->settings());
-            }
+        if (App::runningSolelyInConsole() && !is_null($runningCommand = Artisan::lastRunningCommand())) {
+            $this->setForcedInternalSettings($runningCommand->settings());
         }
     }
 }
