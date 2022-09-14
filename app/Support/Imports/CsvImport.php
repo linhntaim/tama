@@ -60,7 +60,7 @@ abstract class CsvImport extends Import
      */
     protected function store($data): void
     {
-        tap($this->dataMap($data), function (array $data) {
+        take($this->dataMap($data), function (array $data) {
             $this->dataValidate($data);
             $this->dataImport($data);
         });

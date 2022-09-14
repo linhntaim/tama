@@ -41,11 +41,11 @@ class StrategyTest
         ?array           $sellBotOptions = null,
     )
     {
-        $this->buyBot = tap(
+        $this->buyBot = take(
             BotFactory::create($buyBotName, $buyBotOptions),
             static fn(Bot $bot) => $bot->useFakeExchangeConnector()
         );
-        $this->sellBot = tap(
+        $this->sellBot = take(
             BotFactory::create($sellBotName ?: $buyBotName, $sellBotOptions ?: $buyBotOptions),
             static fn(Bot $bot) => $bot->useFakeExchangeConnector()
         );

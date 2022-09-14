@@ -60,7 +60,7 @@ class PriceCollectorTest
         }
 
         $length = $this->chunkEndIndex + 1;
-        return tap(
+        return take(
             $length < Exchange::PRICE_LIMIT
                 ? $this->priceCollection->slice(0, $length)
                 : $this->priceCollection->slice($length - Exchange::PRICE_LIMIT, Exchange::PRICE_LIMIT),

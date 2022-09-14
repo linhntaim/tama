@@ -21,7 +21,7 @@ class Resource extends BaseResource implements WrappedResource, ArrayResponsible
     public static function collection($resource)
     {
         $resourceCollectionClass = static::$collectionClass;
-        return tap(
+        return take(
             new $resourceCollectionClass($resource, static::class),
             static function ($collection) {
                 $collection->collects = static::class;
