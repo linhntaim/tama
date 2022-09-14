@@ -143,7 +143,7 @@ class CreateCommand extends Command
     {
         $this->transactionStart();
         try {
-            $strategy = tap(
+            $strategy = take(
                 (new TradingStrategyProvider())->createWithAttributes([
                     'user_id' => $user->id,
                     'buy_trading_id' => $buyTrading->id,

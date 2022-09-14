@@ -184,7 +184,7 @@ abstract class ModelProvider
     public function __call(string $name, array $arguments)
     {
         if (property_exists($this, $name)) {
-            return tap($this->{$name}, function () use ($name, $arguments) {
+            return take($this->{$name}, function () use ($name, $arguments) {
                 $this->{$name} = $arguments[0] ?? null;
             });
         }
@@ -292,7 +292,7 @@ abstract class ModelProvider
 
     public function updateOrCreateWithAttributes(array $attributes, array $values = []): Model
     {
-        return $this->model = tap($this->newQuery()->firstOrNew($attributes), function (Model $instance) use ($values) {
+        return $this->model = take($this->newQuery()->firstOrNew($attributes), function (Model $instance) use ($values) {
             if ($instance->exists) {
                 $this->catchProtectedModel($instance);
             }

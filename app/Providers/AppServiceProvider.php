@@ -53,7 +53,7 @@ class AppServiceProvider extends ServiceProvider implements DeferrableProvider
     {
         // Log formatter
         $this->app->bind('starter_log_formatter', function () {
-            return tap(new LineFormatter(null, 'Y-m-d H:i:s', true, true), static function ($formatter) {
+            return take(new LineFormatter(null, 'Y-m-d H:i:s', true, true), static function ($formatter) {
                 $formatter->includeStacktraces();
             });
         });

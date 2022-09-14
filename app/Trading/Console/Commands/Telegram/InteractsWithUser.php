@@ -22,7 +22,7 @@ trait InteractsWithUser
             ?? $this->telegramUpdate = new TelegramUpdate(
                 json_decode_array(
                     base64_decode(
-                        tap(
+                        take(
                             $this->option('telegram-update'),
                             static function ($telegram) {
                                 if (is_null($telegram)) {
@@ -100,7 +100,7 @@ trait InteractsWithUser
                 ->notStrict()
                 ->firstByEmail($email),
             static function (?User $user) use ($userProvider, $name, $email, $providerId) {
-                return tap(
+                return take(
                     is_null($user) ? $userProvider->createWithAttributes([
                         'email' => $email,
                         'name' => $name,

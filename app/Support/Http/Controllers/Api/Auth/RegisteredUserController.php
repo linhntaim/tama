@@ -56,7 +56,7 @@ class RegisteredUserController extends ApiController
         $this->transactionStart();
         try {
             event(new Registered($creator->create($request->all())));
-            return tap(app(RegisterResponse::class), function () {
+            return take(app(RegisterResponse::class), function () {
                 $this->transactionComplete();
             });
         }

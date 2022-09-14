@@ -87,7 +87,7 @@ trait Responses
     {
         return $this->responseJson(
             $request,
-            tap(
+            take(
                 ResponseResource::from($resource, $args[0] ?? null),
                 is_callable($callback = ($args[0] ?? null))
                 || is_callable($callback = ($args[1] ?? null))
@@ -99,7 +99,7 @@ trait Responses
     protected function responseExport(Request $request, Export $export, array $headers = []): SymfonyBinaryFileResponse|SymfonyStreamedResponse
     {
         return with($export->disableChunk()(), static function (Filer $filer) use ($headers) {
-            return tap($filer->responseContentDownload($headers), static function () use ($filer) {
+            return take($filer->responseContentDownload($headers), static function () use ($filer) {
                 $filer->delete();
             });
         });

@@ -22,7 +22,7 @@ class ResponseResource extends Resource
     {
         return $resource instanceof self
             ? $resource
-            : tap(new static($resource), static function (ResponseResource $responseResource) use ($resource, $args) {
+            : take(new static($resource), static function (ResponseResource $responseResource) use ($resource, $args) {
                 if (is_null($resource)) {
                     return;
                 }
