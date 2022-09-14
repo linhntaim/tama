@@ -67,9 +67,10 @@ class Sheller
     public function output(): ?string
     {
         return (static fn($output) => $output ? trim($output) : $output)(
-            $this->successful()
-                ? $this->getProcess()?->getOutput()
-                : ($this->getProcess()?->getErrorOutput() ?: $this->getProcess()?->getOutput())
+            match (true) {
+                $this->successful() => $this->getProcess()?->getOutput(),
+                default => $this->getProcess()?->getErrorOutput() ?: $this->getProcess()?->getOutput(),
+            }
         );
     }
 }

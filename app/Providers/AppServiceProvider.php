@@ -15,7 +15,6 @@ use Illuminate\Contracts\Support\DeferrableProvider;
 use Illuminate\Notifications\ChannelManager as BaseChannelManager;
 use Illuminate\Support\Facades\Facade;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Psr\Container\ContainerExceptionInterface;
@@ -111,7 +110,7 @@ class AppServiceProvider extends ServiceProvider implements DeferrableProvider
     protected function configureGlobal(): void
     {
         // ext-bcmath
-        bcscale(18);
+        bcscale(BC_DEFAULT_SCALE);
         // ext-mbstring
         mb_detect_order([
             'UTF-8',

@@ -8,9 +8,12 @@ use App\Support\Console\Application;
 use App\Support\Console\Concerns\ExecutionWrap;
 use App\Support\Console\Sheller;
 use App\Support\Exceptions\ShellException;
+use App\Support\Facades\App;
+use App\Support\Facades\Artisan;
 use App\Support\Facades\Shell;
 use Closure;
 use Illuminate\Console\Command as BaseCommand;
+use Illuminate\Foundation\Bus\PendingDispatch;
 use Illuminate\Support\Str;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -31,6 +34,8 @@ abstract class Command extends BaseCommand
     public const OPTION_CLIENT = 'x-client';
     public const PARAMETER_CLIENT = '--' . self::OPTION_CLIENT;
 
+    protected bool $queuedOnRequest = false;
+
     public function __construct()
     {
         if (isset($this->signature)) {
@@ -38,10 +43,8 @@ abstract class Command extends BaseCommand
                 $this->signature = $this->generateName() . ' ' . $this->signature;
             }
         }
-        else {
-            if (!isset($this->name)) {
-                $this->name = $this->generateName();
-            }
+        elseif (!isset($this->name)) {
+            $this->name = $this->generateName();
         }
 
         parent::__construct();
@@ -192,12 +195,49 @@ abstract class Command extends BaseCommand
     {
     }
 
+    protected function queue(string $command, array $parameters = []): PendingDispatch
+    {
+        return Artisan::queue($command, $parameters);
+    }
+
+    protected function queueSelf(?array $parameters = null): PendingDispatch
+    {
+        return $this->queue($this->name, $parameters ?? array_merge(with($this->arguments(), static function (array $arguments) {
+            $parameters = [];
+            foreach ($arguments as $key => $argument) {
+                if (is_null($argument) || $argument === 'command') {
+                    continue;
+                }
+                $parameters[$key] = $argument;
+            }
+            return $parameters;
+        }), with($this->options(), static function (array $options) {
+            $parameters = [];
+            foreach ($options as $key => $option) {
+                if (is_null($option) || $option === false) {
+                    continue;
+                }
+                $parameters["--$key"] = $option;
+            }
+            return $parameters;
+        })));
+    }
+
+    protected function shouldQueue(): bool
+    {
+        return $this->queuedOnRequest && !App::runningSolelyInConsole();
+    }
+
     public function handle(): int
     {
-        $this->handleBefore();
-        $exit = $this->handling();
-        $this->handleAfter();
-        return $exit;
+        if (!$this->shouldQueue()) {
+            $this->handleBefore();
+            $exit = $this->handling();
+            $this->handleAfter();
+            return $exit;
+        }
+        $this->queueSelf();
+        return $this->exitSuccess();
     }
 
     abstract protected function handling(): int;

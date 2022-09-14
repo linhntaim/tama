@@ -6,7 +6,7 @@ use App\Support\Filesystem\Filers\Filer;
 
 /**
  * @property File|null $model
- * @method File|null model(Model|callable|int|string $model = null, bool $byUnique = true)
+ * @method File|null model(File|callable|int|string $model = null, bool $byUnique = true)
  * @method File createWithAttributes(array $attributes = [])
  * @method File updateWithAttributes(array $attributes = [])
  *

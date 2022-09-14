@@ -12,7 +12,7 @@ abstract class Command extends BaseCommand
     {
         return match (PHP_OS_FAMILY) {
             'Windows' => 'mailhog.exe',
-            default => 'mailhog'
+            default => 'mailhog',
         };
     }
 
