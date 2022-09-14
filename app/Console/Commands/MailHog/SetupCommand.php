@@ -7,6 +7,9 @@ use App\Support\Services\MailHogReleaseService;
 
 class SetupCommand extends Command
 {
+    /**
+     * @throws FileException
+     */
     protected function handling(): int
     {
         if (is_array($latest = (new MailHogReleaseService())->latest())) {
@@ -15,7 +18,7 @@ class SetupCommand extends Command
                 case 'Windows':
                     $assetKey = match (PHP_OS_ARCHITECTURE) {
                         'i386' => 'MailHog_windows_386.exe',
-                        default => 'MailHog_windows_amd64.exe'
+                        default => 'MailHog_windows_amd64.exe',
                     };
                     if (isset($assets[$assetKey])) {
                         $this->downloadBin($assets[$assetKey]['browser_download_url']);

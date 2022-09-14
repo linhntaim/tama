@@ -34,7 +34,7 @@ abstract class JobCommand extends Command
         return $this->exitSuccess();
     }
 
-    protected function runJob()
+    protected function runJob(): void
     {
         if ($job = $this->getJob()) {
             $job::dispatch(...$this->getJobParams());

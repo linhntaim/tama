@@ -43,10 +43,8 @@ abstract class Command extends BaseCommand
                 $this->signature = $this->generateName() . ' ' . $this->signature;
             }
         }
-        else {
-            if (!isset($this->name)) {
-                $this->name = $this->generateName();
-            }
+        elseif (!isset($this->name)) {
+            $this->name = $this->generateName();
         }
 
         parent::__construct();
