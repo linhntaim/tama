@@ -10,7 +10,7 @@ class Kernel extends HttpKernel
     /**
      * @throws BindingResolutionException
      */
-    public function bootstrap()
+    public function bootstrap(): void
     {
         $this->app->instance('advanced_request', new AdvancedRequest($this->app->make('request')));
         parent::bootstrap();

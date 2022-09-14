@@ -4,14 +4,22 @@ use App\Support\Client\DateTimer;
 use App\Support\Client\NumberFormatter;
 use App\Support\Exceptions\FileException;
 use App\Support\Facades\Client;
+use Illuminate\Routing\Exceptions\UrlGenerationException;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Symfony\Component\Mime\MimeTypes;
 use Symfony\Component\VarDumper\VarDumper;
 
+const BC_DEFAULT_SCALE = 18;
+const DATE_DEFAULT = 'Y-m-d H:i:s';
+const DATE_DATABASE = DATE_DEFAULT;
 const JSON_READABLE = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_LINE_TERMINATORS;
 const JSON_PRETTY = JSON_READABLE | JSON_PRETTY_PRINT;
+
+if (!defined('PHP_OS_ARCHITECTURE')) {
+    define('PHP_OS_ARCHITECTURE', strtolower(php_uname('m')));
+}
 
 if (!function_exists('array_associated_map')) {
     function array_associated_map(array $array, array $associatedKeys): array
@@ -53,7 +61,7 @@ if (!function_exists('call_unless')) {
 if (!function_exists('class_use')) {
     function class_use(object|string $object_or_class, string $trait): bool
     {
-        return in_array($trait, class_uses_recursive($object_or_class));
+        return in_array($trait, class_uses_recursive($object_or_class), true);
     }
 }
 
@@ -68,7 +76,7 @@ if (!function_exists('compose_filename')) {
 if (!function_exists('concat_paths')) {
     function concat_paths($relative = true, string ...$paths): string
     {
-        return ($relative && !windows_os() ? DIRECTORY_SEPARATOR : '')
+        return ($relative || windows_os() ? '' : DIRECTORY_SEPARATOR)
             . concat_with_slash(DIRECTORY_SEPARATOR, ...$paths);
     }
 }
@@ -85,7 +93,7 @@ if (!function_exists('concat_with_slash')) {
     {
         return implode(
             $slash,
-            array_map(fn($part) => trim_more(str_replace(['\\', '/'], $slash, $part), $slash), $parts)
+            array_map(static fn($part) => trim_more(str_replace(['\\', '/'], $slash, $part), $slash), $parts)
         );
     }
 }
@@ -133,17 +141,14 @@ if (!function_exists('copy_recursive')) {
         if (is_file($destination)) {
             return false;
         }
-        if (!is_dir($destination)) {
-            if (false === mkdir_recursive($destination, 0777, $context)) {
-                return false;
-            }
+        if (!is_dir($destination) && false === mkdir_recursive($destination, 0777, $context)) {
+            return false;
         }
         $dir = opendir($source, $context);
         while (false !== ($file = readdir($dir))) {
-            if ($file != '.' && $file != '..') {
-                if (false === copy_recursive($source . DIRECTORY_SEPARATOR . $file, $destination . DIRECTORY_SEPARATOR . $file, $context)) {
-                    return false;
-                }
+            if ($file !== '.' && $file !== '..'
+                && false === copy_recursive($source . DIRECTORY_SEPARATOR . $file, $destination . DIRECTORY_SEPARATOR . $file, $context)) {
+                return false;
             }
         }
         closedir($dir);
@@ -172,14 +177,14 @@ if (!function_exists('describe_var')) {
         }
         if (is_array($value)) {
             return $depth
-                ? sprintf('[%s]', implode(', ', (function ($array) use ($maxShownItems) {
+                ? sprintf('[%s]', implode(', ', (static function ($array) use ($maxShownItems) {
                     if (count($array) <= $maxShownItems) {
                         return $array;
                     }
                     $sliced = array_slice($array, 0, $maxShownItems);
                     $sliced[] = '...';
                     return $sliced;
-                })(array_map(fn($item) => describe_var($item, $depth - 1), $value))))
+                })(array_map(static fn($item) => describe_var($item, $depth - 1), $value))))
                 : '{array}';
         }
         if (is_resource($value)) {
@@ -196,24 +201,22 @@ if (!function_exists('describe_var')) {
 }
 
 if (!function_exists('dd_with_headers')) {
-    function dd_with_headers(array $headers, ...$vars)
+    function dd_with_headers(array $headers, ...$vars): void
     {
-        if (!in_array(\PHP_SAPI, ['cli', 'phpdbg'], true) && !headers_sent()) {
+        if (!in_array(PHP_SAPI, ['cli', 'phpdbg'], true) && !headers_sent()) {
             header('HTTP/1.1 500 Internal Server Error');
             foreach ($headers as $name => $value) {
                 header(sprintf('%s: %s', $name, $value));
             }
         }
 
-        foreach ($vars as $v) {
-            VarDumper::dump($v);
-        }
-        exit();
+        out(...$vars);
+        exit(1);
     }
 }
 
 if (!function_exists('dd_with_cors')) {
-    function dd_with_cors(...$vars)
+    function dd_with_cors(...$vars): void
     {
         dd_with_headers([
             'Access-Control-Allow-Origin' => '*',
@@ -280,6 +283,13 @@ if (!function_exists('from_ini_filesize')) {
     }
 }
 
+if (!function_exists('gcd')) {
+    function gcd(int $num1, int $num2): int
+    {
+        return $num2 === 0 ? $num1 : gcd($num2, $num1 % $num2);
+    }
+}
+
 if (!function_exists('guess_extension')) {
     function guess_extension(string $mimeType): string
     {
@@ -291,6 +301,20 @@ if (!function_exists('guess_mime_type')) {
     function guess_mime_type(string $extension): string
     {
         return MimeTypes::getDefault()->getMimeTypes($extension)[0] ?? '';
+    }
+}
+
+if (!function_exists('int_eq')) {
+    function int_eq(float|int $value): bool
+    {
+        return is_int($value) || num_eq($value, (int)$value);
+    }
+}
+
+if (!function_exists('int_floor')) {
+    function int_floor(float|int $num): int
+    {
+        return num_floor($num, 0);
     }
 }
 
@@ -310,23 +334,30 @@ if (!function_exists('is_url')) {
 }
 
 if (!function_exists('json_encode_pretty')) {
-    function json_encode_pretty(mixed $value, int $depth = 512): string|false
+    function json_encode_pretty(mixed $value, int $flags = 0, int $depth = 512): string|false
     {
-        return json_encode($value, JSON_PRETTY, $depth);
+        return json_encode($value, $flags | JSON_PRETTY, $depth);
     }
 }
 
 if (!function_exists('json_encode_readable')) {
-    function json_encode_readable(mixed $value, int $depth = 512): string|false
+    function json_encode_readable(mixed $value, int $flags = 0, int $depth = 512): string|false
     {
-        return json_encode($value, JSON_READABLE, $depth);
+        return json_encode($value, $flags | JSON_READABLE, $depth);
     }
 }
 
 if (!function_exists('json_decode_array')) {
-    function json_decode_array(string $json, int $depth = 512, int $flags = 0): ?array
+    function json_decode_array(string|bool|null $json, int $depth = 512, int $flags = 0): ?array
     {
         return is_array($array = json_decode($json, true, $depth, $flags)) ? $array : null;
+    }
+}
+
+if (!function_exists('lcm')) {
+    function lcm(int $num1, int $num2): int
+    {
+        return ($num1 * $num2) / gcd($num1, $num2);
     }
 }
 
@@ -343,10 +374,8 @@ if (!function_exists('mkdir_recursive')) {
      */
     function mkdir_recursive(string $directory, int $permissions = 0777, $context = null): bool
     {
-        if (!is_dir($directory)) {
-            if (false === @mkdir($directory, $permissions, true, $context) && !is_dir($directory)) {
-                throw new FileException(sprintf('Unable to create the "%s" directory.', $directory));
-            }
+        if (!is_dir($directory) && false === @mkdir($directory, $permissions, true, $context) && !is_dir($directory)) {
+            throw new FileException(sprintf('Unable to create the "%s" directory.', $directory));
         }
         return true;
     }
@@ -363,13 +392,6 @@ if (!function_exists('mkdir_for_writing')) {
             throw new FileException(sprintf('Unable to write in the "%s" directory.', $directory));
         }
         return true;
-    }
-}
-
-if (!function_exists('modify')) {
-    function modify(mixed $value, ?Closure $callback = null): mixed
-    {
-        return is_null($callback) ? $value : $callback($value);
     }
 }
 
@@ -394,6 +416,152 @@ if (!function_exists('nullify_empty_array')) {
     }
 }
 
+if (!function_exists('num_add')) {
+    function num_add(float|int|string $num1, float|int|string $num2, ?int $scale = null): string
+    {
+        return bcadd(num_std($num1), num_std($num2), $scale);
+    }
+}
+
+if (!function_exists('num_comp')) {
+    function num_comp(float|int|string $num1, float|int|string $num2, ?int $scale = null): int
+    {
+        return bccomp(num_std($num1), num_std($num2), $scale);
+    }
+}
+
+if (!function_exists('num_div')) {
+    function num_div(float|int|string $num1, float|int|string $num2, ?int $scale = null): string
+    {
+        return bcdiv(num_std($num1), num_std($num2), $scale);
+    }
+}
+
+if (!function_exists('num_eq')) {
+    function num_eq(float|int|string $num1, float|int|string $num2, ?int $scale = null): bool
+    {
+        return num_comp($num1, $num2, $scale) === 0;
+    }
+}
+
+if (!function_exists('num_floor')) {
+    function num_floor(int|float|string $num, ?int $precision = null): string
+    {
+        return bcadd(num_std($num), 0, $precision);
+    }
+}
+
+if (!function_exists('num_gt')) {
+    function num_gt(float|int|string $num1, float|int|string $num2, ?int $scale = null): bool
+    {
+        return num_comp($num1, $num2, $scale) === 1;
+    }
+}
+
+if (!function_exists('num_gte')) {
+    function num_gte(float|int|string $num1, float|int|string $num2, ?int $scale = null): bool
+    {
+        return num_comp($num1, $num2, $scale) >= 0;
+    }
+}
+
+if (!function_exists('num_lt')) {
+    function num_lt(float|int|string $num1, float|int|string $num2, ?int $scale = null): bool
+    {
+        return num_comp($num1, $num2, $scale) === -1;
+    }
+}
+
+if (!function_exists('num_lte')) {
+    function num_lte(float|int|string $num1, float|int|string $num2, ?int $scale = null): bool
+    {
+        return num_comp($num1, $num2, $scale) <= 0;
+    }
+}
+
+if (!function_exists('num_max')) {
+    function num_max(float|int|string $num1, float|int|string $num2, ?int $scale = null): string
+    {
+        return num_gte($num1, $num2, $scale) ? $num1 : $num2;
+    }
+}
+
+if (!function_exists('num_min')) {
+    function num_min(float|int|string $num1, float|int|string $num2, ?int $scale = null): string
+    {
+        return num_lte($num1, $num2, $scale) ? $num1 : $num2;
+    }
+}
+
+if (!function_exists('num_mod')) {
+    function num_mod(float|int|string $num1, float|int|string $num2, ?int $scale = null): string
+    {
+        return bcmod(num_std($num1), num_std($num2), $scale);
+    }
+}
+
+if (!function_exists('num_mul')) {
+    function num_mul(float|int|string $num1, float|int|string $num2, ?int $scale = null): string
+    {
+        return bcmul(num_std($num1), num_std($num2), $scale);
+    }
+}
+
+if (!function_exists('num_ne')) {
+    function num_ne(float|int|string $num1, float|int|string $num2, ?int $scale = null): bool
+    {
+        return !num_eq($num1, $num2, $scale);
+    }
+}
+
+if (!function_exists('num_neg')) {
+    function num_neg(float|int|string $num, ?int $scale = null): string
+    {
+        return num_sub(0, num_std($num), $scale);
+    }
+}
+
+if (!function_exists('num_pow')) {
+    function num_pow(float|int|string $num, int $exponent, ?int $scale = null): string
+    {
+        return bcpow(num_std($num), $exponent, $scale);
+    }
+}
+
+if (!function_exists('num_sqrt')) {
+    function num_sqrt(float|int|string $num, ?int $scale = null): string
+    {
+        return bcsqrt(num_std($num), $scale);
+    }
+}
+
+if (!function_exists('num_std')) {
+    function num_std(float|int|string $num, ?int $scale = null): string
+    {
+        $num = (string)$num;
+        $scale = $scale ?: BC_DEFAULT_SCALE;
+        return preg_match('/^[+-]?\d*(\.\d*)?$/', $num) === 1
+            ? $num
+            : sprintf("%.{$scale}F", $num); // TODO: Fix that $num will be rounded-up
+    }
+}
+
+if (!function_exists('num_sub')) {
+    function num_sub(float|int|string $num1, float|int|string $num2, ?int $scale = null): string
+    {
+        return bcsub(num_std($num1), num_std($num2), $scale);
+    }
+}
+
+if (!function_exists('num_trim')) {
+    function num_trim(float|int|string $num1, ?int $scale = null): string
+    {
+        return str_contains(num_std($num1, $scale), '.')
+            ? preg_replace('/\.?0+$/', '', num_std($num1, $scale))
+            : $num1;
+    }
+}
+
 if (!function_exists('number_formatter')) {
     function number_formatter(): NumberFormatter
     {
@@ -401,13 +569,12 @@ if (!function_exists('number_formatter')) {
     }
 }
 
-if (!function_exists('numcmp')) {
-    function numcmp(float|int $num1, float|int $num2): int
+if (!function_exists('out')) {
+    function out(...$vars): void
     {
-        if ($num1 == $num2) {
-            return 0;
+        foreach ($vars as $v) {
+            VarDumper::dump($v);
         }
-        return $num1 > $num2 ? 1 : -1;
     }
 }
 
@@ -420,14 +587,14 @@ if (!function_exists('readable_filesize')) {
         if (($index = array_search($unit, $units)) === false) {
             $index = $minUnitIndex;
         }
-        if ($size >= 1024) {
-            while ($size >= 1024 && $index < $maxUnitIndex) {
+        if (num_gte($size, 1024)) {
+            while (num_gte($size, 1024) && $index < $maxUnitIndex) {
                 ++$index;
                 $size /= 1024;
             }
         }
-        elseif ($size < 1) {
-            while ($size < 1 && $index > $minUnitIndex) {
+        elseif (num_lt($size, 1)) {
+            while (num_lt($size, 1) && $index > $minUnitIndex) {
                 --$index;
                 $size *= 1024;
             }
@@ -444,12 +611,19 @@ if (!function_exists('rtrim_more')) {
     }
 }
 
+if (!function_exists('safe_unserialize')) {
+    function safe_unserialize(string $data, bool|array $allowedClasses = true, array $options = []): mixed
+    {
+        return unserialize($data, [
+                'allowed_classes' => $allowedClasses,
+            ] + $options);
+    }
+}
+
 if (!function_exists('snaky_filled_array')) {
     function snaky_filled_array(array $array, array $default = null, $nullable = false): array
     {
-        return filled_array($array, $default, $nullable, function ($key) {
-            return Str::snake($key);
-        });
+        return filled_array($array, $default, $nullable, static fn($key) => Str::snake($key));
     }
 }
 
@@ -457,19 +631,6 @@ if (!function_exists('stringable')) {
     function stringable(mixed $value): bool
     {
         return is_string($value) || (is_object($value) && method_exists($value, '__toString'));
-    }
-}
-
-if (!function_exists('take')) {
-    function take(mixed $value, ?Closure $callback = null): mixed
-    {
-        if (is_null($callback)) {
-            return $value;
-        }
-
-        $callback($value);
-
-        return $value;
     }
 }
 
@@ -481,14 +642,18 @@ if (!function_exists('trim_more')) {
 }
 
 if (!function_exists('uri')) {
+    /**
+     * @throws UrlGenerationException
+     */
     function uri(string $uri, mixed $parameters = [], bool $absolute = true): string
     {
         if ($isAbsolute = (preg_match('/^https?:\/\//', $uri) === 1)) {
             $absolute = false;
         }
-        return with(url()->toRoute(new Route('GET', $uri, fn() => true), $parameters, $absolute), function ($url) use ($isAbsolute) {
-            return $isAbsolute ? substr($url, 1) : $url;
-        });
+        return with(
+            url()->toRoute(new Route('GET', $uri, fn() => true), $parameters, $absolute),
+            static fn($url) => $isAbsolute ? substr($url, 1) : $url
+        );
     }
 }
 

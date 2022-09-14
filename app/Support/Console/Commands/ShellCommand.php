@@ -6,7 +6,7 @@ use App\Support\Exceptions\ShellException;
 
 abstract class ShellCommand extends Command
 {
-    protected abstract function getShell(): string;
+    abstract protected function getShell(): string;
 
     /**
      * @throws ShellException

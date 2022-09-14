@@ -19,6 +19,7 @@ return [
             'logging_except' => [
                 Illuminate\Queue\Console\WorkCommand::class,
                 Illuminate\Console\Scheduling\ScheduleRunCommand::class,
+                //
                 App\Trading\Console\Commands\Orchestration\OriginCommand::class,
                 App\Trading\Console\Commands\Orchestration\PriceStreamCommand::class,
                 App\Trading\Console\Commands\Orchestration\LatestPriceCommand::class,
@@ -37,7 +38,7 @@ return [
                 //
                 [
                     'schedules' => [
-                        // App\Console\Commands\Coin\IdentificationCommand::class,
+                        // App\Trading\Console\Commands\Coin\IdentificationCommand::class,
                     ],
                     'frequencies' => [
                         'monthly',

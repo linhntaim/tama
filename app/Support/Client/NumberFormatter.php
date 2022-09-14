@@ -26,7 +26,7 @@ class NumberFormatter extends SettingsApplier
     {
         if ($this->autoInt) {
             $this->autoInt = false;
-            if ($number == (int)$number) {
+            if (int_eq($number)) {
                 $decimals = 0;
             }
         }
@@ -87,15 +87,5 @@ class NumberFormatter extends SettingsApplier
     {
         [$size, $unit] = readable_filesize($size, $unit);
         return $this->format($size) . $separator . $unit;
-    }
-
-    public function fromIniSize(string $size): int
-    {
-        return match (substr($size, -1)) {
-            'M', 'm' => (int)$size * 1048576,
-            'K', 'k' => (int)$size * 1024,
-            'G', 'g' => (int)$size * 1073741824,
-            default => $size,
-        };
     }
 }

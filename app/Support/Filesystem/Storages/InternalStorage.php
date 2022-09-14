@@ -2,6 +2,8 @@
 
 namespace App\Support\Filesystem\Storages;
 
+use App\Support\Exceptions\FileNotFoundException;
+use App\Support\Filesystem\Storages\Contracts\DirectEditableStorage as DirectEditableStorageContract;
 use App\Support\Http\File;
 use BadMethodCallException;
 use Illuminate\Http\UploadedFile;
@@ -13,7 +15,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse as SymfonyStreamedResponse
 /**
  * @property File|UploadedFile|null $file
  */
-class InternalStorage extends Storage implements IDirectEditableStorage
+class InternalStorage extends Storage implements DirectEditableStorageContract
 {
     public const NAME = 'internal';
 
@@ -22,6 +24,9 @@ class InternalStorage extends Storage implements IDirectEditableStorage
         throw new BadMethodCallException('Internal Storage does not support `fromFile` method.');
     }
 
+    /**
+     * @throws FileNotFoundException
+     */
     public function setFile(string|SplFileInfo $file): static
     {
         $file = File::from($file, false);
@@ -50,6 +55,9 @@ class InternalStorage extends Storage implements IDirectEditableStorage
         return $this->file->getContent();
     }
 
+    /**
+     * @return resource|bool
+     */
     public function getStream()
     {
         if (($f = fopen($path = $this->getRealPath(), 'r')) === false) {

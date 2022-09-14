@@ -27,7 +27,7 @@ class RateLimiter extends BaseRateLimiter
     /**
      * @throws InvalidArgumentException
      */
-    public function lockAvailableIn($key)
+    public function lockAvailableIn($key): int
     {
         return max(
             $this->availableIn($key),
@@ -35,13 +35,13 @@ class RateLimiter extends BaseRateLimiter
         );
     }
 
-    public function lockClear($key)
+    public function lockClear($key): void
     {
         $this->clear($key);
         $this->cache->forget($this->cleanRateLimiterKey($key) . ':lock_timer');
     }
 
-    public function attemptWithDelay($key, $maxAttempts, Closure $callback, $decaySeconds = 60)
+    public function attemptWithDelay($key, $maxAttempts, Closure $callback, $decaySeconds = 60): bool
     {
         if ($this->tooManyAttempts($key, $maxAttempts)) {
             echo 'sleep: ' . $this->availableIn($key) . PHP_EOL;
@@ -56,7 +56,7 @@ class RateLimiter extends BaseRateLimiter
     /**
      * @throws InvalidArgumentException
      */
-    public function attemptWithLock($key, $maxAttempts, Closure $callback, $decaySeconds = 60, $lockSeconds = 3600)
+    public function attemptWithLock($key, $maxAttempts, Closure $callback, $decaySeconds = 60, $lockSeconds = 3600): bool
     {
         if ($this->locked($key)) {
             return false;

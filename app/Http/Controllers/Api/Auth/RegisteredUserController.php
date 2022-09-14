@@ -11,7 +11,7 @@ class RegisteredUserController extends BaseRegisteredUserController
     protected function welcomeCreateUrlCallback(Request $request): ?Closure
     {
         return $request->has('login_url')
-            ? function () use ($request) {
+            ? static function () use ($request) {
                 return $request->input('login_url');
             }
             : null;

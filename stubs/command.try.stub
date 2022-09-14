@@ -8,10 +8,9 @@ class TryCommand extends Command
 {
     protected function handling(): int
     {
-        // TODO:
+        // TODO
         $this->info('hello, try');
 
-        // TODO
         return $this->exitSuccess();
     }
 }

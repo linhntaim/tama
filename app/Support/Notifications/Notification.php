@@ -2,22 +2,32 @@
 
 namespace App\Support\Notifications;
 
-use App\Support\ClassTrait;
-use App\Support\Client\InternalSettings;
+use App\Support\Client\Concerns\InternalSettings;
+use App\Support\Concerns\ClassHelper;
 use App\Support\Facades\App;
 use App\Support\Facades\Artisan;
 use App\Support\Mail\Mailable;
+use App\Support\Notifications\Contracts\Notifiable as NotifiableContract;
+use App\Support\Notifications\Contracts\Notifier as NotifierContract;
+use App\Support\Notifications\Contracts\ViaBroadcast;
+use App\Support\Notifications\Contracts\ViaDatabase;
+use App\Support\Notifications\Contracts\ViaMail;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification as BaseNotification;
 use Illuminate\Support\Facades\Notification as NotificationFacade;
 use RuntimeException;
 
-class Notification extends BaseNotification
+abstract class Notification extends BaseNotification
 {
-    use ClassTrait, InternalSettings;
+    use ClassHelper, InternalSettings;
 
-    public static function sendOnDemand(array|AnonymousNotifiable $routes, mixed ...$args)
+    public static function viaDatabaseEnabled(): bool
+    {
+        return config_starter('notification.uses.database');
+    }
+
+    public static function sendOnDemand(array|AnonymousNotifiable $routes, mixed ...$args): void
     {
         if ($routes instanceof AnonymousNotifiable) {
             $notifiable = $routes;
@@ -31,14 +41,14 @@ class Notification extends BaseNotification
         $notifiable->notify(new static(...$args));
     }
 
-    public static function send(mixed $notifiables, mixed ...$args)
+    public static function send(mixed $notifiables, mixed ...$args): void
     {
         NotificationFacade::send($notifiables, new static(...$args));
     }
 
-    protected ?INotifier $notifier = null;
+    protected ?NotifierContract $notifier = null;
 
-    public function __construct(?INotifier $notifier = null)
+    public function __construct(?NotifierContract $notifier = null)
     {
         $this->captureCurrentSettings();
         if (App::runningSolelyInConsole()) {
@@ -49,11 +59,11 @@ class Notification extends BaseNotification
         $this->notifier = $notifier;
     }
 
-    public function via(INotifiable $notifiable): array|string
+    public function via(NotifiableContract $notifiable): array|string
     {
         $via = [];
         if ($this instanceof ViaDatabase) {
-            if (!config_starter('notification.uses.database')) {
+            if (!self::viaDatabaseEnabled()) {
                 throw new RuntimeException('Notification via database is not enabled.');
             }
             $via[] = 'database';
@@ -67,22 +77,22 @@ class Notification extends BaseNotification
         return $via;
     }
 
-    public function shouldSend(INotifiable $notifiable, string $channel): bool
+    public function shouldSend(NotifiableContract $notifiable, string $channel): bool
     {
         return true;
     }
 
-    public function toDatabase(INotifiable $notifiable): array
+    public function toDatabase(NotifiableContract $notifiable): array
     {
         return ['payload' => serialize(clone $this)] + $this->dataDatabase($notifiable);
     }
 
-    protected function dataDatabase(INotifiable $notifiable): array
+    protected function dataDatabase(NotifiableContract $notifiable): array
     {
         return [];
     }
 
-    public function toBroadcast(INotifiable $notifiable): BroadcastMessage
+    public function toBroadcast(NotifiableContract $notifiable): BroadcastMessage
     {
         return new BroadcastMessage([
                 'notifier' => $this->notifier ? [
@@ -91,18 +101,36 @@ class Notification extends BaseNotification
             ] + $this->dataBroadcast($notifiable));
     }
 
-    protected function dataBroadcast(INotifiable $notifiable): array
+    protected function dataBroadcast(NotifiableContract $notifiable): array
     {
         return [];
     }
 
-    public function toMail(INotifiable $notifiable): Mailable|MailMessage|null
+    public function toMail(NotifiableContract $notifiable): Mailable|MailMessage|null
     {
-        return $this->dataMailable($notifiable);
+        return with($this->dataMail($notifiable), function ($mailable) use ($notifiable) {
+            if ($mailable instanceof Mailable) {
+                $mailable->to($this->dataMailRecipients($notifiable));
+            }
+            return $mailable;
+        });
     }
 
-    public function dataMailable(INotifiable $notifiable): Mailable|MailMessage|null
+    protected function dataMail(NotifiableContract $notifiable): Mailable|MailMessage|null
     {
         return null;
+    }
+
+    protected function dataMailRecipients(NotifiableContract $notifiable): array
+    {
+        if (is_string($recipients = $notifiable->routeNotificationFor('mail', $this))) {
+            $recipients = [$recipients];
+        }
+
+        return collect($recipients)->mapWithKeys(function ($recipient, $email) {
+            return is_numeric($email)
+                ? [$email => (is_string($recipient) ? $recipient : $recipient->email)]
+                : [$email => $recipient];
+        })->all();
     }
 }

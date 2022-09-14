@@ -2,13 +2,17 @@
 
 namespace App\Support\Http\Resources;
 
+use App\Support\Http\Resources\Concerns\ResourceTransformer;
+use App\Support\Http\Resources\Concerns\ResourceWrapper;
+use App\Support\Http\Resources\Contracts\ArrayResponsibleResource;
+use App\Support\Http\Resources\Contracts\WrappedResource;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource as BaseResource;
 use JsonSerializable;
 
-class Resource extends BaseResource implements IWrappedResource, IArrayResponsibleResource
+class Resource extends BaseResource implements WrappedResource, ArrayResponsibleResource
 {
     use ResourceWrapper, ResourceTransformer;
 
@@ -19,7 +23,7 @@ class Resource extends BaseResource implements IWrappedResource, IArrayResponsib
         $resourceCollectionClass = static::$collectionClass;
         return tap(
             new $resourceCollectionClass($resource, static::class),
-            function ($collection) {
+            static function ($collection) {
                 $collection->collects = static::class;
                 if (property_exists(static::class, 'preserveKeys')) {
                     $collection->preserveKeys = (new static([]))->preserveKeys === true;

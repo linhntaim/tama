@@ -6,7 +6,7 @@ use App\Support\Client\Manager;
 use App\Support\Client\Settings;
 use App\Support\Configuration;
 use App\Support\Facades\Client;
-use App\Support\Http\Requests;
+use App\Support\Http\Concerns\Requests;
 use Closure;
 use Illuminate\Http\Request;
 
@@ -93,10 +93,8 @@ class SettingsFromClient
 
     protected function storeCookie(Request $request, $response)
     {
-        if (Client::settingsChanged()) {
-            if (EncryptCookies::ran()) {
-                return $response->cookie(name_starter('settings'), Client::settings()->toJson(JSON_READABLE), Configuration::COOKIE_FOREVER_EXPIRE);
-            }
+        if (Client::settingsChanged() && EncryptCookies::ran()) {
+            return $response->cookie(name_starter('settings'), Client::settings()->toJson(), Configuration::COOKIE_FOREVER_EXPIRE);
         }
         return $response;
     }

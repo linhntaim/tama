@@ -3,6 +3,7 @@
 namespace App\Support\Http\Resources;
 
 use App\Support\Exceptions\Exception;
+use App\Support\Http\Resources\Contracts\ArrayResponsibleResource;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\JsonResponse;
@@ -19,9 +20,9 @@ class ResponseResource extends Resource
 
     public static function from(mixed $resource = null, mixed ...$args): static
     {
-        return $resource instanceof ResponseResource
+        return $resource instanceof self
             ? $resource
-            : tap(new static($resource), function (ResponseResource $responseResource) use ($resource, $args) {
+            : tap(new static($resource), static function (ResponseResource $responseResource) use ($resource, $args) {
                 if (is_null($resource)) {
                     return;
                 }
@@ -197,8 +198,8 @@ class ResponseResource extends Resource
                 'line' => $exception->getLine(),
                 'code' => $exception->getCode(),
                 'message' => $exception->getMessage(),
-                'trace' => array_map(function ($trace) {
-                    $trace['args'] = array_map(function ($arg) {
+                'trace' => array_map(static function ($trace) {
+                    $trace['args'] = array_map(static function ($arg) {
                         return is_resource($arg)
                             ? sprintf('{resource(%s[%s])}', get_resource_type($arg), get_resource_id($arg))
                             : $arg;
@@ -244,7 +245,7 @@ class ResponseResource extends Resource
      * @param Request $request
      * @param JsonResponse $response
      */
-    public function withResponse($request, $response)
+    public function withResponse($request, $response): void
     {
         $response
             ->setStatusCode($this->getStatusCode())
@@ -253,7 +254,7 @@ class ResponseResource extends Resource
 
     public function toArray($request): array|Arrayable|JsonSerializable
     {
-        if ($this->resource instanceof IArrayResponsibleResource) {
+        if ($this->resource instanceof ArrayResponsibleResource) {
             return $this->resource->toArrayResponse($request);
         }
         return parent::toArray($request);

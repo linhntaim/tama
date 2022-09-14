@@ -4,6 +4,7 @@ namespace App\Support\Console;
 
 use App\Support\Client\Settings;
 use App\Support\Console\Commands\Command;
+use App\Support\Console\Concerns\ExecutionWrap;
 use Illuminate\Console\Application as BaseApplication;
 use Illuminate\Console\BufferedConsoleOutput;
 use Illuminate\Support\Str;
@@ -26,9 +27,7 @@ class Application extends BaseApplication
 
     public function findByNamespaces(string|array $namespaces): array
     {
-        $namespaces = array_map(function ($namespace) {
-            return $namespace . ':';
-        }, (array)$namespaces);
+        $namespaces = array_map(static fn($namespace) => $namespace . ':', (array)$namespaces);
 
         $found = [];
         foreach ($this->all() as $command) {
@@ -106,14 +105,14 @@ class Application extends BaseApplication
         );
     }
 
-    public function startRunningCommand(SymfonyCommand $command, InputInterface $input)
+    public function startRunningCommand(SymfonyCommand $command, InputInterface $input): void
     {
         $this->runningCommands[] = (new RunningCommand())
             ->setCommand($command)
             ->setInput($input);
     }
 
-    public function endRunningCommand()
+    public function endRunningCommand(): void
     {
         array_pop($this->runningCommands);
     }

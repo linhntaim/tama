@@ -9,8 +9,6 @@ class RespArray extends RespData
      */
     public function output(): array
     {
-        return array_map(function (?RespData $respData) {
-            return $respData?->output();
-        }, $this->data);
+        return array_map(static fn(?RespData $respData) => $respData?->output(), $this->data);
     }
 }

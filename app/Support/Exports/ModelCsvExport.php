@@ -2,7 +2,8 @@
 
 namespace App\Support\Exports;
 
-use App\Support\Http\Resources\ResourceTransformer;
+use App\Support\Filesystem\Filers\Filer;
+use App\Support\Http\Resources\Concerns\ResourceTransformer;
 use App\Support\Models\ModelProvider;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -52,9 +53,9 @@ abstract class ModelCsvExport extends CsvExport
         return $this;
     }
 
-    protected abstract function modelProviderClass(): string;
+    abstract protected function modelProviderClass(): string;
 
-    protected abstract function modelResourceClass(): string;
+    abstract protected function modelResourceClass(): string;
 
     protected function modelProvider(): ModelProvider
     {
@@ -62,14 +63,14 @@ abstract class ModelCsvExport extends CsvExport
         return new $class;
     }
 
-    protected function exportBefore($filer)
+    protected function exportBefore(Filer $filer): void
     {
         parent::exportBefore($filer);
         $this->skipDefault = $this->dataIndex + 1;
         $this->read = 0;
     }
 
-    protected function prepareData()
+    protected function prepareData(): void
     {
         if ($this->more) {
             $this->data = $this->resourceTransform(
@@ -79,7 +80,7 @@ abstract class ModelCsvExport extends CsvExport
                         ->limit($this->perRead + 1, (++$this->read - 1) * $this->perRead + $this->skipDefault)
                         ->all($this->conditions),
                     function (Collection $models) {
-                        if ($this->more = $models->count() > $this->perRead) {
+                        if ($this->more = ($models->count() > $this->perRead)) {
                             $models->pop();
                         }
                         return $models;
@@ -90,9 +91,11 @@ abstract class ModelCsvExport extends CsvExport
         }
     }
 
-    protected function data()
+    protected function data(): ?array
     {
-        $this->prepareData();
+        if (count($this->data) === 0) {
+            $this->prepareData();
+        }
         return parent::data();
     }
 }

@@ -3,7 +3,7 @@
 namespace App\Support\Http\Controllers\Api\Auth;
 
 use App\Support\Auth\Notifications\WelcomeEmail;
-use App\Support\Database\DatabaseTransaction;
+use App\Support\Database\Concerns\DatabaseTransaction;
 use App\Support\Http\Controllers\ApiController;
 use Closure;
 use Illuminate\Auth\Events\Registered;
@@ -21,9 +21,9 @@ class RegisteredUserController extends ApiController
     protected function welcomeCreateUrlCallback(Request $request): ?Closure
     {
         return match (true) {
-            $request->filled('login_uri') => fn() => url($request->input('login_uri')),
-            $request->filled('login_url') => fn() => $request->input('login_url'),
-            !Route::has('login') => fn() => url('auth/login'),
+            $request->filled('login_uri') => static fn() => url($request->input('login_uri')),
+            $request->filled('login_url') => static fn() => $request->input('login_url'),
+            !Route::has('login') => static fn() => url('auth/login'),
             default => null,
         };
     }
@@ -56,7 +56,7 @@ class RegisteredUserController extends ApiController
         $this->transactionStart();
         try {
             event(new Registered($creator->create($request->all())));
-            return take(app(RegisterResponse::class), function () {
+            return tap(app(RegisterResponse::class), function () {
                 $this->transactionComplete();
             });
         }

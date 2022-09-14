@@ -2,8 +2,8 @@
 
 namespace App\Trading\Models;
 
+use App\Support\Models\Model;
 use App\Support\Models\ModelProvider;
-use App\Support\Models\QueryValues\HasValue;
 use App\Support\Models\QueryValues\LikeValue;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Collection;
 /**
  * @method Trading createWithAttributes(array $attributes = [])
  * @method Trading|null first(array $conditions = [])
+ * @method Trading|null firstByKey(int|string $key)
  * @method Trading|null firstByUnique(int|string $unique)
  * @method Collection all(array $conditions = [])
  */
@@ -24,10 +25,19 @@ class TradingProvider extends ModelProvider
         return $this->first(['slug' => $slug]);
     }
 
-    protected function whereBySubscriber(Builder $query, $subscriber)
+    protected function whereBySubscriber(Builder $query, $subscriber): Builder
     {
-        $query->whereHas('subscribers', function ($query) use ($subscriber) {
+        return $query->whereHas('subscribers', function ($query) use ($subscriber) {
             $query->where('id', $this->retrieveKey($subscriber));
+        });
+    }
+
+    protected function whereByRunning(Builder $query): Builder
+    {
+        return $query->where(function (Builder $query) {
+            $query->has('subscribers')
+                ->orHas('buyStrategies')
+                ->orHas('sellStrategies');
         });
     }
 
@@ -39,13 +49,13 @@ class TradingProvider extends ModelProvider
         ]), $perPage, $page);
     }
 
-    public function allByHavingSubscribers(string|array|null $exchange = null, string|array|null $ticker = null, string|array|null $interval = null): Collection
+    public function allByRunning(string|array|null $exchange = null, string|array|null $ticker = null, string|array|null $interval = null): Collection
     {
         return $this->all(array_filter([
             'exchange' => $exchange,
             'ticker' => $ticker,
             'interval' => $interval,
-            'subscribers' => HasValue::create(),
+            'running' => true,
         ]));
     }
 }

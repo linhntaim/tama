@@ -27,7 +27,7 @@ abstract class CommandSchedule extends Schedule
         return $parameters;
     }
 
-    protected function handling()
+    protected function handling(): void
     {
         Artisan::call($this->getCommand(), $this->getParametersWithSettings());
     }

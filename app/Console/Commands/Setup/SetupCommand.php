@@ -15,12 +15,11 @@ class SetupCommand extends ForceCommand
         }
 
         foreach ([
-                     'webServer',
-                     'keyGenerate',
-                     'storage',
-                     'migrate',
-                 ] as $i => $method) {
-            $i > 0 && $this->newLine();
+            'webServer',
+            'keyGenerate',
+            'storage',
+            'migrate',
+        ] as $method) {
             if (!$this->{$method}()) {
                 return $this->exitFailure();
             }
@@ -28,31 +27,32 @@ class SetupCommand extends ForceCommand
         return $this->exitSuccess();
     }
 
-    protected function keyGenerate(): bool
-    {
-        return $this->call('setup:key-generate', [
-                '--force' => $this->forced(),
-            ]) == self::SUCCESS;
-    }
-
     protected function webServer(): bool
     {
         return $this->call('setup:web-server', [
                 '--force' => $this->forced(),
-            ]) == self::SUCCESS;
+            ]) === self::SUCCESS;
+    }
+
+    protected function keyGenerate(): bool
+    {
+        $this->newLine();
+        return $this->call('setup:key-generate', [
+                '--force' => $this->forced(),
+            ]) === self::SUCCESS;
     }
 
     protected function storage(): bool
     {
         return $this->call('setup:storage', [
                 '--force' => $this->forced(),
-            ]) == self::SUCCESS;
+            ]) === self::SUCCESS;
     }
 
     protected function migrate(): bool
     {
         return $this->call('setup:migrate', [
                 '--force' => $this->forced(),
-            ]) == self::SUCCESS;
+            ]) === self::SUCCESS;
     }
 }

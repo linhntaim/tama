@@ -25,7 +25,7 @@ class LimitCondition extends QueryCondition
 
     public function setSkip(int $skip): static
     {
-        $this->skip = $skip >= 0 ? $skip : 0;
+        $this->skip = max($skip, 0);
         return $this;
     }
 

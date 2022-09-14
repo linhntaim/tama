@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
-use App\Support\Contracts\Auth\MustWelcomeEmail;
-use App\Support\Models\HasProtected;
-use App\Support\Models\IProtected;
+use App\Support\Auth\Contracts\MustWelcomeEmail;
+use App\Support\Models\Concerns\HasProtected;
+use App\Support\Models\Contracts\HasProtected as HasProtectedContract;
 use App\Support\Models\SanctumUser;
 use App\Trading\Models\Trading;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Trading\Models\UserExchangeOption;
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -20,8 +21,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $email
  * @property UserSocial[]|Collection $socials
  * @property Trading[]|Collection $tradings
+ * @property UserExchangeOption[]|Collection $exchangeOptions
  */
-class User extends SanctumUser implements MustWelcomeEmail, IProtected
+class User extends SanctumUser implements MustWelcomeEmail, HasProtectedContract
 {
     use HasFactory, HasProtected;
 
@@ -69,6 +71,7 @@ class User extends SanctumUser implements MustWelcomeEmail, IProtected
      * @var array<string, string>
      */
     protected $casts = [
+        'id' => 'integer',
         'email_verified_at' => 'datetime',
     ];
 
@@ -83,13 +86,13 @@ class User extends SanctumUser implements MustWelcomeEmail, IProtected
     protected function sdStEmailVerifiedAt(): Attribute
     {
         return Attribute::make(
-            get: fn() => is_null($this->attributes['email_verified_at'] ?? null)
+            get: static fn($value, $attributes) => is_null($attributes['email_verified_at'] ?? null)
                 ? null
                 : date_timer()->compound(
                     'shortDate',
                     ' ',
                     'shortTime',
-                    $this->attributes['email_verified_at']
+                    $attributes['email_verified_at']
                 ),
         );
     }
@@ -97,11 +100,11 @@ class User extends SanctumUser implements MustWelcomeEmail, IProtected
     protected function sdStCreatedAt(): Attribute
     {
         return Attribute::make(
-            get: fn() => date_timer()->compound(
+            get: static fn($_, $attributes) => date_timer()->compound(
                 'shortDate',
                 ' ',
                 'shortTime',
-                $this->attributes['created_at']
+                $attributes['created_at']
             )
         );
     }
@@ -124,5 +127,15 @@ class User extends SanctumUser implements MustWelcomeEmail, IProtected
     public function tradings(): BelongsToMany
     {
         return $this->belongsToMany(Trading::class, 'trading_subscribers', 'user_id', 'trading_id');
+    }
+
+    public function exchangeOptions(): HasMany
+    {
+        return $this->hasMany(UserExchangeOption::class, 'user_id', 'id');
+    }
+
+    public function exchangeOption(string $exchange): ?UserExchangeOption
+    {
+        return $this->exchangeOptions->firstWhere('exchange', $exchange);
     }
 }

@@ -32,7 +32,7 @@ abstract class Connection implements ConnectionInterface
         return $this;
     }
 
-    protected function emitRespData(RespData $respData)
+    protected function emitRespData(RespData $respData): void
     {
         if ($respData instanceof RespError) {
             $this->emit('error', [$respData]);
@@ -64,11 +64,13 @@ abstract class Connection implements ConnectionInterface
     public function removeListener($event, callable $listener): static
     {
         $this->connection->removeListener($event, $listener);
+        return $this;
     }
 
     public function removeAllListeners($event = null): static
     {
         $this->connection->removeAllListeners($event);
+        return $this;
     }
 
     public function listeners($event = null)
@@ -76,7 +78,7 @@ abstract class Connection implements ConnectionInterface
         return $this->connection->listeners($event);
     }
 
-    public function emit($event, array $arguments = [])
+    public function emit($event, array $arguments = []): void
     {
         $this->connection->emit($event, $arguments);
     }
@@ -86,22 +88,22 @@ abstract class Connection implements ConnectionInterface
         return $this->connection->isReadable();
     }
 
-    public function pause()
+    public function pause(): void
     {
         $this->connection->pause();
     }
 
-    public function resume()
+    public function resume(): void
     {
         $this->connection->resume();
     }
 
-    public function pipe(WritableStreamInterface $dest, array $options = [])
+    public function pipe(WritableStreamInterface $dest, array $options = []): WritableStreamInterface
     {
         return $this->connection->pipe($dest, $options);
     }
 
-    public function close()
+    public function close(): void
     {
         $this->connection->close();
     }
@@ -116,14 +118,14 @@ abstract class Connection implements ConnectionInterface
         return $this->connection->write($data);
     }
 
-    public function end($data = null)
+    public function end($data = null): void
     {
         $this->connection->end();
     }
 
     public function select(string $index = '0'): static
     {
-        return $this->command('select', (string)$index);
+        return $this->command('select', $index);
     }
 
     public function command(string $command, string|int ...$arguments): static
@@ -140,7 +142,7 @@ abstract class Connection implements ConnectionInterface
                 array_push($data, sprintf('$%d', strlen($argument)), $argument);
             }
             elseif (is_int($argument)) {
-                array_push($data, sprintf(':%d', $argument));
+                $data[] = sprintf(':%d', $argument);
             }
         }
         $data[] = '';

@@ -43,7 +43,7 @@ class BotController extends ApiController
     protected function matchSecret(Request $request): bool
     {
         return is_null($secret = config('services.telegram-bot-api.webhook_secret'))
-            || $request->header('X-Telegram-Bot-Api-Secret-Token') == $secret;
+            || $request->header('X-Telegram-Bot-Api-Secret-Token') === $secret;
     }
 
     protected function parseCommandFromMessageText(?string $messageText): ?string
@@ -52,17 +52,17 @@ class BotController extends ApiController
             return null;
         }
         $messageText = trim($messageText);
-        if ($messageText[0] != '/') {
+        if ($messageText[0] !== '/') {
             return null;
         }
         $messageText = mb_substr($messageText, 1);
-        if ($messageText[0] == ' ') {
+        if ($messageText[0] === ' ') {
             return null;
         }
         $texts = explode(' ', $messageText);
         if (($pos = mb_strpos($texts[0], '@')) !== false) { // handle bot name
-            if (!is_null($botName = config('services.telegram-bot-api.name'))
-                && mb_substr($texts[0], $pos + 1) != $botName) {
+            if (!is_null($botName = config('services.telegram-bot-api.username'))
+                && mb_substr($texts[0], $pos + 1) !== $botName) {
                 return null;
             }
             $texts[0] = explode('@', $texts[0])[0];
@@ -72,7 +72,7 @@ class BotController extends ApiController
 
     protected function transform(Request $request, string $command): string
     {
-        if ($command == 'telegram:hello') {
+        if ($command === 'telegram:hello') {
             $command = 'telegram:ping';
         }
         return $command . sprintf(' --telegram-update=\'%s\'', base64_encode($request->getContent()));

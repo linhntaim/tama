@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Facade;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 
 class AppServiceProvider extends ServiceProvider implements DeferrableProvider
 {
@@ -25,7 +27,7 @@ class AppServiceProvider extends ServiceProvider implements DeferrableProvider
      *
      * @return void
      */
-    public function register()
+    public function register(): void
     {
         $this->registerAppId();
         $this->registerExceptionHandler();
@@ -36,22 +38,22 @@ class AppServiceProvider extends ServiceProvider implements DeferrableProvider
         $this->registerClient();
     }
 
-    protected function registerAppId()
+    protected function registerAppId(): void
     {
         $this->app['id'] = Str::uuid()->toString();
     }
 
-    protected function registerExceptionHandler()
+    protected function registerExceptionHandler(): void
     {
         // Override exception handler when running in console
         $this->app->singleton(ExceptionHandler::class, Handler::class);
     }
 
-    protected function registerLog()
+    protected function registerLog(): void
     {
         // Log formatter
         $this->app->bind('starter_log_formatter', function () {
-            return tap(new LineFormatter(null, 'Y-m-d H:i:s', true, true), function ($formatter) {
+            return tap(new LineFormatter(null, 'Y-m-d H:i:s', true, true), static function ($formatter) {
                 $formatter->includeStacktraces();
             });
         });
@@ -62,7 +64,7 @@ class AppServiceProvider extends ServiceProvider implements DeferrableProvider
         Facade::clearResolvedInstance('log');
     }
 
-    protected function registerNotification()
+    protected function registerNotification(): void
     {
         $this->app->singleton(BaseChannelManager::class, function ($app) {
             return new ChannelManager($app);
@@ -70,7 +72,7 @@ class AppServiceProvider extends ServiceProvider implements DeferrableProvider
         Facade::clearResolvedInstance(BaseChannelManager::class);
     }
 
-    protected function registerCache()
+    protected function registerCache(): void
     {
         $this->app->singleton(BaseRateLimiter::class, function ($app) {
             return new RateLimiter($app->make('cache')->driver(
@@ -79,12 +81,12 @@ class AppServiceProvider extends ServiceProvider implements DeferrableProvider
         });
     }
 
-    protected function registerShell()
+    protected function registerShell(): void
     {
         $this->app->singleton('shell', Sheller::class);
     }
 
-    protected function registerClient()
+    protected function registerClient(): void
     {
         $this->app->singleton(ClientManager::class, function ($app) {
             return new ClientManager($app);
@@ -95,26 +97,51 @@ class AppServiceProvider extends ServiceProvider implements DeferrableProvider
      * Bootstrap any application services.
      *
      * @return void
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
-    public function boot()
+    public function boot(): void
     {
+        $this->configureGlobal();
         $this->configureLog();
         $this->configureMail();
     }
 
-    protected function configureLog()
+    protected function configureGlobal(): void
+    {
+        // ext-bcmath
+        bcscale(BC_DEFAULT_SCALE);
+        // ext-mbstring
+        mb_detect_order([
+            'UTF-8',
+            'UTF-7',
+            'ASCII',
+            'EUC-JP',
+            'SJIS',
+            'eucJP-win',
+            'SJIS-win',
+            'JIS',
+            'ISO-2022-JP',
+        ]);
+    }
+
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     */
+    protected function configureLog(): void
     {
         $config = config();
         $storageChannels = ['single', 'daily'];
         foreach ($config->get('logging.channels') as $channel => $_) {
             $config->set("logging.channels.$channel.formatter", 'starter_log_formatter');
-            if (in_array($channel, $storageChannels)) {
+            if (in_array($channel, $storageChannels, true)) {
                 $config->set("logging.channels.$channel.permission", 0777);
             }
         }
     }
 
-    protected function configureMail()
+    protected function configureMail(): void
     {
         $alwaysTo = config_starter('mail.always_to');
         if ($alwaysTo['address']) {

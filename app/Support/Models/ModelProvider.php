@@ -2,7 +2,8 @@
 
 namespace App\Support\Models;
 
-use App\Support\Database\DatabaseTransaction;
+use App\Support\Database\Concerns\DatabaseTransaction;
+use App\Support\Models\Contracts\HasProtected as HasProtectedContract;
 use App\Support\Models\QueryConditions\GroupCondition;
 use App\Support\Models\QueryConditions\LimitCondition;
 use App\Support\Models\QueryConditions\QueryCondition;
@@ -38,8 +39,6 @@ abstract class ModelProvider
     private const LOCK_NONE = 0;
     private const LOCK_UPDATE = 1;
     private const LOCK_SHARED = 2;
-    public const SORT_ASC = 'asc';
-    public const SORT_DESC = 'desc';
 
     public string $modelClass;
 
@@ -81,7 +80,7 @@ abstract class ModelProvider
     public function __construct(Model|callable|int|string $model = null)
     {
         if (!is_a($this->modelClass, Model::class, true)) {
-            throw new RuntimeException("Class [{$this->modelClass}] is not a model class.");
+            throw new RuntimeException("Class [$this->modelClass] is not a model class.");
         }
 
         $this->model($model);
@@ -126,9 +125,11 @@ abstract class ModelProvider
     public function with(string|array $relations, string|Closure|null $callback = null): static
     {
         $this->wheres[] = new WithCondition(
-            $callback instanceof Closure
-                ? [$relations => $callback]
-                : (is_string($relations) ? func_get_args() : $relations)
+            match (true) {
+                $callback instanceof Closure => [$relations => $callback],
+                is_string($relations) => func_get_args(),
+                default => $relations,
+            }
         );
         return $this;
     }
@@ -183,7 +184,7 @@ abstract class ModelProvider
     public function __call(string $name, array $arguments)
     {
         if (property_exists($this, $name)) {
-            return take($this->{$name}, function () use ($name, $arguments) {
+            return tap($this->{$name}, function () use ($name, $arguments) {
                 $this->{$name} = $arguments[0] ?? null;
             });
         }
@@ -197,7 +198,7 @@ abstract class ModelProvider
             ?? ($this->useSoftDeletes = class_use($this->modelClass, SoftDeletes::class));
     }
 
-    public function perPage(): bool
+    public function perPage(): int
     {
         return $this->perPage ?? ($this->perPage = $this->newModel()->getPerPage());
     }
@@ -309,7 +310,7 @@ abstract class ModelProvider
 
     protected function catchProtectedModel($model, string $message = 'Cannot modify protected model.'): ?Model
     {
-        if ($model instanceof IProtected
+        if ($model instanceof HasProtectedContract
             && $model->isProtected()
             && $this->protected(true)) {
             throw new RuntimeException($message);
@@ -366,7 +367,7 @@ abstract class ModelProvider
         $old = $this->pinned;
         $model = $this->newModel();
         $this->pinned = $old;
-        if ($model instanceof IProtected && $this->protected(true)) {
+        if ($model instanceof HasProtectedContract && $this->protected(true)) {
             return $this->query()->whereNotIn($model->getProtectedKey(), $model->getProtectedValues());
         }
         return $this->query();
@@ -520,7 +521,6 @@ abstract class ModelProvider
     protected function writeRestart(): static
     {
         $this->write = 0;
-        $this->writes = null;
         $this->writes = [];
         return $this;
     }
@@ -539,7 +539,7 @@ abstract class ModelProvider
     {
         ++$this->write;
         $this->writes[] = $attributes;
-        if ($this->write == $this->perWrite) {
+        if ($this->write === $this->perWrite) {
             return $this->writeMany()->writeRestart();
         }
         return $this;
@@ -648,10 +648,10 @@ abstract class ModelProvider
         if (is_null($length)) {
             $callback = method_exists($this, $method = 'makeUnique' . Str::studly($column))
                 ? fn() => $this->{$method}()
-                : fn() => Str::random(40);
+                : static fn() => Str::random(40);
         }
         elseif (is_int($length)) {
-            $callback = fn() => Str::random($length);
+            $callback = static fn() => Str::random($length);
         }
         else {
             $callback = $length;

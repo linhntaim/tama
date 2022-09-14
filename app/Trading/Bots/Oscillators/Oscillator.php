@@ -2,13 +2,16 @@
 
 namespace App\Trading\Bots\Oscillators;
 
+use App\Trading\Bots\BotSlug;
 use App\Trading\Bots\Data\Indication;
-use App\Trading\Bots\Pricing\PriceCollection;
+use App\Trading\Bots\Exchanges\PriceCollection;
 use Illuminate\Support\Collection;
 use RuntimeException;
 
 abstract class Oscillator
 {
+    use BotSlug;
+
     public const NAME = '';
 
     /**
@@ -23,17 +26,17 @@ abstract class Oscillator
         $this->createComponents();
     }
 
-    public final function getName(): string
+    final public function getName(): string
     {
         return static::NAME;
     }
 
     public function options(): array
     {
-        if (count($this->components) == 1) {
+        if (count($this->components) === 1) {
             return array_values($this->components)[0]->options();
         }
-        return array_map(function (Component $component) {
+        return array_map(static function (Component $component) {
             return $component->options();
         }, $this->components);
     }
@@ -46,23 +49,25 @@ abstract class Oscillator
         ];
     }
 
-    public function asSlug(): string
+    protected function optionsAsSlug(): string
     {
-        if (count($this->components) == 1) {
-            return implode('-', [
-                $this->getName(),
-                ...$this->options(),
-            ]);
+        if (count($this->components) === 1) {
+            return $this->slugConcat(...$this->options());
         }
-        return implode('-', [
-            $this->getName(),
-            ...array_map(function (Component $component) {
-                return $component->asSlug();
-            }, $this->components),
-        ]);
+        return $this->slugConcat(...array_map(static function (Component $component) {
+            return $component->asSlug();
+        }, $this->components));
     }
 
-    protected function createComponents()
+    public function asSlug(): string
+    {
+        return $this->slugConcat(
+            $this->getName(),
+            $this->optionsAsSlug(),
+        );
+    }
+
+    protected function createComponents(): void
     {
     }
 
@@ -96,7 +101,7 @@ abstract class Oscillator
 
     protected function input(array $inputs): Packet
     {
-        return take(new Packet(), function (Packet $packet) use ($inputs) {
+        return tap(new Packet(), static function (Packet $packet) use ($inputs) {
             foreach ($inputs as $name => $value) {
                 $packet->set('inputs.' . $name, $value);
             }
@@ -115,5 +120,5 @@ abstract class Oscillator
      * @param Packet $packet
      * @return Collection<int, Indication>
      */
-    protected abstract function output(Packet $packet): Collection;
+    abstract protected function output(Packet $packet): Collection;
 }

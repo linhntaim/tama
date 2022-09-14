@@ -4,11 +4,6 @@ namespace App\Support\Jobs;
 
 abstract class ContinuousBatchJob extends SingleBatchJob
 {
-    public function __construct(int $batchIndex = 0)
-    {
-        parent::__construct($batchIndex);
-    }
-
     protected function nextBatchArguments(): array
     {
         return [$this->batchIndex() + 1];

@@ -19,13 +19,13 @@ class File extends BaseFile
         if ($file instanceof UploadedFile) {
             return $file;
         }
-        elseif ($file instanceof SplFileInfo) {
+        if ($file instanceof SplFileInfo) {
             return new static($file->getRealPath(), $checkPath);
         }
         try {
             return new static($file, $checkPath);
         }
-        catch (SymfonyFileNotFoundException $exception) {
+        catch (SymfonyFileNotFoundException) {
             throw new FileNotFoundException($file);
         }
     }
@@ -35,14 +35,7 @@ class File extends BaseFile
      */
     protected function getTargetFile(string $directory, string $name = null): static
     {
-        if (!is_dir($directory)) {
-            if (false === @mkdir($directory, 0777, true) && !is_dir($directory)) {
-                throw new FileException(sprintf('Unable to create the "%s" directory.', $directory));
-            }
-        }
-        elseif (!is_writable($directory)) {
-            throw new FileException(sprintf('Unable to write in the "%s" directory.', $directory));
-        }
+        mkdir_for_writing($directory);
 
         $target = rtrim($directory, '/\\') . DIRECTORY_SEPARATOR . (null === $name ? $this->getBasename() : $this->getName($name));
 
@@ -56,7 +49,7 @@ class File extends BaseFile
     {
         $target = $this->getTargetFile($directory, $name);
 
-        set_error_handler(function ($type, $msg) use (&$error) {
+        set_error_handler(static function ($type, $msg) use (&$error) {
             $error = $msg;
         });
         try {

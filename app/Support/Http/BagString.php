@@ -61,14 +61,14 @@ class BagString
         return implode(PHP_EOL, $stringifiedItems);
     }
 
-    protected function pushToStringifiedItems(array &$stringifiedItems, string $name, $item)
+    protected function pushToStringifiedItems(array &$stringifiedItems, string $name, $item): void
     {
         $stringifiedItem = $this->stringifyItem($name, $item);
         if (is_array($stringifiedItem)) {
             array_push($stringifiedItems, ...$stringifiedItem);
         }
         else {
-            array_push($stringifiedItems, $stringifiedItem);
+            $stringifiedItems[] = $stringifiedItem;
         }
     }
 

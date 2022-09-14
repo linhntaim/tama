@@ -9,5 +9,5 @@ abstract class SettingsApplier
         $this->applySettings($settings);
     }
 
-    public abstract function applySettings(Settings $settings): static;
+    abstract public function applySettings(Settings $settings): static;
 }

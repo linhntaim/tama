@@ -2,8 +2,10 @@
 
 namespace App\Support\Imports;
 
-use App\Support\Database\DatabaseTransaction;
+use App\Support\Database\Concerns\DatabaseTransaction;
 use App\Support\Exceptions\FileException;
+use App\Support\Filesystem\Filers\CsvFiler;
+use App\Support\Filesystem\Filers\Filer;
 use App\Support\Models\ModelProvider;
 use Throwable;
 
@@ -18,20 +20,22 @@ abstract class ModelCsvImport extends CsvImport
 
     public function __construct()
     {
-        take($this->modelProviderClass(), function ($class) {
-            take(new $class, function (ModelProvider $modelProvider) {
+        tap($this->modelProviderClass(), function ($class) {
+            tap(new $class, function (ModelProvider $modelProvider) {
                 $this->modelProvider = $modelProvider;
             });
         });
     }
 
-    protected abstract function modelProviderClass(): string;
+    abstract protected function modelProviderClass(): string;
 
     /**
+     * @param CsvFiler $filer
+     * @return void
      * @throws Throwable
      * @throws FileException
      */
-    protected function import($filer)
+    protected function import(Filer $filer): void
     {
         $this->transactionStart();
         try {
@@ -58,7 +62,7 @@ abstract class ModelCsvImport extends CsvImport
         return $attributes;
     }
 
-    protected function dataImport(array $data)
+    protected function dataImport(array $data): void
     {
         $this->modelProvider->createWithAttributes($data);
     }
