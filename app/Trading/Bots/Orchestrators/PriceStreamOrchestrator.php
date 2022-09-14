@@ -2,9 +2,8 @@
 
 namespace App\Trading\Bots\Orchestrators;
 
-use App\Trading\Bots\Exchanges\Factory as ExchangeFactory;
-use App\Trading\Bots\Orchestrators\PriceStreams\PriceStream;
-use App\Trading\Bots\Orchestrators\PriceStreams\Factory as PriceStreamFactory;
+use App\Trading\Bots\Exchanges\Exchanger;
+use App\Trading\Bots\Exchanges\PriceStream;
 use App\Trading\Models\Trading;
 use App\Trading\Models\TradingProvider;
 use App\Trading\Redis\PubSubConnection as RedisPubSubConnection;
@@ -37,7 +36,7 @@ class PriceStreamOrchestrator extends Orchestrator
         return (new TradingProvider())
             ->select('exchange')
             ->group('exchange')
-            ->allByHavingSubscribers(ExchangeFactory::enables());
+            ->allByRunning(Exchanger::available());
     }
 
     protected function subscribeTrading(array $trading): void
@@ -48,10 +47,10 @@ class PriceStreamOrchestrator extends Orchestrator
             if (isset($this->streams[$exchange])) { // exchange stream exists
                 $this->streams[$exchange]->subscribeTrading($ticker, $interval);
             }
-            elseif (ExchangeFactory::enabled($exchange)) {
+            elseif (Exchanger::available($exchange)) {
                 // create new exchange stream
                 // current trading will be included in starting subscription inside the stream
-                $this->streams[$exchange] = PriceStreamFactory::create($this->loop, $exchange)();
+                $this->streams[$exchange] = Exchanger::priceStream($this->loop, $exchange)();
             }
         }
     }
@@ -70,7 +69,7 @@ class PriceStreamOrchestrator extends Orchestrator
     {
         $this->streams = $this->fetchTradings()
             ->keyBy('exchange')
-            ->map(fn(Trading $trading) => PriceStreamFactory::create($this->loop, $trading->exchange)())
+            ->map(fn(Trading $trading) => Exchanger::priceStream($this->loop, $trading->exchange)())
             ->all();
 
         (new RedisPubSubManager())->create($this->loop, trading_cfg_redis_pubsub_connection())

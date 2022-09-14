@@ -4,9 +4,9 @@ namespace App\Trading\Console\Commands\Orchestration;
 
 use App\Support\Console\Commands\Command;
 use App\Trading\Bots\Actions\ReportAction;
+use App\Trading\Bots\Actions\TradeAction;
+use App\Trading\Bots\Exchanges\Exchanger;
 use App\Trading\Bots\Orchestrators\LatestPriceOrchestrator;
-use App\Trading\Bots\Pricing\LatestPriceFactory;
-use Psr\SimpleCache\InvalidArgumentException as PsrInvalidArgumentException;
 
 class LatestPriceCommand extends Command
 {
@@ -32,19 +32,18 @@ class LatestPriceCommand extends Command
         return json_decode_array(base64_decode($this->argument('price'))) ?: [];
     }
 
-    /**
-     * @throws PsrInvalidArgumentException
-     */
     protected function handling(): int
     {
         (new LatestPriceOrchestrator(
-            LatestPriceFactory::create(
-                $this->exchange(),
+            Exchanger::exchange($this->exchange())->createLatestPrice(
                 $this->ticker(),
                 $this->interval(),
                 $this->price()
             ),
-            [new ReportAction()]
+            [
+                new TradeAction(),
+                new ReportAction(),
+            ]
         ))->proceed();
         return $this->exitSuccess();
     }

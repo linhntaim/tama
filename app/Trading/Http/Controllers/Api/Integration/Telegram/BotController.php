@@ -61,7 +61,7 @@ class BotController extends ApiController
         }
         $texts = explode(' ', $messageText);
         if (($pos = mb_strpos($texts[0], '@')) !== false) { // handle bot name
-            if (!is_null($botName = config('services.telegram-bot-api.name'))
+            if (!is_null($botName = config('services.telegram-bot-api.username'))
                 && mb_substr($texts[0], $pos + 1) !== $botName) {
                 return null;
             }

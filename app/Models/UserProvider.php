@@ -3,13 +3,12 @@
 namespace App\Models;
 
 use App\Support\Models\Contracts\UserProvider as UserProviderContract;
-use App\Support\Models\Model;
 use App\Support\Models\ModelProvider;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
  * @property User|null $model
- * @method User|null model(Model|callable|int|string $model = null, bool $byUnique = true)
+ * @method User|null model(User|callable|int|string $model = null, bool $byUnique = true)
  * @method User|null first(array $conditions = [])
  * @method User|null firstByKey(int|string $key)
  * @method User firstOrCreateWithAttributes(array $attributes = [], array $values = [])
