@@ -4,8 +4,10 @@ namespace App\Support;
 
 use ArrayAccess;
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Contracts\Support\Jsonable;
+use JsonSerializable;
 
-class ArrayReader implements ArrayAccess, Arrayable
+class ArrayReader implements ArrayAccess, Arrayable, JsonSerializable, Jsonable
 {
     public function __construct(
         protected array $data = []
@@ -59,5 +61,15 @@ class ArrayReader implements ArrayAccess, Arrayable
     public function toArray(): array
     {
         return $this->data;
+    }
+
+    public function jsonSerialize()
+    {
+        return $this->toArray();
+    }
+
+    public function toJson($options = 0): string|false
+    {
+        return json_encode_readable($this->jsonSerialize(), $options);
     }
 }

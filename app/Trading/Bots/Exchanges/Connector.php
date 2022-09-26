@@ -10,6 +10,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Psr\SimpleCache\InvalidArgumentException as PsrInvalidArgumentException;
 use RuntimeException;
+use Throwable;
 
 abstract class Connector implements ConnectorInterface
 {
@@ -43,9 +44,9 @@ abstract class Connector implements ConnectorInterface
         return false;
     }
 
-    public function isIntervalValid(Interval $interval): bool
+    public function intervals(): array
     {
-        return in_array((string)$interval, [
+        return [
             Trader::INTERVAL_1_MINUTE,
             Trader::INTERVAL_3_MINUTES,
             Trader::INTERVAL_5_MINUTES,
@@ -61,7 +62,17 @@ abstract class Connector implements ConnectorInterface
             Trader::INTERVAL_3_DAYS,
             Trader::INTERVAL_1_WEEK,
             Trader::INTERVAL_1_MONTH,
-        ], true);
+        ];
+    }
+
+    public function uiIntervals(): UiIntervals
+    {
+        return new UiIntervals($this->intervals(), Trader::INTERVAL_1_DAY);
+    }
+
+    public function isIntervalValid(Interval $interval): bool
+    {
+        return in_array((string)$interval, $this->intervals(), true);
     }
 
     public function availableTickers(
@@ -72,6 +83,135 @@ abstract class Connector implements ConnectorInterface
     ): Collection
     {
         return collect([]);
+    }
+
+    protected function usdEquivalentSymbol(): string
+    {
+        return 'USDT';
+    }
+
+    protected function usdSymbols(): array
+    {
+        return ['USDT', 'BUSD'];
+    }
+
+    protected function usdPairCacheKey(string $symbol): string
+    {
+        return sprintf('%s.%s.usd', $this->exchange, $symbol);
+    }
+
+    /**
+     * @throws PsrInvalidArgumentException
+     */
+    protected function usdPairFromCache(string $symbol): ?string
+    {
+        return $this->cacheStore->get($this->usdPairCacheKey($symbol));
+    }
+
+    protected function usdPairToCache(string $symbol, string $usdSymbol): void
+    {
+        $this->cacheStore->forever($this->usdPairCacheKey($symbol), $usdSymbol);
+    }
+
+    abstract protected function createTicker($baseSymbol, $quoteSymbol): string;
+
+    abstract protected function createTradeUrl($baseSymbol, $quoteSymbol): string;
+
+    /**
+     * @throws PsrInvalidArgumentException
+     */
+    public function symbol(string $symbol): Symbol
+    {
+        return new Symbol(
+            is_null($usdSymbol = $this->usdPairFromCache($symbol))
+                ? $this->symbolPrice($symbol, $usdSymbol)
+                : $this->tickerPrice($this->createTicker($symbol, $usdSymbol)),
+            $this->createTradeUrl($symbol, $usdSymbol)
+        );
+    }
+
+    /**
+     * @throws PsrInvalidArgumentException
+     */
+    public function symbolPrice(string $symbol, string &$usdSymbol = null): string
+    {
+        if ($symbol === $this->usdEquivalentSymbol()) {
+            return '1.00';
+        }
+
+        if (!is_null($usdSymbol = $this->usdPairFromCache($symbol))) {
+            return $this->tickerPrice($this->createTicker($symbol, $usdSymbol));
+        }
+
+        $usdSymbols = $this->usdSymbols();
+        while ($usdSymbol = array_shift($usdSymbols)) {
+            try {
+                return take($this->tickerPrice($this->createTicker($symbol, $usdSymbol)), function () use ($symbol, $usdSymbol) {
+                    $this->usdPairToCache($symbol, $usdSymbol);
+                });
+            }
+            catch (Throwable) {
+                continue;
+            }
+        }
+
+        throw new RuntimeException(sprintf('The symbol "%s" is invalid or not supported.', $symbol));
+    }
+
+    /**
+     * @throws PsrInvalidArgumentException
+     */
+    public function symbols(array $symbols): array
+    {
+        $pricing = [];
+        $tickers = [];
+        foreach ($symbols as $symbol) {
+            if (is_null($usdSymbol = $this->usdPairFromCache($symbol))) {
+                $pricing[$symbol] = new Symbol(
+                    $this->symbolPrice($symbol, $usdSymbol),
+                    $this->createTradeUrl($symbol, $usdSymbol)
+                );
+            }
+            else {
+                $tickers[$this->createTicker($symbol, $usdSymbol)] = [$symbol, $usdSymbol];
+            }
+        }
+        if (count($tickers)) {
+            foreach ($this->tickersPrice(array_keys($tickers)) as $ticker => $price) {
+                [$symbol, $usdSymbol] = $tickers[$ticker];
+                $pricing[$symbol] = new Symbol(
+                    $price,
+                    $this->createTradeUrl($symbol, $usdSymbol)
+                );
+            }
+        }
+        return $pricing;
+    }
+
+    /**
+     * @throws PsrInvalidArgumentException
+     */
+    public function symbolsPrice(array $symbols, array &$usdSymbols = null): array
+    {
+        $pricing = [];
+        $tickers = [];
+        $usdSymbols = [];
+        foreach ($symbols as $symbol) {
+            if (is_null($usdSymbol = $this->usdPairFromCache($symbol))) {
+                $pricing[$symbol] = $this->symbolPrice($symbol, $usdSymbol);
+            }
+            else {
+                $tickers[$this->createTicker($symbol, $usdSymbol)] = [$symbol, $usdSymbol];
+            }
+            $usdSymbols[$symbol] = $usdSymbol;
+        }
+        if (count($tickers)) {
+            foreach ($this->tickersPrice(array_keys($tickers)) as $ticker => $price) {
+                [$symbol] = $tickers[$ticker];
+                $pricing[$symbol] = $price;
+            }
+        }
+        return $pricing;
     }
 
     protected function recentPricesCacheKey(string $ticker, Interval $interval): string

@@ -14,7 +14,6 @@ use Binance\Spot;
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 use Throwable;
 
 class Connector extends BaseConnector
@@ -91,9 +90,27 @@ class Connector extends BaseConnector
             });
     }
 
+    protected function createTicker($baseSymbol, $quoteSymbol): string
+    {
+        return $baseSymbol . $quoteSymbol;
+    }
+
+    protected function createTradeUrl($baseSymbol, $quoteSymbol): string
+    {
+        return sprintf('https://www.binance.com/en/trade/%s_%s', $baseSymbol, $quoteSymbol);
+    }
+
     public function tickerPrice(string $ticker): string
     {
         return $this->spot->tickerPrice(['symbol' => $ticker])['price'];
+    }
+
+    public function tickersPrice(array $tickers): array
+    {
+        return collect($this->spot->tickerPrice(['symbols' => json_encode_readable($tickers)]))
+            ->keyBy('symbol')
+            ->map(fn(array $pricing) => $pricing['price'])
+            ->all();
     }
 
     /**

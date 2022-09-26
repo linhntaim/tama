@@ -11,6 +11,10 @@ interface ConnectorInterface
 
     public function isTickerValid(string $ticker): false|Ticker;
 
+    public function intervals(): array;
+
+    public function uiIntervals(): UiIntervals;
+
     public function isIntervalValid(Interval $interval): bool;
 
     /**
@@ -26,6 +30,28 @@ interface ConnectorInterface
         string|array|null $exceptQuoteSymbol = null,
         string|array|null $exceptBaseSymbol = null
     ): Collection;
+
+    public function symbol(string $symbol): Symbol;
+
+    public function symbolPrice(string $symbol, string &$usdSymbol = null): string;
+
+    /**
+     * @param string[] $symbols
+     * @return array<string, Symbol>
+     */
+    public function symbols(array $symbols): array;
+
+    /**
+     * @param string[] $symbols
+     * @return array<string, string>
+     */
+    public function symbolsPrice(array $symbols, array &$usdSymbols = null): array;
+
+    /**
+     * @param string[] $tickers
+     * @return array<string, string>
+     */
+    public function tickersPrice(array $tickers): array;
 
     public function tickerPrice(string $ticker): string;
 

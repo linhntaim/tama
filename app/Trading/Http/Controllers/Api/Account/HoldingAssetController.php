@@ -4,6 +4,7 @@ namespace App\Trading\Http\Controllers\Api\Account;
 
 use App\Support\Http\Controllers\ModelApiController;
 use App\Support\Http\Resources\Concerns\ResourceTransformer;
+use App\Trading\Bots\Exchanges\Exchanger;
 use App\Trading\Models\HoldingAsset;
 use App\Trading\Models\HoldingAssetProvider;
 use Illuminate\Http\JsonResponse;
@@ -23,10 +24,18 @@ class HoldingAssetController extends ModelApiController
     protected function storeRules(Request $request): array
     {
         return [
-            'exchange' => 'required|string|max:255|in:binance',
+            'exchange' => 'required|string|max:255|in:' . implode(',', Exchanger::available()),
             'symbol' => 'required|string|max:255',
             'amount' => 'required|numeric',
         ];
+    }
+
+    protected function storeValidate(Request $request)
+    {
+        parent::storeValidate($request);
+
+        // Validate symbol
+        Exchanger::connector($request->input('exchange'))->symbolPrice($request->input('symbol'));
     }
 
     protected function storeExecute(Request $request): HoldingAsset
@@ -66,8 +75,9 @@ class HoldingAssetController extends ModelApiController
         $this->transactionStart();
         try {
             foreach ($request->input('assets') as $asset) {
-                $this->modelProvider()->model($asset['id']);
-                if (!$this->modelProvider()->belongsTo($request->user())) {
+                if (!$this->modelProvider()
+                    ->withModel($asset['id'])
+                    ->belongsTo($request->user())) {
                     $this->abort404();
                 }
                 $this->modelProvider()->updateOrder($asset['order']);

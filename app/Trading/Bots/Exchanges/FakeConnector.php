@@ -31,6 +31,16 @@ class FakeConnector implements ConnectorInterface
         return $this->originConnector->isIntervalValid($interval);
     }
 
+    public function intervals(): array
+    {
+        return $this->originConnector->intervals();
+    }
+
+    public function uiIntervals(): UiIntervals
+    {
+        return $this->originConnector->uiIntervals();
+    }
+
     public function availableTickers(
         string|array|null $quoteSymbol = null,
         string|array|null $baseSymbol = null,
@@ -44,6 +54,31 @@ class FakeConnector implements ConnectorInterface
             $exceptQuoteSymbol,
             $exceptBaseSymbol
         );
+    }
+
+    public function symbol(string $symbol): Symbol
+    {
+        return $this->originConnector->symbol($symbol);
+    }
+
+    public function symbolPrice(string $symbol, string &$usdSymbol = null): string
+    {
+        return $this->originConnector->symbolPrice($symbol, $usdSymbol);
+    }
+
+    public function symbols(array $symbols): array
+    {
+        return $this->originConnector->symbols($symbols);
+    }
+
+    public function symbolsPrice(array $symbols, array &$usdSymbols = null): array
+    {
+        return $this->originConnector->symbolsPrice($symbols, $usdSymbols);
+    }
+
+    public function tickersPrice(array $tickers): array
+    {
+        return $this->originConnector->tickersPrice($tickers);
     }
 
     public function setTickerPrice(string $ticker, string $price): static
