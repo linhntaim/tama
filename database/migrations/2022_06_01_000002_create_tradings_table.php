@@ -35,15 +35,14 @@ return new class extends Migration {
 
         Schema::create('trading_subscribers', function (Blueprint $table) {
             $table->bigInteger('trading_id')->unsigned();
-            $table->bigInteger('user_id')->unsigned();
+            $table->bigInteger('subscribable_id')->unsigned();
+            $table->string('subscribable_type');
             $table->timestamp('subscribed_at')->nullable();
 
             $table->foreign('trading_id')->references('id')->on('tradings')
                 ->onUpdate('cascade')->onDelete('cascade');
-            $table->foreign('user_id')->references('id')->on('users')
-                ->onUpdate('cascade')->onDelete('cascade');
 
-            $table->primary(['trading_id', 'user_id']);
+            $table->primary(['trading_id', 'subscribable_id', 'subscribable_type'], 'trading_subscribers_primary');
         });
 
         Schema::create('trading_broadcasts', function (Blueprint $table) {

@@ -4,9 +4,9 @@ namespace App\Trading\Models;
 
 use App\Models\User;
 use App\Support\Models\Model;
+use App\Support\Models\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $quote_symbol
  * @property string $interval
  * @property array $options
- * @property User[]|Collection $subscribers
+ * @property User[]|Collection $users
  * @property TradingStrategy[]|Collection $buyStrategies
  * @property TradingStrategy[]|Collection $sellStrategies
  * @property array $botOptions
@@ -49,19 +49,26 @@ class Trading extends Model
         'options' => 'array',
     ];
 
-    public function subscribers(): BelongsToMany
+    public function subscribers(): HasMany
     {
-        return $this->belongsToMany(User::class, 'trading_subscribers', 'trading_id', 'user_id');
+        return $this->hasMany(TradingSubscriber::class, 'trading_id', 'id');
     }
 
-    public function buyStrategies(): HasMany
+    public function users(): MorphToMany
     {
-        return $this->hasMany(TradingStrategy::class, 'buy_trading_id', 'id');
+        return $this->morphedByMany(User::class, 'subscribable', 'trading_subscribers', 'trading_id');
     }
 
-    public function sellStrategies(): HasMany
+    public function buyStrategies(): MorphToMany
     {
-        return $this->hasMany(TradingStrategy::class, 'sell_trading_id', 'id');
+        return $this->morphedByMany(TradingStrategy::class, 'subscribable', 'trading_subscribers', 'trading_id')
+            ->setMorphClass(BuyStrategy::class);
+    }
+
+    public function sellStrategies(): MorphToMany
+    {
+        return $this->morphedByMany(TradingStrategy::class, 'subscribable', 'trading_subscribers', 'trading_id')
+            ->setMorphClass(SellStrategy::class);
     }
 
     public function botOptions(): Attribute

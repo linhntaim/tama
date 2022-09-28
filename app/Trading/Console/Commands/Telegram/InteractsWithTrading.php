@@ -213,7 +213,7 @@ trait InteractsWithTrading
 
     protected function subscribe(User $user, Trading $trading): void
     {
-        $trading->subscribers()->syncWithoutDetaching([
+        $trading->users()->syncWithoutDetaching([
             $user->id => [
                 'subscribed_at' => DateTimer::databaseNow(),
             ],
@@ -223,7 +223,7 @@ trait InteractsWithTrading
 
     protected function unsubscribe(User $user, Trading $trading): void
     {
-        $trading->subscribers()->detach($user->id);
+        $trading->users()->detach($user->id);
         $this->unsubscribePriceStream($trading);
     }
 }

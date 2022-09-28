@@ -5,6 +5,7 @@ namespace App\Trading\Console\Commands\Telegram\Test;
 use App\Trading\Console\Commands\Telegram\Command as BaseCommand;
 use App\Trading\Bots\Tests\ResultTest;
 use App\Trading\Models\Trading;
+use Illuminate\Database\Eloquent\Collection;
 
 abstract class Command extends BaseCommand
 {
@@ -42,11 +43,17 @@ abstract class Command extends BaseCommand
         return $this->option('end-time');
     }
 
-    protected function printResultTest(ResultTest $result, Trading $buyTrading, Trading $sellTrading): string
+    protected function printResultTest(ResultTest $result, Collection $buyTradings, Collection $sellTradings): string
     {
         return implode(PHP_EOL, [
-            sprintf('- Buy: {#%d:%s} risk=%s', $buyTrading->id, $buyTrading->slug, $result->buyRisk),
-            sprintf('- Sell: {#%d:%s} risk=%s', $sellTrading->id, $buyTrading->slug, $result->sellRisk),
+            sprintf('- Buy (risk=%s):', $result->buyRisk),
+            ...$buyTradings->map(function (Trading $trading) {
+                return sprintf('  + {#%d:%s}', $trading->id, $trading->slug);
+            })->all(),
+            sprintf('- Sell (risk=%s):', $result->sellRisk),
+            ...$sellTradings->map(function (Trading $trading) {
+                return sprintf('  + {#%d:%s}', $trading->id, $trading->slug);
+            })->all(),
             sprintf(
                 '- Start at: %s',
                 $result->shownStartTime

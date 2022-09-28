@@ -59,13 +59,12 @@ class DeleteCommand extends Command
 
     protected function deleteStrategy(TradingStrategy $strategy): void
     {
-        $buyTrading = $strategy->buyTrading;
-        $sellTrading = $strategy->sellTrading;
-
+        $tradings = $strategy->buyTradings->merge($strategy->sellTradings);
+        $strategy->buyTradings()->detach();
+        $strategy->sellTradings()->detach();
         $strategy->delete();
-        $this->unsubscribePriceStream($buyTrading);
-        if ($buyTrading->id !== $sellTrading->id) {
-            $this->unsubscribePriceStream($sellTrading);
+        foreach ($tradings as $trading) {
+            $this->unsubscribePriceStream($trading);
         }
     }
 }

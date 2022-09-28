@@ -43,7 +43,7 @@ class TradingStrategyProvider extends ModelProvider
     {
         return $this->pagination(array_filter([
             'user_id' => $this->retrieveKey($user),
-            'trading' => is_null($keyword) ? null : LikeValue::create($keyword),
+            'trading' => is_null($keyword) ? null : new LikeValue($keyword),
         ]), $perPage, $page);
     }
 

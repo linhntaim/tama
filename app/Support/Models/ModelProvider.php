@@ -11,7 +11,6 @@ use App\Support\Models\QueryConditions\SelectCondition;
 use App\Support\Models\QueryConditions\SortCondition;
 use App\Support\Models\QueryConditions\WhereCondition;
 use App\Support\Models\QueryConditions\WithCondition;
-use App\Support\Models\QueryValues\DoesntHaveValue;
 use App\Support\Models\QueryValues\HasValue;
 use App\Support\Models\QueryValues\LikeValue;
 use App\Support\Models\QueryValues\NotNullValue;
@@ -436,10 +435,7 @@ abstract class ModelProvider
                             $query->where($column, 'like', (string)$value);
                             break;
                         case $value instanceof HasValue:
-                            $query->has($column);
-                            break;
-                        case $value instanceof DoesntHaveValue:
-                            $query->doesntHave($column);
+                            $query->has($column, $value->getOperator(), $value->getCount(), 'and', $value->getCallback());
                             break;
                         case is_array($value):
                             $query->whereIn($column, $value);

@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Trading\Bots\Exchanges\Exchanger;
 use App\Trading\Console\Commands\Telegram\Command;
 use App\Trading\Console\Commands\Telegram\InteractsWithListing;
+use App\Trading\Models\Trading;
 use App\Trading\Models\TradingStrategy;
 use App\Trading\Models\TradingStrategyProvider;
 use App\Trading\Models\TradingSwap;
@@ -38,40 +39,49 @@ class ListCommand extends Command
     protected function printStrategiesBySubscriber(User $user): string
     {
         return $this->printList(
-            (new TradingStrategyProvider())->paginationByUser($user, $this->keyword(), 5, $this->page()),
+            (new TradingStrategyProvider())
+                ->with(['buyTradings', 'sellTradings'])
+                ->paginationByUser($user, $this->keyword(), 5, $this->page()),
             function (TradingStrategy $strategy) {
                 return transform(
                     $strategy->firstSwap,
                     function (TradingSwap $swap) use ($strategy) {
+                        $firstTrading = $strategy->buyTradings->first();
                         return implode(PHP_EOL, [
                             sprintf('{#%d}', $strategy->id),
-                            sprintf('- Buy: {#%d:%s} risk=%s', $strategy->buyTrading->id, $strategy->buyTrading->slug, $strategy->buy_risk),
-                            sprintf('- Sell: {#%d:%s} risk=%s', $strategy->sellTrading->id, $strategy->buyTrading->slug, $strategy->sell_risk),
+                            sprintf('- Buy (risk=%s):', $strategy->buy_risk),
+                            ...$strategy->buyTradings->map(function (Trading $trading) {
+                                return sprintf('  + {#%d:%s}', $trading->id, $trading->slug);
+                            })->all(),
+                            sprintf('- Sell (risk=%s):', $strategy->sell_risk),
+                            ...$strategy->sellTradings->map(function (Trading $trading) {
+                                return sprintf('  + {#%d:%s}', $trading->id, $trading->slug);
+                            })->all(),
                             sprintf(
                                 '- Start: %s %s + %s %s ~ %s %s @ %s',
                                 num_trim($swap->base_amount),
-                                $strategy->buyTrading->base_symbol,
+                                $firstTrading->base_symbol,
                                 num_trim($swap->quote_amount),
-                                $strategy->buyTrading->quote_symbol,
+                                $firstTrading->quote_symbol,
                                 num_trim($beforeEquivalentQuoteAmount = $swap->equivalentQuoteAmount),
-                                $strategy->buyTrading->quote_symbol,
+                                $firstTrading->quote_symbol,
                                 $swap->getAttribute('created_at')
                             ),
                             sprintf(
-                                '- Now: %s%s + %s%s ~ %s%s',
+                                '- Now: %s %s + %s %s ~ %s %s',
                                 num_trim($strategy->baseAmount),
-                                $strategy->buyTrading->base_symbol,
+                                $firstTrading->base_symbol,
                                 num_trim($strategy->quoteAmount),
-                                $strategy->buyTrading->quote_symbol,
+                                $firstTrading->quote_symbol,
                                 num_trim(
                                     $afterEquivalentQuoteAmount = $strategy->calculateEquivalentQuoteAmount(
                                         $this->tickerPrice(
-                                            $strategy->buyTrading->exchange,
-                                            $strategy->buyTrading->ticker
+                                            $firstTrading->exchange,
+                                            $firstTrading->ticker
                                         )
                                     )
                                 ),
-                                $strategy->buyTrading->quote_symbol,
+                                $firstTrading->quote_symbol,
                             ),
                             sprintf(
                                 '- Trades: %d ~ %d BUY / %d SELL',
@@ -82,7 +92,7 @@ class ListCommand extends Command
                             sprintf(
                                 '- Profit: %s %s ~ %s%%',
                                 num_trim($profit = num_sub($afterEquivalentQuoteAmount, $beforeEquivalentQuoteAmount)),
-                                $strategy->buyTrading->quote_symbol,
+                                $firstTrading->quote_symbol,
                                 num_mul(num_div($profit, $beforeEquivalentQuoteAmount), 100, 2)
                             ),
                         ]);

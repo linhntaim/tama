@@ -3,16 +3,17 @@
 namespace App\Trading\Bots\Tests;
 
 use App\Trading\Models\Trading;
+use Illuminate\Database\Eloquent\Collection;
 
-class TradingTest extends StrategyTest
+class TradingTest extends BotTest
 {
     public function __construct(
-        Trading $buyTrading,
-        Trading $sellTrading,
-        string  $baseAmount = '0.0',
-        string  $quoteAmount = '500.0',
-        float   $buyRisk = 0.0,
-        float   $sellRisk = 0.0,
+        Collection $buyTradings,
+        Collection $sellTradings,
+        string     $baseAmount = '0.0',
+        string     $quoteAmount = '500.0',
+        float      $buyRisk = 0.0,
+        float      $sellRisk = 0.0,
     )
     {
         parent::__construct(
@@ -20,10 +21,18 @@ class TradingTest extends StrategyTest
             $quoteAmount,
             $buyRisk,
             $sellRisk,
-            $buyTrading->bot,
-            $buyTrading->botOptions,
-            $sellTrading->bot,
-            $sellTrading->botOptions,
+            $buyTradings->map(function (Trading $trading) {
+                return [
+                    'name' => $trading->bot,
+                    'options' => $trading->botOptions,
+                ];
+            })->all(),
+            $sellTradings->map(function (Trading $trading) {
+                return [
+                    'name' => $trading->bot,
+                    'options' => $trading->botOptions,
+                ];
+            })->all()
         );
     }
 }

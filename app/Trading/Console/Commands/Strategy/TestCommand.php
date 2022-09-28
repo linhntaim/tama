@@ -5,7 +5,7 @@ namespace App\Trading\Console\Commands\Strategy;
 use App\Support\Console\Commands\Command;
 use App\Trading\Bots\Exchanges\Binance\Binance;
 use App\Trading\Bots\Oscillators\RsiOscillator;
-use App\Trading\Bots\Tests\StrategyTest;
+use App\Trading\Bots\Tests\BotTest;
 use App\Trading\Trader;
 
 class TestCommand extends Command
@@ -13,7 +13,7 @@ class TestCommand extends Command
     protected function handling(): int
     {
         out(
-            (new StrategyTest(
+            (new BotTest(
                 0.0,
                 500.0,
                 0.0,

@@ -26,9 +26,7 @@ trait InteractsWithPriceStream
 
     protected function unsubscribePriceStream(Trading $trading): void
     {
-        if ($trading->subscribers()->count() === 0
-            && $trading->buyStrategies()->count() === 0
-            && $trading->sellStrategies()->count() === 0) {
+        if ($trading->subscribers()->count()) {
             $this->redis()->publish('price-stream:unsubscribe', json_encode_readable([
                 'exchange' => $trading->exchange,
                 'ticker' => $trading->ticker,

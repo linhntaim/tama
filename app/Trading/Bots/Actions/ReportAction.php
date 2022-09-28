@@ -11,7 +11,7 @@ class ReportAction implements IAction
 {
     public function __invoke(Trading $trading, Bot $bot, TradingBroadcast $broadcast): void
     {
-        if (($subscribers = $trading->subscribers->load('socials'))->count() > 0) {
+        if (($subscribers = $trading->users->load('socials'))->count() > 0) {
             $indication = $broadcast->indication;
             $label = sprintf('%s %s %s', $indication->getAction(), $bot->ticker(), $bot->interval());
             ConsoleNotification::send(

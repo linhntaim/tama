@@ -26,7 +26,7 @@ class ListCommand extends Command
     {
         return $this->printList(
             (new TradingProvider())->pagination(array_filter([
-                'slug' => is_null($keyword = $this->keyword()) ? null : LikeValue::create($keyword),
+                'slug' => is_null($keyword = $this->keyword()) ? null : new LikeValue($keyword),
             ]), 10, $this->page()),
             fn(Trading $trading): string => sprintf('#%s:%s', $trading->id, $trading->slug),
             'No tradings.',

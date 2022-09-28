@@ -5,24 +5,24 @@ namespace App\Trading\Console\Commands\Telegram\Strategy;
 use App\Models\User;
 use App\Support\Client\DateTimer;
 use App\Support\Database\Concerns\DatabaseTransaction;
+use App\Support\Models\QueryValues\HasValueWithQuery;
 use App\Trading\Bots\Exchanges\Exchanger;
 use App\Trading\Console\Commands\Telegram\Command;
 use App\Trading\Console\Commands\Telegram\InteractsWithPriceStream;
+use App\Trading\Console\Commands\Telegram\InteractsWithTradings;
 use App\Trading\Models\Trading;
-use App\Trading\Models\TradingProvider;
 use App\Trading\Models\TradingStrategy;
 use App\Trading\Models\TradingStrategyProvider;
 use App\Trading\Models\TradingSwap;
 use App\Trading\Models\TradingSwapProvider;
 use Illuminate\Database\Eloquent\Collection;
-use InvalidArgumentException;
 use Throwable;
 
 class CreateCommand extends Command
 {
-    use DatabaseTransaction, InteractsWithPriceStream;
+    use DatabaseTransaction, InteractsWithTradings, InteractsWithPriceStream;
 
-    public $signature = '{buy_trading_id} {sell_trading_id?} {--base-amount=0.0} {--quote-amount=500.0} {--buy_risk=0.0} {--sell_risk=0.0}';
+    public $signature = '{buy_trading_ids} {sell_trading_ids?} {--base-amount=0.0} {--quote-amount=500.0} {--buy_risk=0.0} {--sell_risk=0.0}';
 
     protected $description = 'Create a strategy.';
 
@@ -33,16 +33,6 @@ class CreateCommand extends Command
     protected string $buyRisk;
 
     protected string $sellRisk;
-
-    protected function buyTradingId(): int
-    {
-        return $this->argument('buy_trading_id');
-    }
-
-    protected function sellTradingId(): ?int
-    {
-        return $this->argument('buy_trading_id');
-    }
 
     protected function baseAmount(): string
     {
@@ -82,33 +72,36 @@ class CreateCommand extends Command
      */
     protected function handling(): int
     {
-        if ($this->validateInputs() && ($user = $this->validateCreatingUser()) !== false) {
-            [$buyTrading, $sellTrading] = $this->getTradings();
-            $strategyProvider = new TradingStrategyProvider();
-            if ($strategyProvider->has([
-                'user_id' => $user->id,
-                'buy_trading_id' => $buyTrading->id,
-                'sell_trading_id' => $sellTrading->id,
-                'type' => TradingStrategy::TYPE_FAKE,
-            ])) {
+        if ($this->validateInputs()
+            && ($user = $this->validateCreatingUser()) !== false
+            && ($tradings = $this->validateTradings()) !== false) {
+            [$buyTradings, $sellTradings] = $tradings;
+            if ($this->hasStrategy($user, $buyTradings, $sellTradings)) {
                 $this->sendConsoleNotification('The strategy has already existed.');
             }
             else {
-                $strategy = $this->createStrategy($user, $buyTrading, $sellTrading);
-                transform($strategy->firstSwap, function (TradingSwap $swap) use ($strategy, $buyTrading, $sellTrading) {
+                $strategy = $this->createStrategy($user, $buyTradings, $sellTradings);
+                transform($strategy->firstSwap, function (TradingSwap $swap) use ($strategy, $buyTradings, $sellTradings) {
+                    $firstTrading = $buyTradings->first();
                     $this->sendConsoleNotification(
                         implode(PHP_EOL, [
                             sprintf('The strategy {#%d} has been created.', $strategy->id),
-                            sprintf('- Buy: {#%d:%s} risk=%s', $buyTrading->id, $buyTrading->slug, $strategy->buy_risk),
-                            sprintf('- Sell: {#%d:%s} risk=%s', $sellTrading->id, $sellTrading->slug, $strategy->sell_risk),
+                            sprintf('- Buy (risk=%s):', $strategy->buy_risk),
+                            ...$buyTradings->map(function (Trading $trading) {
+                                return sprintf('  + {#%d:%s}', $trading->id, $trading->slug);
+                            })->all(),
+                            sprintf('- Sell (risk=%s):', $strategy->sell_risk),
+                            ...$sellTradings->map(function (Trading $trading) {
+                                return sprintf('  + {#%d:%s}', $trading->id, $trading->slug);
+                            })->all(),
                             sprintf(
                                 '- Starting amount: %s %s + %s %s ~ %s %s',
                                 num_trim($swap->base_amount),
-                                $strategy->buyTrading->base_symbol,
+                                $firstTrading->base_symbol,
                                 num_trim($swap->quote_amount),
-                                $strategy->buyTrading->quote_symbol,
+                                $firstTrading->quote_symbol,
                                 num_trim($swap->equivalentQuoteAmount),
-                                $strategy->buyTrading->quote_symbol,
+                                $firstTrading->quote_symbol,
                             ),
                         ])
                     );
@@ -118,56 +111,53 @@ class CreateCommand extends Command
         return $this->exitSuccess();
     }
 
-    /**
-     * @return Trading[]
-     */
-    protected function getTradings(): array
+    protected function hasStrategy(User $user, Collection $buyTradings, Collection $sellTradings): bool
     {
-        $tradingProvider = new TradingProvider();
-        $buyTrading = $tradingProvider->firstByKey($this->buyTradingId());
-        $sellTrading = is_null($sellTradingId = $this->sellTradingId())
-            ? $buyTrading : $tradingProvider->firstByKey($sellTradingId);
-
-        if ($buyTrading->exchange !== $sellTrading->exchange
-            || $buyTrading->ticker !== $sellTrading->ticker) {
-            throw new InvalidArgumentException('Buy and sell trading must have the same exchange and ticker');
-        }
-
-        return [$buyTrading, $sellTrading];
+        $trading = new Trading();
+        return (new TradingStrategyProvider())->has([
+            'user_id' => $user->id,
+            'type' => TradingStrategy::TYPE_FAKE,
+            'buyTradings' => new HasValueWithQuery(function ($query) use ($trading, $buyTradings) {
+                $query->whereIn($trading->qualifyColumn('id'), $buyTradings->pluck('id')->all());
+            }, '=', $buyTradings->count()),
+            'sellTradings' => new HasValueWithQuery(function ($query) use ($trading, $sellTradings) {
+                $query->whereIn($trading->qualifyColumn('id'), $sellTradings->pluck('id')->all());
+            }, '=', $sellTradings->count()),
+        ]);
     }
 
     /**
      * @throws Throwable
      */
-    protected function createStrategy(User $user, Trading $buyTrading, Trading $sellTrading): TradingStrategy
+    protected function createStrategy(User $user, Collection $buyTradings, Collection $sellTradings): TradingStrategy
     {
         $this->transactionStart();
         try {
             $strategy = take(
                 (new TradingStrategyProvider())->createWithAttributes([
                     'user_id' => $user->id,
-                    'buy_trading_id' => $buyTrading->id,
-                    'sell_trading_id' => $sellTrading->id,
                     'buy_risk' => $this->buyRisk(),
                     'sell_risk' => $this->sellRisk(),
                     'type' => TradingStrategy::TYPE_FAKE,
                     'status' => TradingStrategy::STATUS_ACTIVE,
                 ]),
-                function (TradingStrategy $strategy) use ($buyTrading) {
+                function (TradingStrategy $strategy) use ($buyTradings, $sellTradings) {
+                    $firstTrading = $buyTradings->first();
                     $strategy->setRelation('orderedSwaps', new Collection([
                         (new TradingSwapProvider())->createWithAttributes([
                             'trading_strategy_id' => $strategy->id,
-                            'price' => Exchanger::connector($buyTrading->exchange)->tickerPrice($buyTrading->ticker),
+                            'price' => Exchanger::connector($firstTrading->exchange)->tickerPrice($firstTrading->ticker),
                             'time' => DateTimer::databaseNow(null),
                             'base_amount' => $this->baseAmount(),
                             'quote_amount' => $this->quoteAmount(),
                         ]),
                     ]));
+                    $strategy->buyTradings()->attach($buyTradings->pluck('id')->all());
+                    $strategy->sellTradings()->attach($sellTradings->pluck('id')->all());
                 }
             );
-            $this->subscribePriceStream($buyTrading);
-            if ($sellTrading->id !== $buyTrading->id) {
-                $this->subscribePriceStream($sellTrading);
+            foreach ($buyTradings->merge($sellTradings) as $trading) {
+                $this->subscribePriceStream($trading);
             }
             $this->transactionComplete();
             return $strategy;

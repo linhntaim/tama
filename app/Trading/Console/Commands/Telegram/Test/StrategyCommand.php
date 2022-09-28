@@ -3,7 +3,7 @@
 namespace App\Trading\Console\Commands\Telegram\Test;
 
 use App\Trading\Bots\Tests\ResultTest;
-use App\Trading\Bots\Tests\TradingStrategyTest;
+use App\Trading\Bots\Tests\StrategyTest;
 use App\Trading\Models\TradingStrategy;
 use App\Trading\Models\TradingStrategyProvider;
 
@@ -39,8 +39,9 @@ class StrategyCommand extends Command
             $this->testStrategy($strategy),
             function (ResultTest $result) use ($strategy) {
                 return implode(PHP_EOL, [
-                    sprintf('Test for strategy {#%d}', $strategy->id),
-                    $this->printResultTest($result, $strategy->buyTrading, $strategy->sellTrading),
+                    sprintf('TEST STRATEGY {#%d}', $strategy->id),
+                    str_repeat('‾', 25),
+                    $this->printResultTest($result, $strategy->buyTradings, $strategy->sellTradings),
                 ]);
             }
         );
@@ -48,7 +49,7 @@ class StrategyCommand extends Command
 
     protected function testStrategy(TradingStrategy $strategy): ResultTest
     {
-        return (new TradingStrategyTest(
+        return (new StrategyTest(
             $strategy,
             $this->baseAmount(),
             $this->quoteAmount(),

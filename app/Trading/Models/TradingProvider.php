@@ -45,7 +45,7 @@ class TradingProvider extends ModelProvider
     {
         return $this->pagination(array_filter([
             'subscriber' => $subscriber,
-            'slug' => is_null($keyword) ? null : LikeValue::create($keyword),
+            'slug' => is_null($keyword) ? null : new LikeValue($keyword),
         ]), $perPage, $page);
     }
 

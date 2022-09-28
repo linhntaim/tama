@@ -23,8 +23,8 @@ class UserController extends ModelApiController
     {
         $dateTimer = Client::dateTimer();
         return [
-            'email' => fn($input) => LikeValue::create($input),
-            'name' => fn($input) => LikeValue::create($input),
+            'email' => fn($input) => new LikeValue($input),
+            'name' => fn($input) => new LikeValue($input),
             'created_from' => function ($input) use ($dateTimer) {
                 return $dateTimer->fromFormatToDatabaseFormat(
                     $dateTimer->compoundFormat('shortDate', ' ', 'shortTime'),

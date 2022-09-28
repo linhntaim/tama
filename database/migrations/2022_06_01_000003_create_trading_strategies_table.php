@@ -15,8 +15,6 @@ return new class extends Migration {
         Schema::create('trading_strategies', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('user_id')->unsigned();
-            $table->bigInteger('buy_trading_id')->unsigned();
-            $table->bigInteger('sell_trading_id')->unsigned();
             $table->integer('type')
                 ->comment('1=real|2=fake');
             $table->integer('status')
@@ -28,10 +26,6 @@ return new class extends Migration {
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')
-                ->onUpdate('cascade')->onDelete('cascade');
-            $table->foreign('buy_trading_id')->references('id')->on('tradings')
-                ->onUpdate('cascade')->onDelete('cascade');
-            $table->foreign('sell_trading_id')->references('id')->on('tradings')
                 ->onUpdate('cascade')->onDelete('cascade');
 
             $table->index('type');

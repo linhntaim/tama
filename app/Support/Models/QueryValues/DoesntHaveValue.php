@@ -2,10 +2,12 @@
 
 namespace App\Support\Models\QueryValues;
 
-class DoesntHaveValue
+use Closure;
+
+class DoesntHaveValue extends HasValue
 {
-    public static function create(): static
+    public function __construct(?Closure $callback = null)
     {
-        return new static();
+        parent::__construct('<', 1, $callback);
     }
 }

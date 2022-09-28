@@ -4,6 +4,7 @@ namespace App\Trading\Models;
 
 use App\Models\User;
 use App\Support\Models\Model;
+use App\Support\Models\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -24,8 +25,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $quoteAmount
  * @property bool $isFake
  * @property User $user
- * @property Trading $buyTrading
- * @property Trading $sellTrading
+ * @property Collection<int, Trading> $buyTradings
+ * @property Collection<int, Trading> $sellTradings
  * @property Collection<int, TradingSwap> $swaps
  * @property Collection<int, TradingSwap> $orderedSwaps
  * @property Collection<int, TradingSwap> $tradeSwaps
@@ -81,14 +82,16 @@ class TradingStrategy extends Model
         return $this->swaps()->orderBy('time');
     }
 
-    public function buyTrading(): BelongsTo
+    public function buyTradings(): MorphToMany
     {
-        return $this->belongsTo(Trading::class, 'buy_trading_id', 'id');
+        return $this->morphToMany(Trading::class, 'subscribable', 'trading_subscribers', null, 'trading_id')
+            ->setMorphClass(BuyStrategy::class);
     }
 
-    public function sellTrading(): BelongsTo
+    public function sellTradings(): MorphToMany
     {
-        return $this->belongsTo(Trading::class, 'sell_trading_id', 'id');
+        return $this->morphToMany(Trading::class, 'subscribable', 'trading_subscribers', null, 'trading_id')
+            ->setMorphClass(SellStrategy::class);
     }
 
     public function tradeSwaps(): Attribute
