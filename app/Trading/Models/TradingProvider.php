@@ -2,8 +2,10 @@
 
 namespace App\Trading\Models;
 
+use App\Models\User;
 use App\Support\Models\Model;
 use App\Support\Models\ModelProvider;
+use App\Support\Models\QueryValues\HasValue;
 use App\Support\Models\QueryValues\LikeValue;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -25,26 +27,12 @@ class TradingProvider extends ModelProvider
         return $this->first(['slug' => $slug]);
     }
 
-    protected function whereBySubscriber(Builder $query, $subscriber): Builder
-    {
-        return $query->whereHas('subscribers', function ($query) use ($subscriber) {
-            $query->where('id', $this->retrieveKey($subscriber));
-        });
-    }
-
-    protected function whereByRunning(Builder $query): Builder
-    {
-        return $query->where(function (Builder $query) {
-            $query->has('subscribers')
-                ->orHas('buyStrategies')
-                ->orHas('sellStrategies');
-        });
-    }
-
-    public function paginationBySubscriber($subscriber, ?string $keyword = null, ?int $perPage = null, ?int $page = null): LengthAwarePaginator
+    public function paginationByUser(int|User $user, ?string $keyword = null, ?int $perPage = null, ?int $page = null): LengthAwarePaginator
     {
         return $this->pagination(array_filter([
-            'subscriber' => $subscriber,
+            'users' => function ($query) use ($user) {
+                $query->where('id', $this->retrieveKey($user));
+            },
             'slug' => is_null($keyword) ? null : new LikeValue($keyword),
         ]), $perPage, $page);
     }
@@ -55,7 +43,7 @@ class TradingProvider extends ModelProvider
             'exchange' => $exchange,
             'ticker' => $ticker,
             'interval' => $interval,
-            'running' => true,
+            'subscribers' => new HasValue(),
         ]));
     }
 }

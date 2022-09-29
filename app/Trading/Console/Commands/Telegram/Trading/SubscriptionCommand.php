@@ -27,7 +27,7 @@ class SubscriptionCommand extends Command
     protected function printTradingsBySubscriber(User $user): string
     {
         return $this->printList(
-            (new TradingProvider())->paginationBySubscriber($user, $this->keyword(), 10, $this->page()),
+            (new TradingProvider())->paginationByUser($user, $this->keyword(), 10, $this->page()),
             fn(Trading $trading): string => sprintf('#%s:%s', $trading->id, $trading->slug),
             'No subscriptions.',
             'Trading subscriptions:'

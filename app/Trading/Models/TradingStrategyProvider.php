@@ -24,17 +24,23 @@ class TradingStrategyProvider extends ModelProvider
         return $query->where(function ($query) use ($trading) {
             if ($trading instanceof LikeValue) {
                 $query
-                    ->whereHas('buyTrading', function ($query) use ($trading) {
+                    ->whereHas('buyTradings', function ($query) use ($trading) {
                         $query->where('slug', 'like', (string)$trading);
                     })
-                    ->orWhereHas('sellTrading', function ($query) use ($trading) {
+                    ->orWhereHas('sellTradings', function ($query) use ($trading) {
                         $query->where('slug', 'like', (string)$trading);
                     });
             }
             else {
                 $tradingId = $this->retrieveKey($trading);
-                $query->where('buy_trading_id', $tradingId)
-                    ->orWhere('sell_trading_id', $tradingId);
+                $tradingInstance = new Trading();
+                $query
+                    ->whereHas('buyTradings', function ($query) use ($tradingId, $tradingInstance) {
+                        $query->where($tradingInstance->qualifyColumn('id'), $tradingId);
+                    })
+                    ->orWhereHas('sellTradings', function ($query) use ($tradingId, $tradingInstance) {
+                        $query->where($tradingInstance->qualifyColumn('id'), $tradingId);
+                    });
             }
         });
     }

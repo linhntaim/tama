@@ -3,6 +3,7 @@
 namespace App\Trading\Bots\Actions;
 
 use App\Trading\Bots\Bot;
+use App\Trading\Bots\Data\Indication;
 use App\Trading\Models\Trading;
 use App\Trading\Models\TradingBroadcast;
 use App\Trading\Models\TradingStrategy;
@@ -15,14 +16,29 @@ class TradeAction implements IAction
 {
     public function __invoke(Trading $trading, Bot $bot, TradingBroadcast $broadcast): void
     {
-        foreach ((new TradingStrategyProvider())->allActiveByTrading($trading) as $strategy) {
+        foreach ((new TradingStrategyProvider())->with([
+            'buyTradings' => function ($query) use ($trading) {
+                $query->where('id', $trading->id);
+            },
+            'sellTradings' => function ($query) use ($trading) {
+                $query->where('id', $trading->id);
+            },
+        ])->allActiveByTrading($trading) as $strategy) {
             $this->invokeTrading($bot, $broadcast, $strategy);
         }
     }
 
+    protected function isAllowedToTradeWithStrategy(TradingStrategy $strategy, Indication $indication): bool
+    {
+        return ($indication->getActionBuy() && $strategy->buyTradings->count() > 0)
+            || ($indication->getActionSell() && $strategy->sellTradings->count() > 0);
+    }
+
     protected function invokeTrading(Bot $bot, TradingBroadcast $broadcast, TradingStrategy $strategy): void
     {
-        $indication = $broadcast->indication;
+        if (!$this->isAllowedToTradeWithStrategy($strategy, $indication = $broadcast->indication)) {
+            return;
+        }
         try {
             if ($strategy->isFake) {
                 $bot->useFakeExchangeConnector();
@@ -34,7 +50,7 @@ class TradeAction implements IAction
                 $strategy->quoteAmount,
                 $strategy->buy_risk,
                 $strategy->sell_risk,
-                $broadcast->indication
+                $indication
             ))) {
                 (new TradingSwapProvider)->createWithAttributes(
                     [
@@ -53,14 +69,14 @@ class TradeAction implements IAction
                     ])
                 );
 
-                $label = sprintf('STRATEGY #%d: %s %s %s', $strategy->id, $indication->getAction(), $bot->ticker(), $bot->interval());
                 ConsoleNotification::send(
                     $strategy->user->load('socials'),
                     implode(PHP_EOL, [
-                        $label,
-                        str_repeat('‾', strlen($label)),
+                        sprintf('STRATEGY #%d:', $strategy->id),
+                        sprintf('%s %s %s', $indication->getAction(), $bot->ticker(), $bot->interval()),
+                        str_repeat('‾', 25),
                         'TRADE:',
-                        '*************************',
+                        str_repeat('*', 25),
                         $indication->getActionBuy()
                             ? sprintf('BOUGHT %s %s from %s %s at %s',
                             num_trim($marketOrder->getToAmount()),
@@ -77,7 +93,7 @@ class TradeAction implements IAction
                             $marketOrder->getPrice()),
                         '',
                         'INDICATION:',
-                        '*************************',
+                        str_repeat('*', 25),
                         $bot->reportNow($indication),
                     ])
                 );
