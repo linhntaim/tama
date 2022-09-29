@@ -85,7 +85,16 @@ class Interval
             || ($thisUnit === $thatUnit && $this->getNumber() <= $interval->getNumber());
     }
 
-    public function gcd(Interval $interval): int
+    public function cmp(Interval $interval): int
+    {
+        return match (true) {
+            $this->eq($interval) => 0,
+            $this->gt($interval) => 1,
+            default => -1
+        };
+    }
+
+    public function gcd(Interval|int|null $interval = null): int
     {
         $unitOrder = [
             'm' => fn($number) => $number * 60,
@@ -95,10 +104,17 @@ class Interval
             'M' => fn() => 24 * 3600,
         ];
 
-        return gcd(
-            $unitOrder[$this->getUnit()]($this->getNumber()),
-            $unitOrder[$interval->getUnit()]($interval->getNumber())
-        );
+        return match (true) {
+            $interval instanceof self => gcd(
+                $unitOrder[$this->getUnit()]($this->getNumber()),
+                $unitOrder[$interval->getUnit()]($interval->getNumber())
+            ),
+            is_int($interval) => gcd(
+                $unitOrder[$this->getUnit()]($this->getNumber()),
+                $interval
+            ),
+            default => $unitOrder[$this->getUnit()]($this->getNumber())
+        };
     }
 
     public function findOpenTimeOf(Carbon|int|null $time = null, int $directionIndex = 0, bool $asInt = true): int|Carbon

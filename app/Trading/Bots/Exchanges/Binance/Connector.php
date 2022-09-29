@@ -6,7 +6,6 @@ use App\Trading\Bots\Exchanges\Connector as BaseConnector;
 use App\Trading\Bots\Exchanges\Exchange;
 use App\Trading\Bots\Exchanges\Interval;
 use App\Trading\Bots\Exchanges\MarketOrder as BaseMarketOrder;
-use App\Trading\Bots\Exchanges\PriceCollection as BasePriceCollection;
 use App\Trading\Bots\Exchanges\Ticker as BaseTicker;
 use App\Trading\Models\UserExchangeOption;
 use Binance\Exception\MissingArgumentException;
@@ -123,11 +122,6 @@ class Connector extends BaseConnector
             'endTime' => is_null($endTime) ? null : $endTime * 1000, // ms
             'limit' => $limit,
         ]));
-    }
-
-    protected function newPriceCollection(string $ticker, Interval $interval, array $prices, array $times): BasePriceCollection
-    {
-        return new PriceCollection($ticker, $interval, $prices, $times);
     }
 
     /**

@@ -282,17 +282,15 @@ abstract class Connector implements ConnectorInterface
 
     abstract protected function fetchPrices(string $ticker, Interval $interval, int $startTime = null, int $endTime = null, int $limit = Exchange::PRICE_LIMIT): array;
 
-    protected function createPriceCollection(string $ticker, Interval $interval, array $prices, ?int $time = null): PriceCollection
+    protected function createPriceCollection(string $ticker, Interval $interval, array $prices, ?int $endTime = null, int $limit = Exchange::PRICE_LIMIT): PriceCollection
     {
-        return $this->newPriceCollection(
+        return (new PriceCollection(
+            $this->exchange,
             $ticker,
             $interval,
-            $prices,
-            $interval->getRecentOpenTimes(count($prices), $time)
-        );
+            $prices
+        ))->fillMissingTimes($endTime, $limit);
     }
-
-    abstract protected function newPriceCollection(string $ticker, Interval $interval, array $prices, array $times): PriceCollection;
 
     public function hasPricesAt(string $ticker, Interval $interval, ?int $time = null): bool|int
     {
@@ -315,7 +313,8 @@ abstract class Connector implements ConnectorInterface
             $ticker,
             $interval,
             $this->fetchPrices($ticker, $interval, null, $time, $limit),
-            $time
+            $time,
+            $limit
         );
     }
 

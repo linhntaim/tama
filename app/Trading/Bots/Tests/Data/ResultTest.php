@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trading\Bots\Tests;
+namespace App\Trading\Bots\Tests\Data;
 
 use Illuminate\Support\Collection;
 

@@ -2,7 +2,7 @@
 
 namespace App\Trading\Console\Commands\Telegram\Test;
 
-use App\Trading\Bots\Tests\ResultTest;
+use App\Trading\Bots\Tests\Data\ResultTest;
 use App\Trading\Bots\Tests\StrategyTest;
 use App\Trading\Models\TradingStrategy;
 use App\Trading\Models\TradingStrategyProvider;

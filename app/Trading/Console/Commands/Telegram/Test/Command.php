@@ -2,8 +2,8 @@
 
 namespace App\Trading\Console\Commands\Telegram\Test;
 
+use App\Trading\Bots\Tests\Data\ResultTest;
 use App\Trading\Console\Commands\Telegram\Command as BaseCommand;
-use App\Trading\Bots\Tests\ResultTest;
 use App\Trading\Models\Trading;
 use Illuminate\Database\Eloquent\Collection;
 

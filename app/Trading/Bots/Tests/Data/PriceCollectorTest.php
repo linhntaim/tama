@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Trading\Bots\Tests;
+namespace App\Trading\Bots\Tests\Data;
 
 use App\Trading\Bots\Exchanges\ConnectorInterface;
 use App\Trading\Bots\Exchanges\Exchange;

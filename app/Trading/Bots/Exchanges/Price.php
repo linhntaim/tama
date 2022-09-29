@@ -6,6 +6,8 @@ use App\Support\ArrayReader;
 
 abstract class Price extends ArrayReader
 {
+    abstract public function setTime(int $openTime, Interval $interval): static;
+
     abstract public function getOpenTime(): int;
 
     abstract public function getClosePrice(): string;

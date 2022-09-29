@@ -2,7 +2,7 @@
 
 namespace App\Trading\Console\Commands\Telegram\Test;
 
-use App\Trading\Bots\Tests\ResultTest;
+use App\Trading\Bots\Tests\Data\ResultTest;
 use App\Trading\Bots\Tests\TradingTest;
 use App\Trading\Console\Commands\Telegram\InteractsWithTradings;
 use Illuminate\Database\Eloquent\Collection;

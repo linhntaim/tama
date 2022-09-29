@@ -7,10 +7,14 @@ use App\Support\Client\DateTimer;
 use App\Trading\Bots\Bot;
 use App\Trading\Bots\BotFactory;
 use App\Trading\Bots\Exchanges\Binance\Binance;
-use App\Trading\Bots\Exchanges\Interval;
+use App\Trading\Bots\Exchanges\PriceCollection;
 use App\Trading\Bots\Oscillators\RsiOscillator;
+use App\Trading\Bots\Tests\Data\ResultTest;
+use App\Trading\Bots\Tests\Data\SwapTest;
+use App\Trading\Bots\Tests\Data\TraderTest;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
+use RuntimeException;
 
 class BotTest
 {
@@ -56,21 +60,14 @@ class BotTest
         ?array           $sellBots = null,
     )
     {
-        $this->buyBots = array_map(static function (array $bot) {
-            return BotFactory::create($bot['name'], $bot['options']);
-        }, $buyBots);
-        $this->sellBots = is_null($sellBots) ? $this->buyBots : array_map(static function (array $bot) {
-            return BotFactory::create($bot['name'], $bot['options']);
-        }, $sellBots);
-
-        $firstBot = $this->buyBots[0];
-        foreach ((is_null($sellBots) ? $this->buyBots : array_merge($this->buyBots, $this->sellBots)) as $bot) {
-            if ($bot->exchange() !== $firstBot->exchange()
-                || (string)$bot->ticker() !== (string)$firstBot->ticker()) {
-                throw new InvalidArgumentException('Buy and sell bot must have the same exchange and ticker.');
-            }
-        }
-
+        $map = static function (array $bot) {
+            return take(
+                BotFactory::create($bot['name'], $bot['options']),
+                static fn(Bot $bot) => $bot->useFakeExchangeConnector()
+            );
+        };
+        $this->buyBots = array_map($map, $buyBots);
+        $this->sellBots = is_null($sellBots) ? $this->buyBots : array_map($map, $sellBots);
         $this->swaps = new Collection();
     }
 
@@ -94,16 +91,6 @@ class BotTest
         });
     }
 
-    protected function calculateOpenTime(Interval $interval, int $time): int
-    {
-        return with(
-            $interval->findOpenTimeOf($time),
-            static fn(int $openTime) => $openTime === $interval->getLatestOpenTime()
-                ? $interval->getPreviousOpenTimeOfExact($openTime)
-                : $openTime
-        );
-    }
-
     protected function toTime(string $timeString): int
     {
         $number = (int)$timeString;
@@ -120,6 +107,61 @@ class BotTest
             'H', 'h' => $now->subHours($number),
             default => DateTimer::parse($timeString)
         })->getTimestamp();
+    }
+
+    /**
+     * @param int $startTime
+     * @param int $endTime
+     * @return Collection<int, TraderTest>
+     */
+    protected function prepareTraders(int $startTime, int $endTime): Collection
+    {
+        $map = function (Bot $bot, string $action) use ($startTime, $endTime): ?TraderTest {
+            if ($bot->exchange() !== $this->buyBots[0]->exchange()
+                || (string)$bot->ticker() !== (string)$this->buyBots[0]->ticker()) {
+                throw new InvalidArgumentException('Buy and sell bot must have the same exchange and ticker.');
+            }
+
+            return transform(
+                with(
+                    $bot->interval()->findOpenTimeOf($startTime),
+                    static function (int $startOpenTime) use ($bot) {
+                        $hasPrices = $bot->exchangeConnector()->hasPricesAt(
+                            $bot->ticker(),
+                            $bot->interval(),
+                            $startOpenTime
+                        );
+                        if ($hasPrices === false) {
+                            return null;
+                        }
+                        if (is_int($hasPrices)) {
+                            $startOpenTime = $hasPrices;
+                        }
+                        return $startOpenTime;
+                    }
+                ),
+                static fn(?int $startOpenTime): ?TraderTest => is_null($startOpenTime)
+                || $startOpenTime >= ($endOpenTime = $bot->interval()->findOpenTimeOf($endTime, -1))
+                    ? null
+                    : new TraderTest($action, $bot, $startOpenTime, $endOpenTime)
+            );
+        };
+        return take(
+            collect($this->buyBots)
+                ->map(fn(Bot $bot): ?TraderTest => $map($bot, TraderTest::ACTION_BUY))
+                ->merge(collect($this->sellBots)->map(fn(Bot $bot): ?TraderTest => $map($bot, TraderTest::ACTION_SELL)))
+                ->filter()
+                ->sort(fn(TraderTest $t1, TraderTest $t2): int => match ($cmp = $t1->compareStartOpenTime($t2)) {
+                    0 => $t1->compareInterval($t2),
+                    default => $cmp
+                })
+                ->values(),
+            static function (Collection $traders) {
+                if ($traders->count() === 0) {
+                    throw new RuntimeException('Cannot fetch prices while trading.');
+                }
+            }
+        );
     }
 
     public function test(string|int|null $startTime = null, string|int|null $endTime = null): ResultTest
@@ -147,126 +189,84 @@ class BotTest
             throw new InvalidArgumentException('Start time must be less than end time.');
         }
 
-        $buyInterval = $this->buyBot->interval();
-        $sellInterval = $this->sellBot->interval();
-        $buyIntervalLte = $buyInterval->lte($sellInterval);
-        $buyStartOpenTime = $sellStartOpenTime = $this->calculateOpenTime(
-            $buyIntervalLte ? $sellInterval : $buyInterval,
-            $startTime
-        );
-        $buyEndOpenTime = $this->calculateOpenTime($buyInterval, $endTime);
-        $sellEndOpenTime = $this->calculateOpenTime($sellInterval, $endTime);
+        $traders = $this->prepareTraders($startTime, $endTime);
 
-        if ($buyStartOpenTime >= $buyEndOpenTime || $sellStartOpenTime >= $sellEndOpenTime) {
-            throw new InvalidArgumentException('Start and end time must be in different interval zones.');
-        }
-
-        $hasPrices = $buyIntervalLte
-            ? $this->sellBot->exchangeConnector()->hasPricesAt(
-                $this->sellBot->ticker(),
-                $sellInterval,
-                $sellStartOpenTime
+        $startTrader = $traders->first();
+        with($startTrader->getPriceCollector()->get(false), fn(PriceCollection $priceCollection) => $this->swaps->push(
+            new SwapTest(
+                null,
+                $priceCollection->latestTime(),
+                $priceCollection->latestPrice(),
+                $this->baseAmount,
+                $this->quoteAmount,
+                null
             )
-            : $this->buyBot->exchangeConnector()->hasPricesAt(
-                $this->buyBot->ticker(),
-                $buyInterval,
-                $buyStartOpenTime
-            );
-        if ($hasPrices !== false) {
-            if (is_int($hasPrices)) {
-                $buyStartOpenTime = $sellStartOpenTime = $hasPrices;
-            }
-            if ($buyStartOpenTime < $buyEndOpenTime && $sellStartOpenTime < $sellEndOpenTime) {
-                $buyPriceCollector = new PriceCollectorTest(
-                    $this->buyBot->exchangeConnector(),
-                    $this->buyBot->ticker(),
-                    $buyInterval,
-                    $buyStartOpenTime,
-                    $buyEndOpenTime,
-                );
-                $sellPriceCollector = new PriceCollectorTest(
-                    $this->sellBot->exchangeConnector(),
-                    $this->sellBot->ticker(),
-                    $sellInterval,
-                    $sellStartOpenTime,
-                    $sellEndOpenTime
-                );
+        ));
 
-                $priceCollection = $buyIntervalLte ? $buyPriceCollector->get(false) : $sellPriceCollector->get(false);
-                $this->swaps->push(
-                    new SwapTest(
-                        null,
-                        $priceCollection->latestTime(),
-                        $priceCollection->latestPrice(),
-                        $this->baseAmount,
-                        $this->quoteAmount,
-                        null
-                    )
-                );
-
-                $fakeUser = new User();
-                $loopTime = ($buyInterval->lte($sellInterval) ? $buyInterval : $sellInterval)->getNextOpenTimeOfExact($buyStartOpenTime);
-                $loopingTime = $buyInterval->gcd($sellInterval);
-                $loopEndTime = $buyIntervalLte
-                    ? $buyInterval->getNextOpenTimeOfExact($buyEndOpenTime)
-                    : $sellInterval->getNextOpenTimeOfExact($sellEndOpenTime);
-                while ($loopTime <= $loopEndTime) {
-                    if ($buyInterval->isExact($loopTime)) {
-                        $priceCollection = $buyPriceCollector->get();
-                        if (!is_null($indication = $this->buyBot->indicatingNow($priceCollection))) {
-                            $this->buyBot->exchangeConnector()->setTickerPrice($this->buyBot->ticker(), $indication->getPrice());
-                            if (!is_null($marketOrder = $this->buyBot->tryToBuyNow(
-                                $fakeUser,
-                                $this->quoteAmount(),
-                                $this->buyRisk,
-                                $indication
-                            ))) {
-                                $this->swaps->push(
-                                    new SwapTest(
-                                        $indication,
-                                        $indication->getActionTime($this->buyBot->interval()),
-                                        $marketOrder->getPrice(),
-                                        $marketOrder->getToAmount(),
-                                        num_neg($marketOrder->getFromAmount()),
-                                        $marketOrder
-                                    )
-                                );
-                            }
+        $fakeUser = new User();
+        $loopOpenTime = $startTrader->getStartOpenTime();
+        $loopEndOpenTime = $startTrader->getEndOpenTime();
+        $loopingTime = $traders->reduce(function (?int $result, TraderTest $trader): int {
+            return $trader->getBot()->interval()->gcd($result);
+        });
+        while ($loopOpenTime <= $loopEndOpenTime) {
+            $traders->first(function (TraderTest $trader) use ($fakeUser, $loopOpenTime) {
+                $bot = $trader->getBot();
+                // TODO: Rework price collector get
+                if ($loopOpenTime >= $trader->getStartOpenTime()
+                    && $bot->interval()->isExact($loopOpenTime)
+                    && !is_null($priceCollection = $trader->getPriceCollector()->get())
+                    && !is_null($indication = $bot->indicatingNow($priceCollection))) {
+                    $bot->exchangeConnector()->setTickerPrice($bot->ticker(), $indication->getPrice());
+                    if ($trader->isBuy()) {
+                        if (!is_null($marketOrder = $bot->tryToBuyNow(
+                            $fakeUser,
+                            $this->quoteAmount(),
+                            $this->buyRisk,
+                            $indication
+                        ))) {
+                            $this->swaps->push(
+                                new SwapTest(
+                                    $indication,
+                                    $indication->getActionTime($bot->interval()),
+                                    $marketOrder->getPrice(),
+                                    $marketOrder->getToAmount(),
+                                    num_neg($marketOrder->getFromAmount()),
+                                    $marketOrder
+                                )
+                            );
+                            return true;
                         }
                     }
-                    if ($sellInterval->isExact($loopTime)) {
-                        $priceCollection = $sellPriceCollector->get();
-                        if (!is_null($indication = $this->sellBot->indicatingNow($priceCollection))) {
-                            $this->sellBot->exchangeConnector()->setTickerPrice($this->sellBot->ticker(), $indication->getPrice());
-                            if (!is_null($marketOrder = $this->sellBot->tryToSellNow(
-                                $fakeUser,
-                                $this->baseAmount(),
-                                $this->sellRisk,
-                                $indication
-                            ))) {
-                                $this->swaps->push(
-                                    new SwapTest(
-                                        $indication,
-                                        $indication->getActionTime($this->buyBot->interval()),
-                                        $marketOrder->getPrice(),
-                                        num_neg($marketOrder->getFromAmount()),
-                                        $marketOrder->getToAmount(),
-                                        $marketOrder
-                                    )
-                                );
-                            }
-                        }
+                    elseif (!is_null($marketOrder = $bot->tryToSellNow(
+                        $fakeUser,
+                        $this->baseAmount(),
+                        $this->sellRisk,
+                        $indication
+                    ))) {
+                        $this->swaps->push(
+                            new SwapTest(
+                                $indication,
+                                $indication->getActionTime($bot->interval()),
+                                $marketOrder->getPrice(),
+                                num_neg($marketOrder->getFromAmount()),
+                                $marketOrder->getToAmount(),
+                                $marketOrder
+                            )
+                        );
+                        return true;
                     }
-                    $loopTime += $loopingTime;
                 }
-            }
+                return false;
+            });
+            $loopOpenTime += $loopingTime;
         }
 
         return new ResultTest(
-            $this->buyBot->exchange(),
-            $this->buyBot->ticker(),
-            $this->buyBot->baseSymbol(),
-            $this->buyBot->quoteSymbol(),
+            $this->buyBots[0]->exchange(),
+            $this->buyBots[0]->ticker(),
+            $this->buyBots[0]->baseSymbol(),
+            $this->buyBots[0]->quoteSymbol(),
             $this->buyRisk,
             $this->sellRisk,
             $startTime,

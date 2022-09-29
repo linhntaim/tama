@@ -4,10 +4,8 @@ namespace App\Trading\Bots\Exchanges;
 
 use InvalidArgumentException;
 
-abstract class PriceCollection
+class PriceCollection
 {
-    protected array $items;
-
     /**
      * @var string[] Float-valued strings.
      */
@@ -24,27 +22,23 @@ abstract class PriceCollection
         protected string   $exchange,
         protected string   $ticker,
         protected Interval $interval,
-        array              $prices,
-        array              $times,
+        protected array    $items,
     )
     {
-        $this->items = $prices;
-        $this->prices = $this->createPrices();
-        $this->times = $times;
-        /**
-         * Note: price length = time length <= price limit
-         * @see Exchange::PRICE_LIMIT
-         */
-        $this->count = count($this->prices);
+        take(
+            Exchanger::exchange($this->exchange),
+            function (Exchange $exchangeInstance) {
+                $this->prices = [];
+                $this->times = [];
+                foreach ($this->items as $item) {
+                    $price = $exchangeInstance->createPrice($item);
+                    $this->prices[] = $price->getPrice();
+                    $this->times[] = $price->getOpenTime();
+                }
+            }
+        );
+        $this->count = count($this->items);
     }
-
-    abstract protected function createNew(
-        string   $exchange,
-        string   $ticker,
-        Interval $interval,
-        array    $prices,
-        array    $times,
-    ): static;
 
     public function getExchange(): string
     {
@@ -67,10 +61,47 @@ abstract class PriceCollection
         return $this->interval;
     }
 
+    public function fillMissingTimes(?int $endTime = null, int $limit = Exchange::PRICE_LIMIT): static
+    {
+        $expectedOpenTime = $this->interval->findOpenTimeOf($endTime);
+        $missingTimes = [];
+        $i = $this->count;
+        while (--$i >= 0) {
+            if ($this->times[$i] != $expectedOpenTime) {
+                $missingTimes[$expectedOpenTime] = $i;
+                ++$i;
+            }
+            $expectedOpenTime = $this->interval->getPreviousOpenTimeOfExact($expectedOpenTime);
+        }
+        $exchangeInstance = Exchanger::exchange($this->exchange);
+        foreach ($missingTimes as $time => $index) {
+            array_splice(
+                $this->items,
+                $index + 1,
+                0,
+                [
+                    $exchangeInstance
+                        ->createPrice($this->items[$index])
+                        ->setTime($time, $this->interval)
+                        ->toArray(),
+                ]
+            );
+            array_splice($this->prices, $index + 1, 0, [$this->prices[$index]]);
+            array_splice($this->times, $index + 1, 0, [$time]);
+        }
+        $this->count = count($this->items);
+        if ($spliceLength = max(0, $this->count - $limit)) {
+            array_splice($this->items, 0, $spliceLength);
+            array_splice($this->prices, 0, $spliceLength);
+            array_splice($this->times, 0, $spliceLength);
+            $this->count = $limit;
+        }
+        return $this;
+    }
+
     public function push(PriceCollection $priceCollection): static
     {
-        if (!($priceCollection::class === static::class
-            && $this->exchange === $priceCollection->getExchange()
+        if (!($this->exchange === $priceCollection->getExchange()
             && $this->ticker === $priceCollection->getTicker()
             && $this->interval->eq($priceCollection->getInterval()))) {
             throw new InvalidArgumentException('Price collection does not match.');
@@ -85,28 +116,17 @@ abstract class PriceCollection
 
     public function slice(int $offset, ?int $length = null): static
     {
-        return $this->createNew(
+        return new static(
             $this->exchange,
             $this->ticker,
             $this->interval,
             array_slice($this->items, $offset, $length),
-            array_slice($this->times, $offset, $length),
         );
     }
-
-    /**
-     * @return string[] Float-valued strings.
-     */
-    abstract protected function createPrices(): array;
 
     public function items(): array
     {
         return $this->items;
-    }
-
-    public function itemAt(int $index = 0): mixed
-    {
-        return $this->items()[$index];
     }
 
     /**
@@ -123,7 +143,7 @@ abstract class PriceCollection
      */
     public function priceAt(int $index = 0): string
     {
-        return $this->prices()[$index];
+        return $this->prices[$index];
     }
 
     /**
@@ -138,17 +158,12 @@ abstract class PriceCollection
     {
         return $index === $this->count
             ? $this->interval->getNextOpenTimeOfExact($this->latestTime())
-            : $this->times()[$index];
+            : $this->times[$index];
     }
 
     public function count(): int
     {
         return $this->count;
-    }
-
-    public function latestItem(): mixed
-    {
-        return $this->itemAt($this->count - 1);
     }
 
     /**
