@@ -11,7 +11,7 @@ abstract class Command extends BaseCommand
 {
     public $signature = '{--base-amount=0.0} {--quote-amount=500.0} {--buy-risk=} {--sell-risk=} {--start-time=1Y} {--end-time=}';
 
-    protected bool $queuedOnRequest = true;
+    // protected bool $queuedOnRequest = true;
 
     protected function baseAmount(): string
     {
@@ -45,6 +45,7 @@ abstract class Command extends BaseCommand
 
     protected function printResultTest(ResultTest $result, Collection $buyTradings, Collection $sellTradings): string
     {
+        dd($result);
         return implode(PHP_EOL, [
             sprintf('- Buy (risk=%s):', $result->buyRisk),
             ...$buyTradings->map(function (Trading $trading) {
@@ -54,44 +55,7 @@ abstract class Command extends BaseCommand
             ...$sellTradings->map(function (Trading $trading) {
                 return sprintf('  + {#%d:%s}', $trading->id, $trading->slug);
             })->all(),
-            sprintf(
-                '- Start at: %s',
-                $result->shownStartTime
-            ),
-            sprintf(
-                '- Start amount: %s %s + %s %s ~ %s %s',
-                num_trim($result->beforeBaseAmount),
-                $result->baseSymbol,
-                num_trim($result->beforeQuoteAmount),
-                $result->quoteSymbol,
-                num_trim($result->beforeQuoteAmountEquivalent),
-                $result->quoteSymbol
-            ),
-            sprintf(
-                '- End at: %s',
-                $result->shownEndTime
-            ),
-            sprintf(
-                '- End amount: %s %s + %s %s ~ %s %s',
-                num_trim($result->afterBaseAmount),
-                $result->baseSymbol,
-                num_trim($result->afterQuoteAmount),
-                $result->quoteSymbol,
-                num_trim($result->afterQuoteAmountEquivalent),
-                $result->quoteSymbol
-            ),
-            sprintf(
-                '- Trades: %d ~ %d BUY / %d SELL',
-                $result->tradeSwaps()->count(),
-                $result->buySwaps()->count(),
-                $result->sellSwaps()->count()
-            ),
-            sprintf(
-                '- Profit: %s %s ~ %s%%',
-                num_trim($result->profit),
-                $result->quoteSymbol,
-                $result->profitPercent
-            ),
+            $result->report(),
         ]);
     }
 }

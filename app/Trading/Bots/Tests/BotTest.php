@@ -212,7 +212,6 @@ class BotTest
         while ($loopOpenTime <= $loopEndOpenTime) {
             $traders->first(function (TraderTest $trader) use ($fakeUser, $loopOpenTime) {
                 $bot = $trader->getBot();
-                // TODO: Rework price collector get
                 if ($loopOpenTime >= $trader->getStartOpenTime()
                     && $bot->interval()->isExact($loopOpenTime)
                     && !is_null($priceCollection = $trader->getPriceCollector()->get())

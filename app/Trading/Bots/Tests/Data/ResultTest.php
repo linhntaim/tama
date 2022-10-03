@@ -3,6 +3,8 @@
 namespace App\Trading\Bots\Tests\Data;
 
 use App\Trading\Bots\Exchanges\Exchanger;
+use App\Trading\Bots\Tests\Reports\IReportTest;
+use App\Trading\Bots\Tests\Reports\PlainTextReportTest;
 use Illuminate\Support\Collection;
 
 class ResultTest
@@ -34,6 +36,8 @@ class ResultTest
     public string $shownEndTime;
 
     public Collection $swaps;
+
+    protected IReportTest $reporter;
 
     /**
      * @param string $exchange
@@ -101,5 +105,21 @@ class ResultTest
     public function sellSwaps(): Collection
     {
         return $this->swaps->filter(fn(SwapTest $swap): bool => num_lt($swap->getBaseAmount(), 0));
+    }
+
+    public function setReporter(IReportTest $reporter): static
+    {
+        $this->reporter = $reporter;
+        return $this;
+    }
+
+    public function getReporter(): IReportTest
+    {
+        return $this->reporter ?? new PlainTextReportTest();
+    }
+
+    public function report(): string
+    {
+        return $this->getReporter()->report($this);
     }
 }
