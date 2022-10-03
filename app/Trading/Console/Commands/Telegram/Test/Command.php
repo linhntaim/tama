@@ -11,7 +11,7 @@ abstract class Command extends BaseCommand
 {
     public $signature = '{--base-amount=0.0} {--quote-amount=500.0} {--buy-risk=} {--sell-risk=} {--start-time=1Y} {--end-time=}';
 
-    // protected bool $queuedOnRequest = true;
+    protected bool $queuedOnRequest = true;
 
     protected function baseAmount(): string
     {
@@ -45,7 +45,6 @@ abstract class Command extends BaseCommand
 
     protected function printResultTest(ResultTest $result, Collection $buyTradings, Collection $sellTradings): string
     {
-        dd($result);
         return implode(PHP_EOL, [
             sprintf('- Buy (risk=%s):', $result->buyRisk),
             ...$buyTradings->map(function (Trading $trading) {
