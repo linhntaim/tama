@@ -9,6 +9,7 @@ use App\Trading\Bots\BotFactory;
 use App\Trading\Bots\Exchanges\Binance\Binance;
 use App\Trading\Bots\Exchanges\PriceCollection;
 use App\Trading\Bots\Oscillators\RsiOscillator;
+use App\Trading\Bots\Tests\Data\PriceCollectorTest;
 use App\Trading\Bots\Tests\Data\ResultTest;
 use App\Trading\Bots\Tests\Data\SwapTest;
 use App\Trading\Bots\Tests\Data\TraderTest;
@@ -164,6 +165,28 @@ class BotTest
         );
     }
 
+    /**
+     * @param Collection<int, TraderTest> $traders
+     * @return PriceCollectorTest[]
+     */
+    protected function preparePriceCollectors(Collection $traders): array
+    {
+        return $traders
+            ->keyBy(function (TraderTest $trader) {
+                return (string)$trader->getBot()->interval();
+            })
+            ->map(function (TraderTest $trader) {
+                $bot = $trader->getBot();
+                return new PriceCollectorTest(
+                    $bot->exchangeConnector(),
+                    $bot->ticker(),
+                    $bot->interval(),
+                    $trader->getStartOpenTime(),
+                    $trader->getEndOpenTime()
+                );
+            })->all();
+    }
+
     public function test(string|int|null $startTime = null, string|int|null $endTime = null): ResultTest
     {
         if (is_string($startTime)) {
@@ -190,9 +213,10 @@ class BotTest
         }
 
         $traders = $this->prepareTraders($startTime, $endTime);
+        $priceCollectors = $this->preparePriceCollectors($traders);
 
         $startTrader = $traders->first();
-        with($startTrader->getPriceCollector()->get(false), fn(PriceCollection $priceCollection) => $this->swaps->push(
+        with($priceCollectors[(string)$startTrader->getBot()->interval()]->get(false), fn(PriceCollection $priceCollection) => $this->swaps->push(
             new SwapTest(
                 null,
                 $priceCollection->latestTime(),
@@ -210,11 +234,16 @@ class BotTest
             return $trader->getBot()->interval()->gcd($result);
         });
         while ($loopOpenTime <= $loopEndOpenTime) {
-            $traders->first(function (TraderTest $trader) use ($fakeUser, $loopOpenTime) {
+            $priceNext = [];
+            $traders->each(function (TraderTest $trader) use ($fakeUser, $loopOpenTime, $priceCollectors, &$priceNext) {
                 $bot = $trader->getBot();
+                $intervalString = (string)$bot->interval();
                 if ($loopOpenTime >= $trader->getStartOpenTime()
                     && $bot->interval()->isExact($loopOpenTime)
-                    && !is_null($priceCollection = $trader->getPriceCollector()->get())
+                    && !is_null($priceCollection = $priceCollectors[$intervalString]->get(
+                        $priceNext[$intervalString] ?? take(true, static function () use (&$priceNext, $intervalString) {
+                        $priceNext[$intervalString] = false;
+                    })))
                     && !is_null($indication = $bot->indicatingNow($priceCollection))) {
                     $bot->exchangeConnector()->setTickerPrice($bot->ticker(), $indication->getPrice());
                     if ($trader->isBuy()) {
@@ -234,7 +263,6 @@ class BotTest
                                     $marketOrder
                                 )
                             );
-                            return true;
                         }
                     }
                     elseif (!is_null($marketOrder = $bot->tryToSellNow(
@@ -253,10 +281,8 @@ class BotTest
                                 $marketOrder
                             )
                         );
-                        return true;
                     }
                 }
-                return false;
             });
             $loopOpenTime += $loopingTime;
         }

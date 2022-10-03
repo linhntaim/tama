@@ -9,21 +9,12 @@ class TraderTest
     public const ACTION_BUY = 'buy';
     public const ACTION_SELL = 'sell';
 
-    protected PriceCollectorTest $priceCollector;
-
     public function __construct(
         protected string $action,
         protected Bot    $bot,
         protected int    $startOpenTime,
         protected int    $endOpenTime)
     {
-        $this->priceCollector = new PriceCollectorTest(
-            $this->bot->exchangeConnector(),
-            $this->bot->ticker(),
-            $this->bot->interval(),
-            $this->startOpenTime,
-            $this->endOpenTime
-        );
     }
 
     public function isBuy(): bool
@@ -44,11 +35,6 @@ class TraderTest
     public function getEndOpenTime(): int
     {
         return $this->endOpenTime;
-    }
-
-    public function getPriceCollector(): PriceCollectorTest
-    {
-        return $this->priceCollector;
     }
 
     public function compareInterval(TraderTest $trader): int

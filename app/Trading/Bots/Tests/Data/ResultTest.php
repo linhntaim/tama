@@ -35,6 +35,9 @@ class ResultTest
 
     public string $shownEndTime;
 
+    /**
+     * @var Collection<int, SwapTest>
+     */
     public Collection $swaps;
 
     protected IReportTest $reporter;
