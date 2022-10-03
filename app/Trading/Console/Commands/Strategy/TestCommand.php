@@ -18,13 +18,17 @@ class TestCommand extends Command
                 500.0,
                 0.0,
                 0.0,
-                'oscillating_bot',
                 [
-                    'exchange' => Binance::NAME,
-                    'ticker' => Binance::DEFAULT_TICKER,
-                    'interval' => Trader::INTERVAL_1_HOUR,
-                    'oscillator' => [
-                        'name' => RsiOscillator::NAME,
+                    [ // bot buy 1
+                        'name' => 'oscillating_bot',
+                        'options' => [
+                            'exchange' => Binance::NAME,
+                            'ticker' => Binance::DEFAULT_TICKER,
+                            'interval' => Trader::INTERVAL_1_HOUR,
+                            'oscillator' => [
+                                'name' => RsiOscillator::NAME,
+                            ],
+                        ],
                     ],
                 ],
             ))->testYearsTillNow()

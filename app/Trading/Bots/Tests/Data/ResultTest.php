@@ -2,6 +2,7 @@
 
 namespace App\Trading\Bots\Tests\Data;
 
+use App\Trading\Bots\Exchanges\Exchanger;
 use Illuminate\Support\Collection;
 
 class ResultTest
@@ -57,7 +58,7 @@ class ResultTest
         Collection    $swaps
     )
     {
-        $this->afterPrice = $swaps->last()->getPrice();
+        $this->afterPrice = Exchanger::connector($this->exchange)->tickerPrice($this->ticker);
         $this->afterBaseAmount = with(0, static function (string $amount) use ($swaps): string {
             $swaps->each(function (SwapTest $swap) use (&$amount) {
                 $amount = num_add($amount, $swap->getBaseAmount());
