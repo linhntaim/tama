@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Support\Client\DateTimer;
 use App\Trading\Bots\Bot;
 use App\Trading\Bots\BotFactory;
+use App\Trading\Bots\Data\Indication;
 use App\Trading\Bots\Exchanges\Binance\Binance;
 use App\Trading\Bots\Exchanges\PriceCollection;
 use App\Trading\Bots\Oscillators\RsiOscillator;
@@ -92,24 +93,6 @@ class BotTest
         });
     }
 
-    protected function toTime(string $timeString): int
-    {
-        $number = (int)$timeString;
-        if ((string)$number === $timeString) {
-            return $number;
-        }
-
-        $now = DateTimer::now(null);
-        return (match (substr($timeString, -1)) {
-            'Y', 'y' => $now->subYears($number),
-            'M', 'm' => $now->subMonths($number),
-            'W', 'w' => $now->subWeeks($number),
-            'D', 'd' => $now->subDays($number),
-            'H', 'h' => $now->subHours($number),
-            default => DateTimer::parse($timeString)
-        })->getTimestamp();
-    }
-
     /**
      * @param int $startTime
      * @param int $endTime
@@ -187,117 +170,51 @@ class BotTest
             })->all();
     }
 
+    /**
+     * @param Collection $traders
+     * @param PriceCollectorTest[] $priceCollectors
+     * @return int[]
+     */
+    protected function prepareLoop(Collection $traders, array $priceCollectors): array
+    {
+        $startTrader = $traders->first();
+        take(
+            $priceCollectors[(string)$startTrader->getBot()->interval()]->get(false),
+            fn(PriceCollection $priceCollection) => $this->swaps->push(
+                new SwapTest(
+                    null,
+                    $priceCollection->latestTime(),
+                    $priceCollection->latestPrice(),
+                    $this->baseAmount,
+                    $this->quoteAmount,
+                    null
+                )
+            )
+        );
+        return [
+            $startTrader->getStartOpenTime(),
+            $startTrader->getEndOpenTime(),
+            $traders->reduce(function (?int $result, TraderTest $trader): int {
+                return $trader->getBot()->interval()->gcd($result);
+            }),
+        ];
+    }
+
     public function test(string|int|null $startTime = null, string|int|null $endTime = null): ResultTest
     {
-        if (is_string($startTime)) {
-            $startTime = $this->toTime($startTime);
-        }
-        if (is_string($endTime)) {
-            $endTime = $this->toTime($endTime);
-        }
-
-        $now = DateTimer::now(null);
-        if ((!is_null($startTime) && $startTime > $now->getTimestamp())
-            || (!is_null($endTime) && $endTime > $now->getTimestamp())) {
-            throw new InvalidArgumentException('Start/End time must be in the past.');
-        }
-        if ($endTime === null) {
-            $endTime = $now->getTimestamp();
-        }
-        if ($startTime === null) {
-            $startTime = $now->subYear()->getTimestamp();
-        }
-
-        if ($startTime >= $endTime) {
-            throw new InvalidArgumentException('Start time must be less than end time.');
-        }
+        [$startTime, $endTime] = $this->toTimes($startTime, $endTime);
 
         $traders = $this->prepareTraders($startTime, $endTime);
         $priceCollectors = $this->preparePriceCollectors($traders);
-
-        $startTrader = $traders->first();
-        with($priceCollectors[(string)$startTrader->getBot()->interval()]->get(false), fn(PriceCollection $priceCollection) => $this->swaps->push(
-            new SwapTest(
-                null,
-                $priceCollection->latestTime(),
-                $priceCollection->latestPrice(),
-                $this->baseAmount,
-                $this->quoteAmount,
-                null
-            )
-        ));
-
         $fakeUser = new User();
-        $loopOpenTime = $startTrader->getStartOpenTime();
-        $loopEndOpenTime = $startTrader->getEndOpenTime();
-        $loopingTime = $traders->reduce(function (?int $result, TraderTest $trader): int {
-            return $trader->getBot()->interval()->gcd($result);
-        });
+
+        [$loopOpenTime, $loopEndOpenTime, $loopingTime] = $this->prepareLoop($traders, $priceCollectors);
         while ($loopOpenTime <= $loopEndOpenTime) {
-            $priceNext = [];
-            $traders->each(function (TraderTest $trader) use ($fakeUser, $loopOpenTime, $priceCollectors, &$priceNext) {
-                $bot = $trader->getBot();
-                $intervalString = (string)$bot->interval();
-                if ($loopOpenTime >= $trader->getStartOpenTime()
-                    && $bot->interval()->isExact($loopOpenTime)
-                    && !is_null($priceCollection = $priceCollectors[$intervalString]->get(
-                        $priceNext[$intervalString] ?? take(true, static function () use (&$priceNext, $intervalString) {
-                        $priceNext[$intervalString] = false;
-                    })))
-                    && !is_null($indication = $bot->indicatingNow($priceCollection))) {
-                    $bot->exchangeConnector()->setTickerPrice($bot->ticker(), $indication->getPrice());
-                    if ($trader->isBuy()) {
-                        if (!is_null($marketOrder = $bot->tryToBuyNow(
-                            $fakeUser,
-                            $this->quoteAmount(),
-                            $this->buyRisk,
-                            $indication
-                        ))) {
-                            $this->swaps->push(
-                                new SwapTest(
-                                    $indication,
-                                    $indication->getActionTime($bot->interval()),
-                                    $marketOrder->getPrice(),
-                                    $marketOrder->getToAmount(),
-                                    num_neg($marketOrder->getFromAmount()),
-                                    $marketOrder
-                                )
-                            );
-                        }
-                    }
-                    elseif (!is_null($marketOrder = $bot->tryToSellNow(
-                        $fakeUser,
-                        $this->baseAmount(),
-                        $this->sellRisk,
-                        $indication
-                    ))) {
-                        $this->swaps->push(
-                            new SwapTest(
-                                $indication,
-                                $indication->getActionTime($bot->interval()),
-                                $marketOrder->getPrice(),
-                                num_neg($marketOrder->getFromAmount()),
-                                $marketOrder->getToAmount(),
-                                $marketOrder
-                            )
-                        );
-                    }
-                }
-            });
+            $this->testTraders($traders, $priceCollectors, $loopOpenTime, $fakeUser);
             $loopOpenTime += $loopingTime;
         }
 
-        return new ResultTest(
-            $this->buyBots[0]->exchange(),
-            $this->buyBots[0]->ticker(),
-            $this->buyBots[0]->baseSymbol(),
-            $this->buyBots[0]->quoteSymbol(),
-            $this->buyRisk,
-            $this->sellRisk,
-            $startTime,
-            $endTime,
-            $this->swaps
-        );
+        return $this->createResult($startTime, $endTime);
     }
 
     public function testYearsTillNow(int $years = 1): ResultTest
@@ -323,5 +240,140 @@ class BotTest
     public function testHoursTillNow(int $hours = 365 * 24): ResultTest
     {
         return $this->test(sprintf('%dH', $hours));
+    }
+
+    protected function toTime(string $timeString): int
+    {
+        $number = (int)$timeString;
+        if ((string)$number === $timeString) {
+            return $number;
+        }
+
+        $now = DateTimer::now(null);
+        return (match (substr($timeString, -1)) {
+            'Y', 'y' => $now->subYears($number),
+            'M', 'm' => $now->subMonths($number),
+            'W', 'w' => $now->subWeeks($number),
+            'D', 'd' => $now->subDays($number),
+            'H', 'h' => $now->subHours($number),
+            default => DateTimer::parse($timeString)
+        })->getTimestamp();
+    }
+
+    /**
+     * @param string|int|null $startTime
+     * @param string|int|null $endTime
+     * @return int[]
+     */
+    protected function toTimes(string|int|null $startTime = null, string|int|null $endTime = null): array
+    {
+        if (is_string($startTime)) {
+            $startTime = $this->toTime($startTime);
+        }
+        if (is_string($endTime)) {
+            $endTime = $this->toTime($endTime);
+        }
+
+        $now = DateTimer::now(null);
+        if ((!is_null($startTime) && $startTime > $now->getTimestamp())
+            || (!is_null($endTime) && $endTime > $now->getTimestamp())) {
+            throw new InvalidArgumentException('Start/End time must be in the past.');
+        }
+        if ($endTime === null) {
+            $endTime = $now->getTimestamp();
+        }
+        if ($startTime === null) {
+            $startTime = $now->subYear()->getTimestamp();
+        }
+
+        if ($startTime >= $endTime) {
+            throw new InvalidArgumentException('Start time must be less than end time.');
+        }
+        return [$startTime, $endTime];
+    }
+
+    /**
+     * @param Collection $traders
+     * @param PriceCollectorTest[] $priceCollectors
+     * @param int $loopOpenTime
+     * @param User $fakeUser
+     * @return void
+     */
+    protected function testTraders(Collection $traders, array $priceCollectors, int $loopOpenTime, User $fakeUser): void
+    {
+        $cachedExacts = [];
+        $cachedNextAfters = [];
+        $cachedIndications = [];
+        foreach ($traders as $trader) {
+            $bot = $trader->getBot();
+            $interval = (string)$bot->interval();
+            if ($loopOpenTime >= $trader->getStartOpenTime()
+                && ($cachedExacts[$interval] ?? $cachedExacts[$interval] = $bot->interval()->isExact($loopOpenTime))
+                && !is_null(
+                    $indication = $cachedIndications[$bot->asSlug()]
+                        ?? $cachedIndications[$bot->asSlug()] = (static function () use ($priceCollectors, $bot, $interval, &$cachedNextAfters): ?Indication {
+                            return is_null(
+                                $priceCollection = $priceCollectors[$interval]->get(
+                                    $cachedNextAfters[$interval] ?? !($cachedNextAfters[$interval] = false)
+                                )
+                            )
+                                ? null
+                                : $bot->indicatingNow($priceCollection);
+                        })()
+                )) {
+                $bot->exchangeConnector()->setTickerPrice($bot->ticker(), $indication->getPrice());
+                if ($trader->isBuy()) {
+                    if (!is_null($marketOrder = $bot->tryToBuyNow(
+                        $fakeUser,
+                        $this->quoteAmount(),
+                        $this->buyRisk,
+                        $indication
+                    ))) {
+                        $this->swaps->push(
+                            new SwapTest(
+                                $indication,
+                                $indication->getActionTime($bot->interval()),
+                                $marketOrder->getPrice(),
+                                $marketOrder->getToAmount(),
+                                num_neg($marketOrder->getFromAmount()),
+                                $marketOrder
+                            )
+                        );
+                    }
+                }
+                elseif (!is_null($marketOrder = $bot->tryToSellNow(
+                    $fakeUser,
+                    $this->baseAmount(),
+                    $this->sellRisk,
+                    $indication
+                ))) {
+                    $this->swaps->push(
+                        new SwapTest(
+                            $indication,
+                            $indication->getActionTime($bot->interval()),
+                            $marketOrder->getPrice(),
+                            num_neg($marketOrder->getFromAmount()),
+                            $marketOrder->getToAmount(),
+                            $marketOrder
+                        )
+                    );
+                }
+            }
+        }
+    }
+
+    protected function createResult(int $startTime, int $endTime): ResultTest
+    {
+        return new ResultTest(
+            $this->buyBots[0]->exchange(),
+            $this->buyBots[0]->ticker(),
+            $this->buyBots[0]->baseSymbol(),
+            $this->buyBots[0]->quoteSymbol(),
+            $this->buyRisk,
+            $this->sellRisk,
+            $startTime,
+            $endTime,
+            $this->swaps
+        );
     }
 }
