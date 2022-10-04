@@ -10,7 +10,7 @@ use RuntimeException;
 
 abstract class Oscillator
 {
-    use BotSlug;
+    use BotSlug, Pricing;
 
     public const NAME = '';
 

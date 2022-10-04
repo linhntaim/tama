@@ -19,6 +19,9 @@ use InvalidArgumentException;
  * @see https://www.php.net/manual/en/function.trader-rsi.php
  * @method static array|false rsi(array $real, ?int $timePeriod = null)
  *
+ * @see https://www.php.net/manual/en/function.trader-stoch.php
+ * @method static array|false stoch(array $high, array $low, array $close, ?int $fastK_Period = null, ?int $slowK_Period = null, ?int $slowK_MAType = null, ?int $slowD_Period = null, ?int $slowD_MAType = null)
+ *
  * @see https://www.php.net/manual/en/function.trader-stochrsi.php
  * @method static array stochrsi(array $real, ?int $timePeriod = null, ?int $fastKPeriod = null, ?int $fastDPeriod = null, ?int $fastDMAType = null)
  */

@@ -5,12 +5,11 @@ namespace App\Trading\Bots\Oscillators;
 use App\Trading\Bots\BotSlug;
 use App\Trading\Bots\Data\Analysis;
 use App\Trading\Bots\Data\Indication;
-use App\Trading\Bots\Exchanges\PriceCollection;
 use Illuminate\Support\Collection;
 
 abstract class Component
 {
-    use BotSlug;
+    use BotSlug, Pricing;
 
     public const NAME = '';
 
@@ -64,17 +63,17 @@ abstract class Component
         );
     }
 
-    protected function getPrices(Packet $packet): PriceCollection
-    {
-        return $packet->get('inputs.prices');
-    }
-
     protected function convert(Packet $packet): Packet
     {
         return $packet->set('converters.' . static::NAME, $this->converted($packet));
     }
 
     abstract protected function converted(Packet $packet): mixed;
+
+    protected function getConvertedValues(Packet $packet): mixed
+    {
+        return $packet->get('converters.' . static::NAME);
+    }
 
     protected function analyze(Packet $packet, bool|int $latest = true): Packet
     {

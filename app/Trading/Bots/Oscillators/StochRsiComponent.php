@@ -11,37 +11,45 @@ use App\Trading\Trader;
 use Illuminate\Support\Collection;
 
 /**
- * @method Values|false getConvertedValues(Packet $packet)
+ * @method Values[]|false getConvertedValues(Packet $packet)
  */
-class RsiComponent extends Component
+class StochRsiComponent extends Component
 {
-    public const NAME = 'rsi';
+    public const NAME = 'stoch_rsi';
     protected const DEFAULT_TIME_PERIOD = 14;
-    protected const DEFAULT_LOWER_BAND = 30;
-    protected const DEFAULT_UPPER_BAND = 70;
-    protected const DEFAULT_MIDDLE_BAND = 50;
+    protected const DEFAULT_K_PERIOD = 3;
+    protected const DEFAULT_D_PERIOD = 3;
+    protected const DEFAULT_LOWER_BAND = 20;
+    protected const DEFAULT_UPPER_BAND = 80;
 
     protected int $timePeriod;
+
+    protected int $kPeriod;
+
+    protected int $dPeriod;
 
     protected float $lowerBand;
 
     protected float $upperBand;
-
-    protected float $middleBand;
 
     public function timePeriod(): int
     {
         return $this->timePeriod ?? $this->timePeriod = $this->options['time_period'] ?? self::DEFAULT_TIME_PERIOD;
     }
 
+    public function kPeriod(): int
+    {
+        return $this->kPeriod ?? $this->kPeriod = $this->options['k_period'] ?? self::DEFAULT_K_PERIOD;
+    }
+
+    public function dPeriod(): int
+    {
+        return $this->dPeriod ?? $this->dPeriod = $this->options['d_period'] ?? self::DEFAULT_D_PERIOD;
+    }
+
     public function lowerBand(): float
     {
         return $this->lowerBand ?? $this->lowerBand = $this->options['lower_band'] ?? self::DEFAULT_LOWER_BAND;
-    }
-
-    public function middleBand(): float
-    {
-        return $this->middleBand ?? $this->middleBand = $this->options['middle_band'] ?? self::DEFAULT_MIDDLE_BAND;
     }
 
     public function upperBand(): float
@@ -53,49 +61,70 @@ class RsiComponent extends Component
     {
         return [
             'time_period' => $this->timePeriod(),
+            'k_period' => $this->kPeriod(),
+            'd_period' => $this->dPeriod(),
             'lower_band' => $this->lowerBand(),
-            'middle_band' => $this->middleBand(),
             'upper_band' => $this->upperBand(),
         ];
     }
 
-    protected function convert(Packet $packet): Packet
+    protected function converted(Packet $packet): array|false
     {
-        return $packet->set(
-            'converters.rsi',
-            ($rsi = Trader::rsi($this->getPrices($packet)->prices(), $this->timePeriod())) !== false
-                ? new Values($rsi) : false
-        );
-    }
+        $rsi = Trader::rsi($this->getPrices($packet)->prices(), 14);
+        if ($rsi === false) {
+            return false;
+        }
 
-    protected function converted(Packet $packet): Values|false
-    {
-        return ($rsi = Trader::rsi($this->getPrices($packet)->prices(), $this->timePeriod())) !== false
-            ? new Values($rsi) : false;
+        $stochRsi = Trader::stoch(
+            $rsi,
+            $rsi,
+            $rsi,
+            14,
+            3,
+            Trader::constant(Trader::MA_TYPE_SMA),
+            3,
+            Trader::constant(Trader::MA_TYPE_SMA)
+        );
+        if ($stochRsi === false) {
+            return false;
+        }
+
+        [$kRsi, $dRsi] = $stochRsi;
+        $k = $d = [];
+        foreach (array_keys($kRsi) as $index) {
+            $k[$index + $this->timePeriod()] = $kRsi[$index];
+            $d[$index + $this->timePeriod()] = $dRsi[$index];
+        }
+        return [
+            new Values($k), // K values
+            new Values($d), // D values
+        ];
     }
 
     protected function analyzed(Packet $packet, bool|int $latest = true): Collection
     {
         $data = [];
-        $rsiValues = $this->getConvertedValues($packet);
-        if ($rsiValues !== false) {
+        $stochRsiValues = $this->getConvertedValues($packet);
+        if ($stochRsiValues !== false) {
+            [$kValues, $dValues] = $stochRsiValues;
             $limit = is_int($latest) ? max(0, $latest) : -1;
             $dataCount = 0;
             $priceCollection = $this->getPrices($packet);
             $priceValues = $priceCollection->prices();
             $timeValues = $priceCollection->times();
             $i = $priceCollection->count();
-            $minIndex = $this->timePeriod() + 1;
+            $minIndex = $this->timePeriod() + $this->timePeriod() + max($this->kPeriod(), $this->dPeriod()) + 1;
             while (--$i >= 0) {
                 if ($i < $minIndex) {
                     break;
                 }
 
-                if (($signals = $this->createSignals($timeValues, $priceValues, $rsiValues, $i - 1))->count()) {
+                if (($signals = $this->createSignals($timeValues, $priceValues, $kValues, $dValues, $i - 1))->count()) {
                     $data[$i] = $this->createAnalysis(
                         $timeValues[$i],
                         $priceValues[$i],
-                        $rsiValues->value($i),
+                        $kValues->value($i),
+                        $dValues->value($i),
                         $signals
                     );
                     if (++$dataCount === $limit) {
@@ -111,76 +140,84 @@ class RsiComponent extends Component
         return collect($data);
     }
 
-    protected function createRsi(string $rsi): array
+    protected function createStochRsi(string $k, string $d): array
     {
         return [
-            'value' => $rsi,
-            'band' => match (true) {
-                num_lt($rsi, $this->lowerBand()) => 'lower',
-                num_lt($rsi, $this->middleBand()) => 'high_lower',
-                num_lt($rsi, $this->upperBand()) => 'low_upper',
+            'k' => $k,
+            'd' => $d,
+            'k_band' => match (true) {
+                num_lt($k, $this->lowerBand()) => 'lower',
+                num_lt($k, $this->upperBand()) => 'middle',
+                default => 'upper'
+            },
+            'd_band' => match (true) {
+                num_lt($d, $this->lowerBand()) => 'lower',
+                num_lt($d, $this->upperBand()) => 'middle',
                 default => 'upper'
             },
         ];
     }
 
-    protected function createAnalysis(int $time, string $price, string $rsi, Collection $signals): Analysis
+    protected function createAnalysis(int $time, string $price, string $k, string $d, Collection $signals): Analysis
     {
         return new Analysis($time, $price, $signals, [
-            'rsi' => $this->createRsi($rsi),
+            'stoch_rsi' => $this->createStochRsi($k, $d),
         ]);
     }
 
     /**
      * @param int[] $timeValues
      * @param string[] $priceValues
-     * @param Values $rsiValues
+     * @param Values $kValues
+     * @param Values $dValues
      * @param int $index
      * @return Collection
      */
-    protected function createSignals(array $timeValues, array $priceValues, Values $rsiValues, int $index): Collection
+    protected function createSignals(array $timeValues, array $priceValues, Values $kValues, Values $dValues, int $index): Collection
     {
         $signals = collect([]);
         switch (true) {
-            case $rsiValues->isTrough($index): // bottom
-                if (num_lt($d2RsiValue = $rsiValues->value($index), $this->middleBand())) {
+            case $kValues->isTrough($index): // bottom
+                if (num_lt($d2KValue = $kValues->value($index), $this->lowerBand())) {
+                    $d2DValue = $dValues->value($index);
                     $d2TimeValue = $timeValues[$index];
                     $d2PriceValue = $priceValues[$index];
 
-                    $lowestRsiValue = $d2RsiValue;
+                    $lowestKValue = $d2KValue;
                     $j = $jMiddle = $index;
                     while (--$j >= $this->timePeriod()) {
-                        $jRsiValue = $rsiValues->value($j);
-                        if (num_gte($jRsiValue, $this->middleBand())) {
+                        $jKValue = $kValues->value($j);
+                        $jDValue = $dValues->value($j);
+                        if (num_gte($jKValue, $this->lowerBand())) {
                             break;
                         }
-                        if ($rsiValues->isNone($j)) {
+                        if ($kValues->isNone($j)) {
                             continue;
                         }
-                        if ($rsiValues->isPeak($j)) {
-                            if (num_gt($rsiValues->value($j), $rsiValues->value($jMiddle))) {
+                        if ($kValues->isPeak($j)) {
+                            if (num_gt($kValues->value($j), $kValues->value($jMiddle))) {
                                 $jMiddle = $j;
                             }
                             continue;
                         }
-                        if ($rsiValues->isTrough($j)) {
+                        if ($kValues->isTrough($j)) {
                             $jTimeValue = $timeValues[$j];
                             $jPriceValue = $priceValues[$j];
-                            if (num_gt($jRsiValue, num_min($d2RsiValue, $lowestRsiValue))) {
-                                if (num_gt($jRsiValue, $d2RsiValue) && num_lt($jPriceValue, $d2PriceValue)) {
+                            if (num_gt($jKValue, num_min($d2KValue, $lowestKValue))) {
+                                if (num_gt($jKValue, $d2KValue) && num_lt($jPriceValue, $d2PriceValue)) {
                                     $signals->push(
                                         $this->createDivergenceSignal(
                                             'bullish_divergence', 'hidden',
-                                            $jTimeValue, $jPriceValue, $jRsiValue,
-                                            $d2TimeValue, $d2PriceValue, $d2RsiValue,
-                                            $timeValues[$jMiddle], $priceValues[$jMiddle], $rsiValues->value($jMiddle),
+                                            $jTimeValue, $jPriceValue, $jKValue, $jDValue,
+                                            $d2TimeValue, $d2PriceValue, $d2KValue, $d2DValue,
+                                            $timeValues[$jMiddle], $priceValues[$jMiddle], $kValues->value($jMiddle), $dValues->value($jMiddle),
                                         )
                                     );
                                     break;
                                 }
                                 continue;
                             }
-                            if (num_eq($jRsiValue, $d2RsiValue) && num_eq($jPriceValue, $d2PriceValue)) {
+                            if (num_eq($jKValue, $d2KValue) && num_eq($jPriceValue, $d2PriceValue)) {
                                 continue;
                             }
                             if (num_gte($jPriceValue, $d2PriceValue)) {
@@ -188,63 +225,65 @@ class RsiComponent extends Component
                                     $this->createDivergenceSignal(
                                         'bullish_divergence',
                                         match (true) {
-                                            num_eq($jRsiValue, $d2RsiValue) => 'weak',
+                                            num_eq($jKValue, $d2KValue) => 'weak',
                                             num_eq($jPriceValue, $d2PriceValue) => 'medium',
                                             default => 'strong'
                                         },
-                                        $jTimeValue, $jPriceValue, $jRsiValue,
-                                        $d2TimeValue, $d2PriceValue, $d2RsiValue,
-                                        $timeValues[$jMiddle], $priceValues[$jMiddle], $rsiValues->value($jMiddle),
+                                        $jTimeValue, $jPriceValue, $jKValue, $jDValue,
+                                        $d2TimeValue, $d2PriceValue, $d2KValue, $d2DValue,
+                                        $timeValues[$jMiddle], $priceValues[$jMiddle], $kValues->value($jMiddle), $dValues->value($jMiddle),
                                     )
                                 );
                                 break;
                             }
-                            if (num_lt($jRsiValue, $lowestRsiValue)) {
-                                $lowestRsiValue = $jRsiValue;
+                            if (num_lt($jKValue, $lowestKValue)) {
+                                $lowestKValue = $jKValue;
                             }
                         }
                     }
                 }
                 break;
-            case $rsiValues->isPeak($index): // top
-                if (num_gte($d2RsiValue = $rsiValues->value($index), $this->middleBand())) {
+            case $kValues->isPeak($index): // top
+                if (num_gte($d2KValue = $kValues->value($index), $this->lowerBand())) {
+                    $d2DValue = $dValues->value($index);
                     $d2TimeValue = $timeValues[$index];
                     $d2PriceValue = $priceValues[$index];
 
-                    $highestRsiValue = $d2RsiValue;
+                    $highestKValue = $d2KValue;
                     $j = $jMiddle = $index;
                     while (--$j >= $this->timePeriod()) {
-                        $jRsiValue = $rsiValues->value($j);
-                        if (num_lte($jRsiValue, $this->lowerBand())) {
+                        $jKValue = $kValues->value($j);
+                        $jDValue = $dValues->value($j);
+                        if (num_lte($jKValue, $this->lowerBand())) {
                             break;
                         }
-                        if ($rsiValues->isNone($j)) {
+                        if ($kValues->isNone($j)) {
                             continue;
                         }
-                        if ($rsiValues->isTrough($j)) {
-                            if (num_lt($rsiValues->value($j), $rsiValues->value($jMiddle))) {
+                        if ($kValues->isTrough($j)) {
+                            if (num_lt($kValues->value($j), $kValues->value($jMiddle))) {
                                 $jMiddle = $j;
                             }
                             continue;
                         }
-                        if ($rsiValues->isPeak($j)) {
+                        if ($kValues->isPeak($j)) {
                             $jTimeValue = $timeValues[$j];
                             $jPriceValue = $priceValues[$j];
-                            if (num_lt($jRsiValue, num_max($d2RsiValue, $highestRsiValue))) {
-                                if (num_lt($jRsiValue, $d2RsiValue) && num_gt($jPriceValue, $d2PriceValue)) {
+                            if (num_lt($jKValue, num_max($d2KValue, $highestKValue))) {
+                                if (num_lt($jKValue, $d2KValue) && num_gt($jPriceValue, $d2PriceValue)) {
                                     $signals->push(
                                         $this->createDivergenceSignal(
                                             'bearish_divergence', 'hidden',
-                                            $jTimeValue, $jPriceValue, $jRsiValue,
-                                            $d2TimeValue, $d2PriceValue, $d2RsiValue,
-                                            $timeValues[$jMiddle], $priceValues[$jMiddle], $rsiValues->value($jMiddle),
+                                            $jTimeValue, $jPriceValue, $jKValue, $jDValue,
+                                            $d2TimeValue, $d2PriceValue, $d2KValue, $d2DValue,
+                                            $timeValues[$jMiddle], $priceValues[$jMiddle], $kValues->value($jMiddle), $dValues->value($jMiddle),
                                         )
                                     );
                                     break;
                                 }
                                 continue;
                             }
-                            if (num_eq($jRsiValue, $d2RsiValue) && num_eq($jPriceValue, $d2PriceValue)) {
+                            if (num_eq($jKValue, $d2KValue) && num_eq($jPriceValue, $d2PriceValue)) {
                                 continue;
                             }
                             if (num_lte($jPriceValue, $d2PriceValue)) {
@@ -252,19 +291,19 @@ class RsiComponent extends Component
                                     $this->createDivergenceSignal(
                                         'bearish_divergence',
                                         match (true) {
-                                            num_eq($jRsiValue, $d2RsiValue) => 'weak',
+                                            num_eq($jKValue, $d2KValue) => 'weak',
                                             num_eq($jPriceValue, $d2PriceValue) => 'medium',
                                             default => 'strong'
                                         },
-                                        $jTimeValue, $jPriceValue, $jRsiValue,
-                                        $d2TimeValue, $d2PriceValue, $d2RsiValue,
-                                        $timeValues[$jMiddle], $priceValues[$jMiddle], $rsiValues->value($jMiddle),
+                                        $jTimeValue, $jPriceValue, $jKValue, $jDValue,
+                                        $d2TimeValue, $d2PriceValue, $d2KValue, $d2DValue,
+                                        $timeValues[$jMiddle], $priceValues[$jMiddle], $kValues->value($jMiddle), $dValues->value($jMiddle),
                                     )
                                 );
                                 break;
                             }
-                            if (num_gt($jRsiValue, $highestRsiValue)) {
-                                $highestRsiValue = $jRsiValue;
+                            if (num_gt($jKValue, $highestKValue)) {
+                                $highestKValue = $jKValue;
                             }
                         }
                     }
@@ -279,30 +318,33 @@ class RsiComponent extends Component
         string $strength,
         int    $time1,
         string $price1,
-        string $rsi1,
+        string $k1,
+        string $d1,
         int    $time2,
         string $price2,
-        string $rsi2,
+        string $k2,
+        string $d2,
         int    $timeMiddle,
         string $priceMiddle,
-        string $rsiMiddle
+        string $kMiddle,
+        string $dMiddle
     ): Signal
     {
         return new Signal($type, $strength, [
             'divergence_1' => [
                 'time' => $time1,
                 'price' => $price1,
-                'rsi' => $this->createRsi($rsi1),
+                'stoch_rsi' => $this->createStochRsi($k1, $d1),
             ],
             'divergence_2' => [
                 'time' => $time2,
                 'price' => $price2,
-                'rsi' => $this->createRsi($rsi2),
+                'stoch_rsi' => $this->createStochRsi($k2, $d2),
             ],
             'divergence_m' => [
                 'time' => $timeMiddle,
                 'price' => $priceMiddle,
-                'rsi' => $this->createRsi($rsiMiddle),
+                'rsi' => $this->createStochRsi($kMiddle, $dMiddle),
             ],
         ]);
     }
@@ -324,8 +366,8 @@ class RsiComponent extends Component
     protected function transformedIndicationMeta(Analysis $analysis): array
     {
         return [
-            new IndicationMetaItem('rsi', $analysis->getSignals(), [
-                'rsi' => $analysis->get('rsi'),
+            new IndicationMetaItem('stoch_rsi', $analysis->getSignals(), [
+                'stoch_rsi' => $analysis->get('stoch_rsi'),
             ]),
         ];
     }
