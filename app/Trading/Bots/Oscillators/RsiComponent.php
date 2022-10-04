@@ -65,12 +65,18 @@ class RsiComponent extends Component
         );
     }
 
+    protected function converted(Packet $packet): Values|false
+    {
+        return ($rsi = Trader::rsi($this->getPrices($packet)->prices(), $this->timePeriod())) !== false
+            ? new Values($rsi) : false;
+    }
+
     protected function getRsiValues(Packet $packet): Values|false
     {
         return $packet->get('converters.rsi');
     }
 
-    protected function analyze(Packet $packet, bool|int $latest = true): Packet
+    protected function analyzed(Packet $packet, bool|int $latest = true): Collection
     {
         $data = [];
         $rsiValues = $this->getRsiValues($packet);
@@ -103,7 +109,7 @@ class RsiComponent extends Component
             }
         }
 
-        return $packet->set('analyzers.rsi', collect($data));
+        return collect($data);
     }
 
     protected function createRsi(string $rsi): array
@@ -302,27 +308,26 @@ class RsiComponent extends Component
         ]);
     }
 
-    protected function transform(Packet $packet): Packet
+    protected function transformedIndicationValue(Analysis $analysis): float
     {
-        return $packet->set(
-            'transformers.rsi',
-            $packet->get('analyzers.rsi')
-                ->map(function (Analysis $analysis) {
-                    return new Indication(
-                        match (true) {
-                            $analysis->hasSignal('bullish_divergence') => Indication::VALUE_BUY_MAX,
-                            $analysis->hasSignal('bearish_divergence') => Indication::VALUE_SELL_MAX,
-                            default => Indication::VALUE_NEUTRAL
-                        },
-                        $analysis->getTime(),
-                        $analysis->getPrice(),
-                        [
-                            new IndicationMetaItem('rsi', $analysis->getSignals(), [
-                                'rsi' => $analysis->get('rsi'),
-                            ]),
-                        ]
-                    );
-                })
-        );
+        // TODO: Need to improve
+        foreach ($analysis->getSignals() as $signal) {
+            if ($signal->getType() === 'bullish_divergence') {
+                return Indication::VALUE_BUY_MAX;
+            }
+            if ($signal->getType() === 'bearish_divergence') {
+                return Indication::VALUE_SELL_MAX;
+            }
+        }
+        return Indication::VALUE_NEUTRAL;
+    }
+
+    protected function transformedIndicationMeta(Analysis $analysis): array
+    {
+        return [
+            new IndicationMetaItem('rsi', $analysis->getSignals(), [
+                'rsi' => $analysis->get('rsi'),
+            ]),
+        ];
     }
 }

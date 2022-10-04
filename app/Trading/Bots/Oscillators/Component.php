@@ -3,7 +3,10 @@
 namespace App\Trading\Bots\Oscillators;
 
 use App\Trading\Bots\BotSlug;
+use App\Trading\Bots\Data\Analysis;
+use App\Trading\Bots\Data\Indication;
 use App\Trading\Bots\Exchanges\PriceCollection;
+use Illuminate\Support\Collection;
 
 abstract class Component
 {
@@ -66,9 +69,54 @@ abstract class Component
         return $packet->get('inputs.prices');
     }
 
-    abstract protected function convert(Packet $packet): Packet;
+    protected function convert(Packet $packet): Packet
+    {
+        return $packet->set('converters.' . static::NAME, $this->converted($packet));
+    }
 
-    abstract protected function analyze(Packet $packet, bool|int $latest = true): Packet;
+    abstract protected function converted(Packet $packet): mixed;
 
-    abstract protected function transform(Packet $packet): Packet;
+    protected function analyze(Packet $packet, bool|int $latest = true): Packet
+    {
+        return $packet->set('analyzers.' . static::NAME, $this->analyzed($packet, $latest));
+    }
+
+    /**
+     * @param Packet $packet
+     * @param bool|int $latest
+     * @return Collection<int, Analysis>
+     */
+    abstract protected function analyzed(Packet $packet, bool|int $latest = true): Collection;
+
+    protected function transform(Packet $packet): Packet
+    {
+        return $packet->set('transformers.' . static::NAME, $this->transformed($packet));
+    }
+
+    /**
+     * @param Packet $packet
+     * @return Collection<int, Indication>
+     */
+    protected function transformed(Packet $packet): Collection
+    {
+        return $packet->get('analyzers.' . static::NAME)
+            ->map(function (Analysis $analysis) {
+                return new Indication(
+                    $this->transformedIndicationValue($analysis),
+                    $analysis->getTime(),
+                    $analysis->getPrice(),
+                    $this->transformedIndicationMeta($analysis)
+                );
+            });
+    }
+
+    protected function transformedIndicationValue(Analysis $analysis): float
+    {
+        return 0.0;
+    }
+
+    protected function transformedIndicationMeta(Analysis $analysis): array
+    {
+        return [];
+    }
 }

@@ -423,6 +423,22 @@ if (!function_exists('num_add')) {
     }
 }
 
+if (!function_exists('num_avg')) {
+    /**
+     * @param float[]|int[]|string[] $nums
+     * @param int|null $scale
+     * @return string
+     */
+    function num_avg(array $nums, ?int $scale = null): string
+    {
+        $sum = 0;
+        foreach ($nums as $num) {
+            $sum = num_add($sum, $num, $scale);
+        }
+        return num_div($sum, count($nums), $scale);
+    }
+}
+
 if (!function_exists('num_comp')) {
     function num_comp(float|int|string $num1, float|int|string $num2, ?int $scale = null): int
     {
