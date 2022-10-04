@@ -3,8 +3,10 @@
 namespace App\Trading\Bots\Tests\Data;
 
 use App\Trading\Bots\Exchanges\Exchanger;
+use App\Trading\Bots\Exchanges\Interval;
 use App\Trading\Bots\Tests\Reports\IReportTest;
 use App\Trading\Bots\Tests\Reports\PlainTextReportTest;
+use App\Trading\Trader;
 use Illuminate\Support\Collection;
 
 class ResultTest
@@ -35,11 +37,6 @@ class ResultTest
 
     public string $shownEndTime;
 
-    /**
-     * @var Collection<int, SwapTest>
-     */
-    public Collection $swaps;
-
     protected IReportTest $reporter;
 
     /**
@@ -51,39 +48,37 @@ class ResultTest
      * @param float $sellRisk
      * @param int $startTime
      * @param int $endTime
-     * @param Collection $swaps
+     * @param Collection<int, SwapTest> $swaps
      */
     public function __construct(
-        public string $exchange,
-        public string $ticker,
-        public string $baseSymbol,
-        public string $quoteSymbol,
-        public float  $buyRisk,
-        public float  $sellRisk,
-        public int    $startTime,
-        public int    $endTime,
-        Collection    $swaps
+        public string     $exchange,
+        public string     $ticker,
+        public string     $baseSymbol,
+        public string     $quoteSymbol,
+        public float      $buyRisk,
+        public float      $sellRisk,
+        public int        $startTime,
+        public int        $endTime,
+        public Collection $swaps
     )
     {
-        $this->afterPrice = Exchanger::connector($this->exchange)->tickerPrice($this->ticker);
-        $this->afterBaseAmount = with(0, static function (string $amount) use ($swaps): string {
-            $swaps->each(function (SwapTest $swap) use (&$amount) {
-                $amount = num_add($amount, $swap->getBaseAmount());
+        $this->afterPrice = Exchanger::connector($this->exchange)
+            ->recentPricesAt($this->ticker, new Interval(Trader::INTERVAL_1_MINUTE), $this->endTime, 1)
+            ->latestPrice();
+        [$this->afterBaseAmount, $this->afterQuoteAmount] = (function () {
+            $baseAmount = $quoteAmount = 0;
+            $this->swaps->each(function (SwapTest $swap) use (&$baseAmount, &$quoteAmount) {
+                $baseAmount = num_add($baseAmount, $swap->getBaseAmount());
+                $quoteAmount = num_add($quoteAmount, $swap->getQuoteAmount());
             });
-            return $amount;
-        });
-        $this->afterQuoteAmount = with(0, static function (string $amount) use ($swaps): string {
-            $swaps->each(function (SwapTest $swap) use (&$amount) {
-                $amount = num_add($amount, $swap->getQuoteAmount());
-            });
-            return $amount;
-        });
+            return [$baseAmount, $quoteAmount];
+        })();
         $this->afterQuoteAmountEquivalent = num_add(num_mul($this->afterPrice, $this->afterBaseAmount), $this->afterQuoteAmount);
         // first swap is initial
-        take($swaps->first(), function (SwapTest $swap) {
-            $this->beforePrice = $swap->getPrice();
-            $this->beforeBaseAmount = $swap->getBaseAmount();
-            $this->beforeQuoteAmount = $swap->getQuoteAmount();
+        take($swaps->first(), function (SwapTest $firstSwap) {
+            $this->beforePrice = $firstSwap->getPrice();
+            $this->beforeBaseAmount = $firstSwap->getBaseAmount();
+            $this->beforeQuoteAmount = $firstSwap->getQuoteAmount();
             $this->beforeQuoteAmountEquivalent = num_add(num_mul($this->beforePrice, $this->beforeBaseAmount), $this->beforeQuoteAmount);
         });
 
@@ -92,7 +87,6 @@ class ResultTest
         $this->shownProfitPercent = sprintf('%s%%', $this->profitPercent);
         $this->shownStartTime = date(DATE_DEFAULT, $this->startTime);
         $this->shownEndTime = date(DATE_DEFAULT, $this->endTime);
-        $this->swaps = $swaps;
     }
 
     public function tradeSwaps(): Collection

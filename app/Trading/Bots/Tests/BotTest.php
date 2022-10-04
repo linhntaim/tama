@@ -8,12 +8,15 @@ use App\Trading\Bots\Bot;
 use App\Trading\Bots\BotFactory;
 use App\Trading\Bots\Data\Indication;
 use App\Trading\Bots\Exchanges\Binance\Binance;
+use App\Trading\Bots\Exchanges\Interval;
+use App\Trading\Bots\Exchanges\Price;
 use App\Trading\Bots\Exchanges\PriceCollection;
 use App\Trading\Bots\Oscillators\RsiOscillator;
 use App\Trading\Bots\Tests\Data\PriceCollectorTest;
 use App\Trading\Bots\Tests\Data\ResultTest;
 use App\Trading\Bots\Tests\Data\SwapTest;
 use App\Trading\Bots\Tests\Data\TraderTest;
+use App\Trading\Trader;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
 use RuntimeException;
@@ -106,29 +109,11 @@ class BotTest
                 throw new InvalidArgumentException('Buy and sell bot must have the same exchange and ticker.');
             }
 
-            return transform(
-                with(
-                    $bot->interval()->findOpenTimeOf($startTime),
-                    static function (int $startOpenTime) use ($bot) {
-                        $hasPrices = $bot->exchangeConnector()->hasPricesAt(
-                            $bot->ticker(),
-                            $bot->interval(),
-                            $startOpenTime
-                        );
-                        if ($hasPrices === false) {
-                            return null;
-                        }
-                        if (is_int($hasPrices)) {
-                            $startOpenTime = $hasPrices;
-                        }
-                        return $startOpenTime;
-                    }
-                ),
-                static fn(?int $startOpenTime): ?TraderTest => is_null($startOpenTime)
-                || $startOpenTime >= ($endOpenTime = $bot->interval()->findOpenTimeOf($endTime, -1))
-                    ? null
-                    : new TraderTest($action, $bot, $startOpenTime, $endOpenTime)
-            );
+            [$startOpenTime, $endOpenTime] = [
+                $bot->interval()->findOpenTimeOf($startTime),
+                $bot->interval()->findOpenTimeOf($endTime, -1),
+            ];
+            return $startOpenTime >= $endOpenTime ? null : new TraderTest($action, $bot, $startOpenTime, $endOpenTime);
         };
         return take(
             collect($this->buyBots)
@@ -142,7 +127,7 @@ class BotTest
                 ->values(),
             static function (Collection $traders) {
                 if ($traders->count() === 0) {
-                    throw new RuntimeException('Cannot fetch prices while trading.');
+                    throw new RuntimeException('Cannot trade.');
                 }
             }
         );
@@ -172,25 +157,11 @@ class BotTest
 
     /**
      * @param Collection $traders
-     * @param PriceCollectorTest[] $priceCollectors
      * @return int[]
      */
-    protected function prepareLoop(Collection $traders, array $priceCollectors): array
+    protected function prepareLoop(Collection $traders): array
     {
         $startTrader = $traders->first();
-        take(
-            $priceCollectors[(string)$startTrader->getBot()->interval()]->get(false),
-            fn(PriceCollection $priceCollection) => $this->swaps->push(
-                new SwapTest(
-                    null,
-                    $priceCollection->latestTime(),
-                    $priceCollection->latestPrice(),
-                    $this->baseAmount,
-                    $this->quoteAmount,
-                    null
-                )
-            )
-        );
         return [
             $startTrader->getStartOpenTime(),
             $startTrader->getEndOpenTime(),
@@ -208,38 +179,13 @@ class BotTest
         $priceCollectors = $this->preparePriceCollectors($traders);
         $fakeUser = new User();
 
-        [$loopOpenTime, $loopEndOpenTime, $loopingTime] = $this->prepareLoop($traders, $priceCollectors);
+        [$loopOpenTime, $loopEndOpenTime, $loopingTime] = $this->prepareLoop($traders);
         while ($loopOpenTime <= $loopEndOpenTime) {
             $this->testTraders($traders, $priceCollectors, $loopOpenTime, $fakeUser);
             $loopOpenTime += $loopingTime;
         }
 
         return $this->createResult($startTime, $endTime);
-    }
-
-    public function testYearsTillNow(int $years = 1): ResultTest
-    {
-        return $this->test(sprintf('%dY', $years));
-    }
-
-    public function testMonthsTillNow(int $months = 12): ResultTest
-    {
-        return $this->test(sprintf('%dM', $months));
-    }
-
-    public function testWeeksTillNow(int $weeks = 52): ResultTest
-    {
-        return $this->test(sprintf('%dW', $weeks));
-    }
-
-    public function testDaysTillNow(int $days = 365): ResultTest
-    {
-        return $this->test(sprintf('%dD', $days));
-    }
-
-    public function testHoursTillNow(int $hours = 365 * 24): ResultTest
-    {
-        return $this->test(sprintf('%dH', $hours));
     }
 
     protected function toTime(string $timeString): int
@@ -286,9 +232,30 @@ class BotTest
             $startTime = $now->subYear()->getTimestamp();
         }
 
-        if ($startTime >= $endTime) {
-            throw new InvalidArgumentException('Start time must be less than end time.');
-        }
+        take($this->buyBots[0], function (Bot $bot) use (&$startTime, $endTime) {
+            $price = $bot->exchangeConnector()->hasPriceAt($bot->ticker(), $startTime - 60); // should check price at previous minute
+            if ($price instanceof Price) {
+                $startTime = max($startTime, $price->getOpenTime());
+                if ($startTime >= $endTime) {
+                    throw new InvalidArgumentException('Start time must be less than end time.');
+                }
+
+                $this->swaps->push(
+                    new SwapTest(
+                        null,
+                        $startTime,
+                        $price->getPrice(),
+                        $this->baseAmount,
+                        $this->quoteAmount,
+                        null
+                    )
+                );
+            }
+            else {
+                throw new InvalidArgumentException('Unable to fetch prices at the time range.');
+            }
+        });
+
         return [$startTime, $endTime];
     }
 
@@ -375,5 +342,30 @@ class BotTest
             $endTime,
             $this->swaps
         );
+    }
+
+    public function testYearsTillNow(int $years = 1): ResultTest
+    {
+        return $this->test(sprintf('%dY', $years));
+    }
+
+    public function testMonthsTillNow(int $months = 12): ResultTest
+    {
+        return $this->test(sprintf('%dM', $months));
+    }
+
+    public function testWeeksTillNow(int $weeks = 52): ResultTest
+    {
+        return $this->test(sprintf('%dW', $weeks));
+    }
+
+    public function testDaysTillNow(int $days = 365): ResultTest
+    {
+        return $this->test(sprintf('%dD', $days));
+    }
+
+    public function testHoursTillNow(int $hours = 365 * 24): ResultTest
+    {
+        return $this->test(sprintf('%dH', $hours));
     }
 }

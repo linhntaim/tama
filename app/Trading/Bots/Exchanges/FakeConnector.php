@@ -97,9 +97,9 @@ class FakeConnector implements ConnectorInterface
         $this->originConnector->pushLatestPrice($latestPrice);
     }
 
-    public function hasPricesAt(string $ticker, Interval $interval, ?int $time = null): bool|int
+    public function hasPriceAt(string $ticker, ?int $time = null, ?Interval $interval = null): false|Price
     {
-        return $this->originConnector->hasPricesAt($ticker, $interval, $time);
+        return $this->originConnector->hasPriceAt($ticker, $time, $interval);
     }
 
     public function recentPricesAt(string $ticker, Interval $interval, ?int $time = null, int $limit = Exchange::PRICE_LIMIT): PriceCollection

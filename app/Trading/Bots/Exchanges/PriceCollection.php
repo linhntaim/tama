@@ -63,6 +63,10 @@ class PriceCollection
 
     public function fillMissingTimes(?int $endTime = null, int $limit = Exchange::PRICE_LIMIT): static
     {
+        if ($this->count < 2) {
+            return $this;
+        }
+        
         $expectedOpenTime = $this->interval->findOpenTimeOf($endTime);
         if ($this->times[$this->count - 1] === $expectedOpenTime
             && $this->times[$this->count - 1] === $this->interval->getNextOpenTimeOfExact($this->times[0], $this->count - 2)) {

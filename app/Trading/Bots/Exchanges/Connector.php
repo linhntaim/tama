@@ -292,17 +292,18 @@ abstract class Connector implements ConnectorInterface
         ))->fillMissingTimes($endTime, $limit);
     }
 
-    public function hasPricesAt(string $ticker, Interval $interval, ?int $time = null): bool|int
+    public function hasPriceAt(string $ticker, ?int $time = null, ?Interval $interval = null): false|Price
     {
+        $interval = $interval ?: new Interval(Trader::INTERVAL_1_MINUTE);
         $openTime = $interval->findOpenTimeOf($time);
-        if (count($this->fetchPrices($ticker, $interval, null, $openTime, 1)) > 0) {
-            return true;
+        if (count($fetched = $this->fetchPrices($ticker, $interval, null, $openTime, 1)) > 0) {
+            return Exchanger::exchange($this->exchange)->createPrice($fetched[0]);
         }
         if ($openTime >= $interval->findOpenTimeOf()) {
             return false;
         }
         if (count($fetched = $this->fetchPrices($ticker, $interval, $openTime, null, 1)) > 0) {
-            return Exchanger::exchange($this->exchange)->createPrice($fetched[0])->getOpenTime();
+            return Exchanger::exchange($this->exchange)->createPrice($fetched[0]);
         }
         return false;
     }
