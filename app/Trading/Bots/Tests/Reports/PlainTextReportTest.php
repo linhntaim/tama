@@ -4,10 +4,30 @@ namespace App\Trading\Bots\Tests\Reports;
 
 use App\Trading\Bots\Tests\Data\ResultTest;
 
-class PlainTextReportTest implements IReportTest
+class PlainTextReportTest extends ReportTest
 {
     public function report(ResultTest $result): string
     {
+        array_push(
+            $this->summary,
+            $result->exchange,
+            $result->baseSymbol,
+            $result->quoteSymbol,
+            $result->shownStartTime,
+            $result->shownEndTime,
+            $result->beforeBaseAmount,
+            $result->beforeQuoteAmount,
+            $result->beforeQuoteAmountEquivalent,
+            $result->afterBaseAmount,
+            $result->afterQuoteAmount,
+            $result->afterQuoteAmountEquivalent,
+            $result->tradeSwaps()->count(),
+            $result->buySwaps()->count(),
+            $result->sellSwaps()->count(),
+            $result->profit,
+            $result->profitPercent,
+        );
+
         return implode(PHP_EOL, [
             sprintf(
                 '- Start at: %s',

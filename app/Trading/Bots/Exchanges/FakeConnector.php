@@ -56,6 +56,16 @@ class FakeConnector implements ConnectorInterface
         );
     }
 
+    public function createTicker(string $baseSymbol, string $quoteSymbol): string
+    {
+        return $this->originConnector->createTicker($baseSymbol, $quoteSymbol);
+    }
+
+    public function createTradeUrl(string $baseSymbol, string $quoteSymbol): string
+    {
+        return $this->originConnector->createTradeUrl($baseSymbol, $quoteSymbol);
+    }
+
     public function symbol(string $symbol): Symbol
     {
         return $this->originConnector->symbol($symbol);

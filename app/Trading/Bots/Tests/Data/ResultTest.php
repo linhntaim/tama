@@ -39,6 +39,12 @@ class ResultTest
 
     protected IReportTest $reporter;
 
+    protected Collection $tradeSwaps;
+
+    protected Collection $buySwaps;
+
+    protected Collection $sellSwaps;
+
     /**
      * @param string $exchange
      * @param string $ticker
@@ -91,17 +97,17 @@ class ResultTest
 
     public function tradeSwaps(): Collection
     {
-        return $this->swaps->filter(fn(SwapTest $swap): bool => num_lt($swap->getQuoteAmount(), 0) || num_lt($swap->getBaseAmount(), 0));
+        return $this->tradeSwaps ?? $this->tradeSwaps = $this->swaps->filter(fn(SwapTest $swap): bool => num_lt($swap->getQuoteAmount(), 0) || num_lt($swap->getBaseAmount(), 0));
     }
 
     public function buySwaps(): Collection
     {
-        return $this->swaps->filter(fn(SwapTest $swap): bool => num_lt($swap->getQuoteAmount(), 0));
+        return $this->buySwaps ?? $this->buySwaps = $this->swaps->filter(fn(SwapTest $swap): bool => num_lt($swap->getQuoteAmount(), 0));
     }
 
     public function sellSwaps(): Collection
     {
-        return $this->swaps->filter(fn(SwapTest $swap): bool => num_lt($swap->getBaseAmount(), 0));
+        return $this->sellSwaps ?? $this->sellSwaps = $this->swaps->filter(fn(SwapTest $swap): bool => num_lt($swap->getBaseAmount(), 0));
     }
 
     public function setReporter(IReportTest $reporter): static

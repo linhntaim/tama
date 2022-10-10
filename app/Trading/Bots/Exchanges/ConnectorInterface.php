@@ -31,6 +31,10 @@ interface ConnectorInterface
         string|array|null $exceptBaseSymbol = null
     ): Collection;
 
+    public function createTicker(string $baseSymbol, string $quoteSymbol): string;
+
+    public function createTradeUrl(string $baseSymbol, string $quoteSymbol): string;
+
     public function symbol(string $symbol): Symbol;
 
     public function symbolPrice(string $symbol, string &$usdSymbol = null): string;

@@ -45,7 +45,7 @@ class CryptocurrencyApi extends Api
         ?string $convertId = null,
         ?string $sort = null,
         ?string $sortDir = null,
-        ?string $CryptocurrencyType = null,
+        ?string $cryptocurrencyType = null,
         ?string $tag = null,
         ?string $aux = null,
     ): bool|array
@@ -55,9 +55,9 @@ class CryptocurrencyApi extends Api
                 'start' => 1,
                 'limit' => 100,
                 'sort' => 'market_cap',
-                'CryptocurrencyType' => 'all',
+                'cryptocurrencyType' => 'all',
                 'tag' => 'all',
-                'aux' => 'platform,first_historical_data,last_historical_data,is_active',
+                'aux' => 'num_market_pairs,cmc_rank,date_added,tags,platform,max_supply,circulating_supply,total_supply',
             ]))
             ->response();
     }

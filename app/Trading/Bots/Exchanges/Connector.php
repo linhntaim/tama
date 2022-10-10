@@ -113,10 +113,6 @@ abstract class Connector implements ConnectorInterface
         $this->cacheStore->forever($this->usdPairCacheKey($symbol), $usdSymbol);
     }
 
-    abstract protected function createTicker($baseSymbol, $quoteSymbol): string;
-
-    abstract protected function createTradeUrl($baseSymbol, $quoteSymbol): string;
-
     /**
      * @throws PsrInvalidArgumentException
      */
@@ -136,6 +132,7 @@ abstract class Connector implements ConnectorInterface
     public function symbolPrice(string $symbol, string &$usdSymbol = null): string
     {
         if ($symbol === $this->usdEquivalentSymbol()) {
+            $usdSymbol = $symbol;
             return '1.00';
         }
 

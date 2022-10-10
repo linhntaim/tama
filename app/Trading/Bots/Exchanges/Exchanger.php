@@ -35,6 +35,9 @@ class Exchanger extends Facade
         'FRAX',
         'LUSD',
         'HUSD',
+        'EUR',
+        'GBP',
+        'AUD',
     ];
     /**
      * @see https://coinmarketcap.com/view/tokenized-gold/

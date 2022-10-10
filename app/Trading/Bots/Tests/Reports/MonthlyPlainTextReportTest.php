@@ -27,7 +27,44 @@ class MonthlyPlainTextReportTest extends PlainTextReportTest
         $monthlySwaps = $this->getMonthlySwaps($result);
         $monthlyAmounts = $this->getMonthlyAmounts($monthlySwaps);
         $months = $monthlySwaps->keys();
-        $monthlyPrices = Exchanger::connector($result->exchange)->recentPricesAt($result->ticker, new Interval('1M'), $months->last(), $months->count());
+        $countMonths = $months->count();
+        $monthlyPrices = Exchanger::connector($result->exchange)->recentPricesAt($result->ticker, new Interval('1M'), $months->last(), $countMonths);
+        $highestOverallProfit = [
+            'month' => null,
+            'profit' => '0',
+            'profit_percent' => '0',
+        ];
+        $lowestOverallProfit = [
+            'month' => null,
+            'profit' => '0',
+            'profit_percent' => '0',
+        ];
+        $highestMonthlyProfit = [
+            'month' => null,
+            'profit' => '0',
+            'profit_percent' => '0',
+        ];
+        $lowestMonthlyProfit = [
+            'month' => null,
+            'profit' => '0',
+            'profit_percent' => '0',
+        ];
+        $sumMonthlyProfit = [
+            'profit' => '0',
+            'profit_percent' => '0',
+        ];
+        $updatePivotProfit = static function (array &$highestProfit, array &$lowestProfit, int $month, string $profit, string $profitPercent) {
+            if (is_null($highestProfit['month']) || num_gte($profit, $highestProfit['profit'])) {
+                $highestProfit['month'] = $month;
+                $highestProfit['profit'] = $profit;
+                $highestProfit['profit_percent'] = $profitPercent;
+            }
+            if (is_null($lowestProfit['month']) || num_lte($profit, $lowestProfit['profit'])) {
+                $lowestProfit['month'] = $month;
+                $lowestProfit['profit'] = $profit;
+                $lowestProfit['profit_percent'] = $profitPercent;
+            }
+        };
         foreach ($months as $i => $month) {
             $swaps = $monthlySwaps[$month];
 
@@ -42,8 +79,13 @@ class MonthlyPlainTextReportTest extends PlainTextReportTest
 
             $monthlyProfit = num_sub($endQuoteAmountEquivalent, $startQuoteAmountEquivalent);
             $monthlyProfitPercent = num_mul(num_div($monthlyProfit, $startQuoteAmountEquivalent), 100, 2);
-            $profit = num_sub($endQuoteAmountEquivalent, $result->beforeQuoteAmountEquivalent);
-            $profitPercent = num_mul(num_div($profit, $result->beforeQuoteAmountEquivalent), 100, 2);
+            $updatePivotProfit($highestMonthlyProfit, $lowestMonthlyProfit, $month, $monthlyProfit, $monthlyProfitPercent);
+            $sumMonthlyProfit['profit'] = num_add($sumMonthlyProfit['profit'], $monthlyProfit);
+            $sumMonthlyProfit['profit_percent'] = num_add($sumMonthlyProfit['profit_percent'], $monthlyProfitPercent);
+
+            $overallProfit = num_sub($endQuoteAmountEquivalent, $result->beforeQuoteAmountEquivalent);
+            $overallProfitPercent = num_mul(num_div($overallProfit, $result->beforeQuoteAmountEquivalent), 100, 2);
+            $updatePivotProfit($highestOverallProfit, $lowestOverallProfit, $month, $overallProfit, $overallProfitPercent);
 
             $reports[] = implode(PHP_EOL, [
                 sprintf(
@@ -81,16 +123,83 @@ class MonthlyPlainTextReportTest extends PlainTextReportTest
                         ->count()
                 ),
                 sprintf(
-                    '- Profit: %s %s ~ %s%% (in month) / %s %s ~ %s%% (from start)',
+                    '- Profit: %s %s ~ %s%% (monthly) / %s %s ~ %s%% (overall)',
                     num_trim($monthlyProfit),
                     $result->quoteSymbol,
                     $monthlyProfitPercent,
-                    num_trim($profit),
+                    num_trim($overallProfit),
                     $result->quoteSymbol,
-                    $profitPercent
+                    $overallProfitPercent
                 ),
             ]);
         }
+        array_push(
+            $this->summary,
+            ...(is_null($highestOverallProfit['month']) ? ['', '', ''] : [
+            $highestOverallProfit['profit'],
+            $highestOverallProfit['profit_percent'],
+            Carbon::createFromTimestamp($highestOverallProfit['month'])->format('Y-m'),
+        ]),
+            ...(is_null($highestOverallProfit['month']) ? ['', '', ''] : [
+            $lowestOverallProfit['profit'],
+            $lowestOverallProfit['profit_percent'],
+            Carbon::createFromTimestamp($lowestOverallProfit['month'])->format('Y-m'),
+        ]),
+            ...(is_null($highestMonthlyProfit['month']) ? ['', '', ''] : [
+            $highestMonthlyProfit['profit'],
+            $highestMonthlyProfit['profit_percent'],
+            Carbon::createFromTimestamp($highestMonthlyProfit['month'])->format('Y-m'),
+        ]),
+            ...(is_null($lowestMonthlyProfit['month']) ? ['', '', ''] : [
+            $lowestMonthlyProfit['profit'],
+            $lowestMonthlyProfit['profit_percent'],
+            Carbon::createFromTimestamp($lowestMonthlyProfit['month'])->format('Y-m'),
+        ]),
+            ...($countMonths === 0 ? ['', ''] : [
+            num_div($sumMonthlyProfit['profit'], $countMonths),
+            num_div($sumMonthlyProfit['profit_percent'], $countMonths, 2),
+        ])
+        );
+        array_unshift(
+            $reports,
+            '- Summary:',
+            is_null($highestOverallProfit['month']) ? '+ Highest overall profit: **unknown**' : sprintf(
+                '+ Highest overall profit: %s %s ~ %s%% in %s',
+                num_trim($highestOverallProfit['profit']),
+                $result->quoteSymbol,
+                $highestOverallProfit['profit_percent'],
+                Carbon::createFromTimestamp($highestOverallProfit['month'])->format('Y-m')
+            ),
+            is_null($lowestOverallProfit['month']) ? '+ Lowest overall profit: **unknown**' : sprintf(
+                '+ Lowest overall profit: %s %s ~ %s%% in %s',
+                num_trim($lowestOverallProfit['profit']),
+                $result->quoteSymbol,
+                $lowestOverallProfit['profit_percent'],
+                Carbon::createFromTimestamp($lowestOverallProfit['month'])->format('Y-m')
+            ),
+            is_null($highestMonthlyProfit['month']) ? '+ Highest monthly profit: **unknown**' : sprintf(
+                '+ Highest monthly profit: %s %s ~ %s%% in %s',
+                num_trim($highestMonthlyProfit['profit']),
+                $result->quoteSymbol,
+                $highestMonthlyProfit['profit_percent'],
+                Carbon::createFromTimestamp($highestMonthlyProfit['month'])->format('Y-m')
+            ),
+            is_null($lowestMonthlyProfit['month']) ? '+ Lowest monthly profit: **unknown**' : sprintf(
+                '+ Lowest monthly profit: %s %s ~ %s%% in %s',
+                num_trim($lowestMonthlyProfit['profit']),
+                $result->quoteSymbol,
+                $lowestMonthlyProfit['profit_percent'],
+                Carbon::createFromTimestamp($lowestMonthlyProfit['month'])->format('Y-m')
+            ),
+            $countMonths === 0 ? '+ Avg. monthly profit: **unknown**' : sprintf(
+                '+ Avg. monthly profit: %s %s ~ %s%%',
+                num_trim(num_div($sumMonthlyProfit['profit'], $countMonths)),
+                $result->quoteSymbol,
+                num_div($sumMonthlyProfit['profit_percent'], $countMonths, 2)
+            ),
+
+            str_repeat('-', 25),
+        );
         return implode(PHP_EOL, $reports);
     }
 

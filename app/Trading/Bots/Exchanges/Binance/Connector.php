@@ -84,17 +84,18 @@ class Connector extends BaseConnector
                     && (is_null($exceptQuoteSymbol) || !in_array($ticker['quoteAsset'], (array)$exceptQuoteSymbol, true))
                     && (is_null($exceptBaseSymbol) || !in_array($ticker['baseAsset'], (array)$exceptBaseSymbol, true));
             })
+            ->values()
             ->map(function (array $ticker) {
                 return new Ticker($ticker);
             });
     }
 
-    protected function createTicker($baseSymbol, $quoteSymbol): string
+    public function createTicker(string $baseSymbol, string $quoteSymbol): string
     {
         return $baseSymbol . $quoteSymbol;
     }
 
-    protected function createTradeUrl($baseSymbol, $quoteSymbol): string
+    public function createTradeUrl(string $baseSymbol, string $quoteSymbol): string
     {
         return sprintf('https://www.binance.com/en/trade/%s_%s', $baseSymbol, $quoteSymbol);
     }
