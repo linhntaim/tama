@@ -39,10 +39,7 @@ class QuickBinanceCommand extends Command
             null,
             null,
             array_merge(Exchanger::STABLECOIN_SYMBOLS, Exchanger::GOLDCOIN_SYMBOLS)
-        )
-            ->groupBy(fn(Ticker $ticker) => $ticker->getBaseSymbol())
-            ->map(fn(Collection $tickers) => $tickers->first())
-            ->values();
+        );
         $this->info('TICKERS:');
         out($tickers->map(fn(Ticker $ticker) => $ticker->getSymbol())->all());
         foreach ($tickers as $i => $ticker) {

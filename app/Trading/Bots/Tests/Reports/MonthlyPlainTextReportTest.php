@@ -140,7 +140,7 @@ class MonthlyPlainTextReportTest extends PlainTextReportTest
             $highestOverallProfit['profit_percent'],
             Carbon::createFromTimestamp($highestOverallProfit['month'])->format('Y-m'),
         ]),
-            ...(is_null($highestOverallProfit['month']) ? ['', '', ''] : [
+            ...(is_null($lowestOverallProfit['month']) ? ['', '', ''] : [
             $lowestOverallProfit['profit'],
             $lowestOverallProfit['profit_percent'],
             Carbon::createFromTimestamp($lowestOverallProfit['month'])->format('Y-m'),
